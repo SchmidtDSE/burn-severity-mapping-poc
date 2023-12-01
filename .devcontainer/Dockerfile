@@ -1,7 +1,7 @@
 FROM condaforge/mambaforge
 
 # Get necessary utils
-RUN apt-get update && apt-get install -y bash unzip curl
+RUN apt-get update && apt-get install -y bash unzip curl ssh
 
 # Copy repo into 
 COPY . .
