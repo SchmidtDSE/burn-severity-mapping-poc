@@ -1,7 +1,15 @@
 FROM condaforge/mambaforge
 
-# Get necessary utils
-RUN apt-get update && apt-get install -y bash unzip curl ssh
+# Set noninteractive mode for apt-get, to avoid hanging on tzdata
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Get necessary utils, w/ no-install-recommends and clean up to keep image small
+RUN apt-get update && apt-get install -y \
+    bash \
+    unzip \
+    curl \
+    ssh \
+    --no-install-recommends && rm -rf /var/lib/apt/lists/* 
 
 # Copy repo into 
 COPY . .
