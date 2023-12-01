@@ -18,6 +18,7 @@ from shapely.geometry import mapping
 import geopandas as gpd
 import math
 import rioxarray as rxr
+from rioxarray.merge import merge_arrays
 import pandas as pd
 
 os.environ["AWS_NO_SIGN_REQUEST"] = "YES" # to avoid signing requests, avoid AWS auth
@@ -107,8 +108,8 @@ def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
     dnbr = calc_dnbr(nbr_prefire, nbr_postfire)
     rdnbr = calc_rdnbr(dnbr, nbr_prefire)
     rbr = calc_rbr(dnbr, nbr_prefire)
-    # stack these arrays together, naming them by their source
 
+    # stack these arrays together, naming them by their source
     burn_stack = rxr.concat(
         [nbr_prefire, nbr_postfire, dnbr, rdnbr, rbr],
         pd.Index(['nbr_prefire', 'nbr_postfire', 'dnbr', 'rdnbr', 'rbr'], name='burn_metric')

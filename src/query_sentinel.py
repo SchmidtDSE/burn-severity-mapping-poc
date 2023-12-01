@@ -25,7 +25,8 @@ class Sentinel2Client:
         # Buffer the bounds to ensure we get all the data we need, plus a
         # little extra for visualization outside burn area
 
-        self.geojson_bounds = geojson_bounds.buffer(buffer).to_crs(crs)
+        self.geojson_bounds = geojson_bounds.to_crs(crs).buffer(buffer)
+
         geojson_bbox = geojson_bounds.bounds.to_numpy()[0]
         self.bbox = [
             geojson_bbox[0] - buffer,
@@ -74,14 +75,18 @@ class Sentinel2Client:
             assets=[self.band_nir, self.band_swir]
         ).rio.write_crs(stac_endpoint_crs)
     
-        # Reproject to our desired CRS
-        stack = stack.rio.to_crs(self.crs)
-
-        # Clip to our bounds
-        stack = stack.rio.clip(self.geojson_bounds)
+        # Clip to our bounds (need to temporarily convert to the endpoint crs, since we can't reproject til we have <= 3 dims)
+        bounds_stac_crs = self.geojson_bounds.to_crs(stac_endpoint_crs).geometry.values
+        stack = stack.rio.clip(
+            bounds_stac_crs,
+            bounds_stac_crs.crs
+        )
 
         # Reduce according to our best approximation
-        reduced_stack = self.reduce_time_range(reduced_stack)
+        reduced_stack = self.reduce_time_range(stack)
+
+        # Reproject to our desired CRS
+        reduced_stack = reduced_stack.rio.reproject(self.crs)
 
         return reduced_stack
 
