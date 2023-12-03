@@ -11,7 +11,7 @@ SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 
 
 class Sentinel2Client:
-    def __init__(self, geojson_bounds, buffer = .1, crs = 4326, band_nir = "B8A", band_swir = "B12"):
+    def __init__(self, geojson_bounds, buffer = .1, crs = "EPSG:4326", band_nir = "B8A", band_swir = "B12"):
         self.path = SENTINEL2_PATH
         self.client = Client.open(
             self.path,
@@ -22,19 +22,22 @@ class Sentinel2Client:
         self.band_swir = band_swir
         self.crs = crs
 
-        # Buffer the bounds to ensure we get all the data we need, plus a
-        # little extra for visualization outside burn area
-
-        self.geojson_bounds = geojson_bounds.to_crs(crs).buffer(buffer)
+        self.buffer = buffer
+        self.geojson_bounds = geojson_bounds.to_crs(crs)
 
         geojson_bbox = geojson_bounds.bounds.to_numpy()[0]
         self.bbox = [
-            geojson_bbox[0] - buffer,
-            geojson_bbox[1] - buffer,
-            geojson_bbox[2] + buffer,
-            geojson_bbox[3] + buffer
+            geojson_bbox[0].round(decimals=2) - buffer,
+            geojson_bbox[1].round(decimals=2) - buffer,
+            geojson_bbox[2].round(decimals=2) + buffer,
+            geojson_bbox[3].round(decimals=2) + buffer
         ]
 
+        print(
+            "Initialized Sentinel2Client with bounds: {}".format(
+                self.bbox
+            )
+        )
 
     def get_items(self, date_range, cloud_cover = 100, from_bbox = True, max_items = None):
         
@@ -73,22 +76,40 @@ class Sentinel2Client:
             epsg=stac_endpoint_crs,
             resolution=resolution,
             assets=[self.band_nir, self.band_swir]
-        ).rio.write_crs(stac_endpoint_crs)
-    
-        # Clip to our bounds (need to temporarily convert to the endpoint crs, since we can't reproject til we have <= 3 dims)
-        bounds_stac_crs = self.geojson_bounds.to_crs(stac_endpoint_crs).geometry.values
+        )
+        stack.rio.write_crs(stac_endpoint_crs, inplace=True)
+
+        # Reduce over the time dimension
+        stack = self.reduce_time_range(stack)
+        self.debug_reduced_stack = stack
+        self.debug_missingness = stack.isnull()
+
+        # Buffer the bounds to ensure we get all the data we need, plus a
+        # little extra for visualization outside burn area
+        bounds_stac_crs = self.geojson_bounds\
+            .to_crs(stac_endpoint_crs)\
+            .geometry\
+            .values
+
+        # Clip to our bounds (need to temporarily convert to the endpoint crs, since we can't reproject til we have <= 3 dims) 
         stack = stack.rio.clip(
             bounds_stac_crs,
             bounds_stac_crs.crs
         )
 
-        # Reduce according to our best approximation
-        reduced_stack = self.reduce_time_range(stack)
+        self.debug_clpped_stack = stack
+
+        # print("after clip")
+        # print(stack.isel(x=slice(0, 5), y=slice(0, 5)).values)
 
         # Reproject to our desired CRS
-        reduced_stack = reduced_stack.rio.reproject(self.crs)
+        stack = stack.rio.reproject(self.crs)
 
-        return reduced_stack
+        self.debug_reprojected_stack = stack
+        # print("after reproject")
+        # print(stack.isel(x=slice(0, 5), y=slice(0, 5)).values)
+
+        return stack
 
     def reduce_time_range(self, range_stack):
 
@@ -109,9 +130,9 @@ class Sentinel2Client:
         self.prefire_stack = self.arrange_stack(prefire_items)
         self.postfire_stack = self.arrange_stack(postfire_items)
 
-        self.metrics_stack = calc_burn_metrics(
-            prefire_nir = self.prefire_stack.sel(band = self.band_nir),
-            prefire_swir = self.prefire_stack.sel(band = self.band_swir),
-            postfire_nir = self.postfire_stack.sel(band = self.band_nir),
-            postfire_swir = self.postfire_stack.sel(band = self.band_swir),
-        )
+        # self.metrics_stack = calc_burn_metrics(
+        #     prefire_nir = self.prefire_stack.sel(band = self.band_nir),
+        #     prefire_swir = self.prefire_stack.sel(band = self.band_swir),
+        #     postfire_nir = self.postfire_stack.sel(band = self.band_nir),
+        #     postfire_swir = self.postfire_stack.sel(band = self.band_swir),
+        # )
