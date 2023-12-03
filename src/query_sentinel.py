@@ -4,6 +4,8 @@ from pystac_client import Client
 from datetime import datetime
 import planetary_computer
 import rioxarray as rxr
+import xarray as xr
+import numpy as np
 import stackstac
 from .burn_severity import calc_burn_metrics
 
@@ -103,7 +105,11 @@ class Sentinel2Client:
         # print(stack.isel(x=slice(0, 5), y=slice(0, 5)).values)
 
         # Reproject to our desired CRS
-        stack = stack.rio.reproject(self.crs)
+        stack = stack.rio.reproject(
+            dst_crs = self.crs,
+            nodata = np.nan
+        )
+
 
         self.debug_reprojected_stack = stack
         # print("after reproject")
@@ -130,9 +136,10 @@ class Sentinel2Client:
         self.prefire_stack = self.arrange_stack(prefire_items)
         self.postfire_stack = self.arrange_stack(postfire_items)
 
-        # self.metrics_stack = calc_burn_metrics(
-        #     prefire_nir = self.prefire_stack.sel(band = self.band_nir),
-        #     prefire_swir = self.prefire_stack.sel(band = self.band_swir),
-        #     postfire_nir = self.postfire_stack.sel(band = self.band_nir),
-        #     postfire_swir = self.postfire_stack.sel(band = self.band_swir),
-        # )
+    def calc_burn_metrics(self):
+        self.metrics_stack = calc_burn_metrics(
+                prefire_nir = self.prefire_stack.sel(band = self.band_nir),
+                prefire_swir = self.prefire_stack.sel(band = self.band_swir),
+                postfire_nir = self.postfire_stack.sel(band = self.band_nir),
+                postfire_swir = self.postfire_stack.sel(band = self.band_swir),
+            )
