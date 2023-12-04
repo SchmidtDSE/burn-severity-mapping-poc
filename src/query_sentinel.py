@@ -36,7 +36,7 @@ class Sentinel2Client:
         ]
 
         self.barc_classifications = self.ingest_barc_classifications(barc_classifications)
-
+        self.derived_classifications = None
         print(
             "Initialized Sentinel2Client with bounds: {}".format(
                 self.bbox
@@ -148,5 +148,25 @@ class Sentinel2Client:
                 postfire_swir = self.postfire_stack.sel(band = self.band_swir),
             )
 
-    def classify(self):
-        self.un_spyder_classifications = reclassify(self.metrics_stack.sel(burn_metric = "dnbr"))
+    def classify(self, thresholds, threshold_source):
+        new_classification = reclassify(
+            self.metrics_stack.sel(burn_metric = "dnbr"),
+            thresholds = thresholds
+        )
+        new_classification = new_classification.expand_dims(
+                dim = "classification_source"
+            )
+        new_classification["classification_source"] = [threshold_source]
+
+        if self.derived_classifications is None:
+            self.derived_classifications = new_classification
+        elif threshold_source in self.derived_classifications.classification_source.values:
+            self.derived_classifications = self.derived_classifications.where(
+                self.derived_classifications.classification_source != threshold_source,
+                new_classification
+            )
+        else:
+            self.derived_classifications = xr.concat(
+                [self.derived_classifications, new_classification],
+                dim = "classification_source"
+            )

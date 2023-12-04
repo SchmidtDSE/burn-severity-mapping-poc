@@ -213,23 +213,17 @@ def clip_raster(filename, shp):
     
     return clipped, clipped_meta, cr_ext, gt
 
-def reclassify(array):
+def reclassify(array, thresholds):
     """
     This function reclassifies an array
     input:  array           xarray.DataArray    input array
     output: reclass         xarray.DataArray    reclassified array
     """
-    UN_THRESHOLDS = {
-        0.1: 1,
-        0.27: 2,
-        0.44: 3,
-        0.66: 4
-    }
     
     reclass = xr.full_like(array, np.nan)
-    
-    for threshold, value in UN_THRESHOLDS.items():
-        reclass = xr.where(array < threshold, value, reclass)
+
+    for threshold, value in sorted(thresholds.items()):
+        reclass = xr.where((array < threshold) & (reclass.isnull()), value, reclass)
     
     return reclass
 
