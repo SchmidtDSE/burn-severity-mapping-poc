@@ -1,11 +1,14 @@
 import zipfile
 import geopandas as gpd
+import rasterio
+import rioxarray as rxr
 import os
 import tempfile
 
 
 def ingest_BARC_zip_file(zip_file_path):
     valid_shapefiles = []
+    valid_tifs = []
 
     with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
         for file_name in zip_ref.namelist():
@@ -23,4 +26,17 @@ def ingest_BARC_zip_file(zip_file_path):
                     valid_shapefile = gpd.read_file(os.path.join(tmp_dir, file_name))
                     valid_shapefiles.append(valid_shapefile)
 
-    return valid_shapefiles
+            if file_name.endswith(".tif"):
+                print("Found tif file: {}".format(file_name))
+                # Create a temporary directory
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    # Extract the related files to the temporary directory
+                    tif_base = os.path.splitext(file_name)[0]
+                    zip_ref.extract(tif_base + '.tif', path=tmp_dir)
+
+                    # Read the shapefile from the temporary directory
+                    valid_tif = rxr.open_rasterio(os.path.join(tmp_dir, file_name))
+
+                    valid_tifs.append(valid_tif)
+
+    return valid_shapefiles, valid_tifs

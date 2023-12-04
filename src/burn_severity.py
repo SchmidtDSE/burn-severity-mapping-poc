@@ -75,7 +75,7 @@ def calc_rdnbr(dnbr, nbr_prefire):
             nbr_prefire     array (n x m)       pre-fire NBR
     output: rdnbr    array (n x m)       relative dNBR
     """
-    rdnbr = dnbr / np.abs(np.square(nbr_prefire))
+    rdnbr = dnbr / np.abs(np.sqrt(nbr_prefire))
     return rdnbr
 
 def calc_rbr(dnbr, nbr_prefire):
@@ -212,29 +212,25 @@ def clip_raster(filename, shp):
     gt = crop_affine.to_gdal()
     
     return clipped, clipped_meta, cr_ext, gt
-    
+
 def reclassify(array):
     """
     This function reclassifies an array
-    input:  array           array (n x m)    input array
-    output: reclass         array (n x m)    reclassified array
+    input:  array           xarray.DataArray    input array
+    output: reclass         xarray.DataArray    reclassified array
     """
-    reclass = np.zeros((array.shape[0],array.shape[1]))
-    for i in range(0,array.shape[0]):
-        for j in range(0,array.shape[1]):
-            if math.isnan(array[i,j]):
-                reclass[i,j] = np.nan
-            elif array[i,j] < 0.1:
-                reclass[i,j] = 1
-            elif array[i,j] < 0.27:
-                 reclass[i,j] = 2
-            elif array[i,j] < 0.44:
-                 reclass[i,j] = 3
-            elif array[i,j] < 0.66:
-                 reclass[i,j] = 4
-            else:
-                reclass[i,j] = 5
-                
+    UN_THRESHOLDS = {
+        0.1: 1,
+        0.27: 2,
+        0.44: 3,
+        0.66: 4
+    }
+    
+    reclass = xr.full_like(array, np.nan)
+    
+    for threshold, value in UN_THRESHOLDS.items():
+        reclass = xr.where(array < threshold, value, reclass)
+    
     return reclass
 
 def is_s3_url_valid(url):

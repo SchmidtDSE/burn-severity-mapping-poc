@@ -7,13 +7,13 @@ import rioxarray as rxr
 import xarray as xr
 import numpy as np
 import stackstac
-from .burn_severity import calc_burn_metrics
+from .burn_severity import calc_burn_metrics, reclassify
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 
 
 class Sentinel2Client:
-    def __init__(self, geojson_bounds, buffer = .1, crs = "EPSG:4326", band_nir = "B8A", band_swir = "B12"):
+    def __init__(self, geojson_bounds, barc_classifications, buffer = .1, crs = "EPSG:4326", band_nir = "B8A", band_swir = "B12"):
         self.path = SENTINEL2_PATH
         self.client = Client.open(
             self.path,
@@ -34,6 +34,8 @@ class Sentinel2Client:
             geojson_bbox[2].round(decimals=2) + buffer,
             geojson_bbox[3].round(decimals=2) + buffer
         ]
+
+        self.barc_classifications = self.ingest_barc_classifications(barc_classifications)
 
         print(
             "Initialized Sentinel2Client with bounds: {}".format(
@@ -67,6 +69,20 @@ class Sentinel2Client:
 
         return items
 
+    def ingest_barc_classifications(self, barc_classifications_xarray):
+        barc_classifications = barc_classifications_xarray.rio.reproject(
+            dst_crs = self.crs,
+            nodata = 0
+        )
+        barc_classifications = barc_classifications.astype(int)
+        barc_classifications = barc_classifications.rio.clip(
+            self.geojson_bounds.geometry.values,
+            self.geojson_bounds.crs
+        )
+        # Set everything outside the geojson_bounds to np.nan
+        barc_classifications = barc_classifications.where(barc_classifications != 0, np.nan)
+        return barc_classifications
+
     def arrange_stack(self, items, resolution = 20):
 
         # Get CRS from first item (this isn't inferred by stackstac, for some reason)
@@ -83,8 +99,6 @@ class Sentinel2Client:
 
         # Reduce over the time dimension
         stack = self.reduce_time_range(stack)
-        self.debug_reduced_stack = stack
-        self.debug_missingness = stack.isnull()
 
         # Buffer the bounds to ensure we get all the data we need, plus a
         # little extra for visualization outside burn area
@@ -99,21 +113,11 @@ class Sentinel2Client:
             bounds_stac_crs.crs
         )
 
-        self.debug_clpped_stack = stack
-
-        # print("after clip")
-        # print(stack.isel(x=slice(0, 5), y=slice(0, 5)).values)
-
         # Reproject to our desired CRS
         stack = stack.rio.reproject(
             dst_crs = self.crs,
             nodata = np.nan
         )
-
-
-        self.debug_reprojected_stack = stack
-        # print("after reproject")
-        # print(stack.isel(x=slice(0, 5), y=slice(0, 5)).values)
 
         return stack
 
@@ -143,3 +147,6 @@ class Sentinel2Client:
                 postfire_nir = self.postfire_stack.sel(band = self.band_nir),
                 postfire_swir = self.postfire_stack.sel(band = self.band_swir),
             )
+
+    def classify(self):
+        self.un_spyder_classifications = reclassify(self.metrics_stack.sel(burn_metric = "dnbr"))
