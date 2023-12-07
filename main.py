@@ -1,8 +1,10 @@
+from pyscript import display
 import folium
 import json
 import pandas as pd
-from pyscript import display
 from pyodide.http import open_url
+
+print('hello from python')
 
 url = (
     "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data"
