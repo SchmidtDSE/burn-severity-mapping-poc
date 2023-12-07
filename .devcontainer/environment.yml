@@ -16,9 +16,13 @@ dependencies:
   - matplotlib
   - geopandas
   - rasterio
+  - seaborn
   - ipython
   - jupyter
   - pystac-client
   - boto3
   - planetary-computer
   - mplleaflet
+  - folium
+  - pyscript
+  - pyodide

@@ -148,9 +148,9 @@ class Sentinel2Client:
                 postfire_swir = self.postfire_stack.sel(band = self.band_swir),
             )
 
-    def classify(self, thresholds, threshold_source):
+    def classify(self, thresholds, threshold_source, burn_metric = "dnbr"):
         new_classification = reclassify(
-            self.metrics_stack.sel(burn_metric = "dnbr"),
+            self.metrics_stack.sel(burn_metric = burn_metric),
             thresholds = thresholds
         )
         new_classification = new_classification.expand_dims(
