@@ -23,3 +23,6 @@ dependencies:
   - boto3
   - planetary-computer
   - mplleaflet
+  - folium
+  - pyscript
+  - pyodide
