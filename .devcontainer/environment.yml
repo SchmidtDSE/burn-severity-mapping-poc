@@ -16,6 +16,7 @@ dependencies:
   - matplotlib
   - geopandas
   - rasterio
+  - seaborn
   - ipython
   - jupyter
   - pystac-client
