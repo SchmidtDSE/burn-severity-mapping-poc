@@ -25,6 +25,11 @@ class Sentinel2Client:
         self.crs = crs
 
         self.buffer = buffer
+
+        geojson_bounds = gpd.GeoDataFrame.from_features(geojson_bounds)
+        # TODO: This is hard-coded to BARC crs - when we draw an AOI, we will change this logic
+        if not geojson_bounds.crs:
+            geojson_bounds = geojson_bounds.set_crs("esri:102039")
         self.geojson_bounds = geojson_bounds.to_crs(crs)
 
         geojson_bbox = geojson_bounds.bounds.to_numpy()[0]
@@ -35,7 +40,7 @@ class Sentinel2Client:
             geojson_bbox[3].round(decimals=2) + buffer
         ]
 
-        if self.barc_classifications:
+        if barc_classifications:
             self.barc_classifications = self.ingest_barc_classifications(barc_classifications)
 
         self.derived_classifications = None

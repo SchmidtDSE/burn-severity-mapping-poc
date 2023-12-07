@@ -1,4 +1,4 @@
-from flask import Flask, request, response
+from flask import Flask, request
 from src.query_sentinel import Sentinel2Client
 
 app = Flask(__name__)
