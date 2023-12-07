@@ -1,0 +1,2 @@
+name = "Folium"
+packages = ["folium", "pandas"]
