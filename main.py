@@ -1,30 +1,47 @@
-from pyscript import display
-import folium
-import json
-import pandas as pd
+from flask import Flask, request, response
+from src.query_sentinel import Sentinel2Client
 
-from pyodide.http import open_url
+app = Flask(__name__)
 
-url = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data"
-state_geo = f"{url}/us-states.json"
-state_unemployment = f"{url}/US_Unemployment_Oct2012.csv"
-state_data = pd.read_csv(open_url(state_unemployment))
-geo_json = json.loads(open_url(state_geo).read())
+@app.route('/')
+def index():
+    return 'Hello World! We have some burn data in here.', 200
 
-m = folium.Map(location=[48, -102], zoom_start=3)
+# create a POST endpoint for running a burn query with an input geojson
+@app.route('/analyze-burn', methods=['POST'])
+def burn():
 
-folium.Choropleth(
-    geo_data=geo_json,
-    name="choropleth",
-    data=state_data,
-    columns=["State", "Unemployment"],
-    key_on="feature.id",
-    fill_color="YlGn",
-    fill_opacity=0.7,
-    line_opacity=0.2,
-    legend_name="Unemployment Rate (%)",
-).add_to(m)
+    # get the geojson from the request body
+    body = request.get_json()
+    geojson = body['geojson']
+    date_ranges = body['date_ranges']
+    fire_name = body['fire_name']
 
-folium.LayerControl().add_to(m)
+    try:
+        # create a Sentinel2Client instance
+        geo_client = Sentinel2Client(
+            geojson_bounds=geojson,
+            buffer=0.1
+        )
 
-display(m, target="folium")
+        # get imagery data before and after the fire
+        geo_client.query_fire_event(
+            prefire_date_range=date_ranges['prefire'],
+            postfire_date_range=date_ranges['postfire'],
+            from_bbox=True
+        )
+
+        # calculate burn metrics
+        geo_client.calc_burn_metrics()
+
+        # save the cog to the FTP server
+        # geo_client.upload_cog()
+
+        return f"cog uploaded for {fire_name}", 200
+
+    except Exception as e:
+
+        return f"Error: {e}", 400
+
+if __name__ == '__main__':
+    app.run(debug=True)

@@ -1,25 +1,17 @@
-name: burn-severity
+name: burn-severity-prod
 
 channels:
   - conda-forge
   - defaults
 dependencies:
   - python
-  - ipykernel
   - rioxarray
   - stackstac
-  - contextily
-  - rich
-  - rich-with-jupyter
   - gdal
   - numpy
-  - matplotlib
   - geopandas
   - rasterio
-  - seaborn
   - ipython
-  - jupyter
   - pystac-client
-  - boto3
   - planetary-computer
   - flask

@@ -18,10 +18,10 @@ COPY . .
 RUN mamba env create -f environment.yml
 
 # Make 'RUN' use the new environment:
-SHELL ["conda", "run", "-n", "burn-severity", "/bin/bash", "-c"]
+SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
 
 # Expose port 5000 for the REST API
 EXPOSE 5000
 
 # Start the REST API w/ the new environment:
-ENTRYPOINT ["conda", "run", "-n", "burn-severity", "python", "main.py"]
+ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "python", "main.py"]

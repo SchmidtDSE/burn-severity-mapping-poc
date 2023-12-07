@@ -13,7 +13,7 @@ SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 
 
 class Sentinel2Client:
-    def __init__(self, geojson_bounds, barc_classifications, buffer = .1, crs = "EPSG:4326", band_nir = "B8A", band_swir = "B12"):
+    def __init__(self, geojson_bounds, barc_classifications = None, buffer = .1, crs = "EPSG:4326", band_nir = "B8A", band_swir = "B12"):
         self.path = SENTINEL2_PATH
         self.client = Client.open(
             self.path,
@@ -35,7 +35,9 @@ class Sentinel2Client:
             geojson_bbox[3].round(decimals=2) + buffer
         ]
 
-        self.barc_classifications = self.ingest_barc_classifications(barc_classifications)
+        if self.barc_classifications:
+            self.barc_classifications = self.ingest_barc_classifications(barc_classifications)
+
         self.derived_classifications = None
         print(
             "Initialized Sentinel2Client with bounds: {}".format(
