@@ -1,3 +1,2 @@
 #!/bin/bash
-
-echo "Hello from prebuild and hopefully not runtime!"
+bash .devcontainer/prebuild/setup_opentofu.sh

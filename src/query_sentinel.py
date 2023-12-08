@@ -27,9 +27,9 @@ class Sentinel2Client:
         self.buffer = buffer
 
         geojson_bounds = gpd.GeoDataFrame.from_features(geojson_bounds)
-        # TODO: This is hard-coded to BARC crs - when we draw an AOI, we will change this logic
+        # TODO: This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
         if not geojson_bounds.crs:
-            geojson_bounds = geojson_bounds.set_crs("esri:102039")
+            geojson_bounds = geojson_bounds.set_crs("EPSG:4326")
         self.geojson_bounds = geojson_bounds.to_crs(crs)
 
         geojson_bbox = geojson_bounds.bounds.to_numpy()[0]
