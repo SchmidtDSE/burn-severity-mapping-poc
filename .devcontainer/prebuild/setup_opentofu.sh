@@ -7,7 +7,7 @@ TEMPDIR="$(mktemp -d)"
 pushd "${TEMPDIR}" >/dev/null
 wget "https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_${OS}_${ARCH}.zip"
 unzip "tofu_${TOFU_VERSION}_${OS}_${ARCH}.zip"
-sudo mv tofu /usr/local/bin/tofu
+mv tofu /usr/local/bin/tofu
 popd >/dev/null
 rm -rf "${TEMPDIR}"
 echo "OpenTofu is now available at /usr/local/bin/tofu."

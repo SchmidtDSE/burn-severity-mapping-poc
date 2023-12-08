@@ -17,6 +17,9 @@ COPY . .
 # Create a new conda environment from the environment.yml file 
 RUN mamba env create -f environment.yml
 
+# Source .env
+RUN echo "source .env" >> ~/.bashrc
+
 # Make 'RUN' use the new environment:
 SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
 
