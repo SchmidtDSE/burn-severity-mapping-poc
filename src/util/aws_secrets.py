@@ -20,9 +20,9 @@ def get_ssh_secret():
     get_secret_value_response = client.get_secret_value(SecretId=secret_name)
     
     # The secret value is a JSON string
-    secret_value = json.loads(get_secret_value_response['SecretString'])
+    ssh_private_key = json.loads(get_secret_value_response['SecretString'])['SFTP_ADMIN_PRIVATE_KEY']
 
-    return secret_value
+    return ssh_private_key
 
 if __name__ == "__main__":
     print(get_ssh_secret())

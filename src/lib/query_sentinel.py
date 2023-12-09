@@ -8,7 +8,7 @@ import xarray as xr
 import numpy as np
 import stackstac
 from .burn_severity import calc_burn_metrics, reclassify
-from .sftp import SFTPClient
+from .util/sftp import SFTPClient
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 
 
