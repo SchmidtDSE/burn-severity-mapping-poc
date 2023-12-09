@@ -11,8 +11,11 @@ RUN apt-get update && apt-get install -y \
     ssh \
     --no-install-recommends && rm -rf /var/lib/apt/lists/* 
 
-# Get AWS CLI
-RUN pip3 --no-cache-dir install --upgrade awscli
+# Get AWS CLI V2
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+&& unzip awscliv2.zip \
+&& ./aws/install \
+&& rm -rf awscliv2.zip aws
 
 # Copy repo into 
 COPY . .

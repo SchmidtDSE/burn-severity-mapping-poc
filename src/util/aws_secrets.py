@@ -7,10 +7,13 @@ def get_ssh_secret():
     region_name = "us-east-2"
 
     # Create a Secrets Manager client
-    session = boto3.session.Session()
+    session = boto3.session.Session(
+        profile_name='UCB-FederatedAdmins-557418946771',
+        region_name=region_name,
+    )
     client = session.client(
         service_name='secretsmanager',
-        region_name=region_name
+        region_name=region_name,
     )
 
     # Use the client to retrieve the secret
