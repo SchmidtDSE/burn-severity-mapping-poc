@@ -22,31 +22,6 @@ import pandas as pd
 
 os.environ["AWS_NO_SIGN_REQUEST"] = "YES" # to avoid signing requests, avoid AWS auth
 
-def read_band_image_from_stac_item_collection(band, item_collection):
-    """
-    This function takes as input the Sentinel-2 band name and a PySTAC ItemCollection,
-    reads the image from each item's asset for the given band, and returns the merged
-    data from all images as an array.
-    input:   band           string            Sentinel-2 band name
-             item_collection ItemCollection   PySTAC ItemCollection
-    output:  data           array (n x m)     array of the band image
-             spatialRef     string            projection 
-             geoTransform   tuple             affine transformation coefficients
-             targetprj                        spatial reference
-    """
-    images = []
-    for item in item_collection:
-        asset = item.assets.get(band)
-        if asset is not None:
-            image = rasterio.open(asset.href)
-            images.append(image)
-    print('Merging - number of images: ', len(images))
-    mosaic, __out_trans = merge(images)
-    spatialRef = images[0].crs
-    geoTransform = images[0].get_transform()
-    targetprj = osr.SpatialReference(wkt = images[0].crs.wkt)
-    return mosaic, spatialRef, geoTransform, targetprj
-
 def calc_nbr(band_nir, band_swir):
     """
     This function takes an input the arrays of the bands from the read_band_image
@@ -116,103 +91,6 @@ def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
 
     return burn_stack
 
-def reproject_shp_gdal(infile, outfile, targetprj):
-    """
-    This function takes as input the input and output file names and the projection
-    in which the input file will be reprojected and reprojects the input file using
-    gdal
-    input:  infile     string      input filename
-            outfile    string      output filename
-            targetprj              projection (output of function read_band_image)
-    """
-    ## reprojection with gdal 
-    
-    driver = ogr.GetDriverByName("ESRI Shapefile") 
-    dataSource = driver.Open(infile, 1) # 0 means read-only. 1 means writeable.
-    layer = dataSource.GetLayer()
-    sourceprj = layer.GetSpatialRef()
-    transform = osr.CoordinateTransformation(sourceprj, targetprj)
-    
-    # Create the output shapefile
-    outDriver = ogr.GetDriverByName("Esri Shapefile")
-    outDataSource = outDriver.CreateDataSource(outfile)
-    outlayer = outDataSource.CreateLayer('', targetprj, ogr.wkbPolygon)
-    outlayer.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
-    
-    #Iterate over Features
-    i = 0
-    for feature in layer:
-        transformed = feature.GetGeometryRef()
-        transformed.Transform(transform) #reproject geometry
-
-        geom = ogr.CreateGeometryFromWkb(transformed.ExportToWkb()) # create geometry from wkb (write geometry of reprojected geometry)
-        defn = outlayer.GetLayerDefn() #layer definition
-        feat = ogr.Feature(defn)  #create new feature
-        feat.SetField('id', i) #set id
-        feat.SetGeometry(geom) #set geometry
-        outlayer.CreateFeature(feat) 
-        i += 1
-        feat = None
-        
-def array2raster(array, geoTransform, projection, filename):
-    """ 
-    This function tarnsforms a numpy array to a geotiff projected raster
-    input:  array                       array (n x m)   input array
-            geoTransform                tuple           affine transformation coefficients
-            projection                  string          projection
-            filename                    string          output filename
-    output: dataset                                     gdal raster dataset
-            dataset.GetRasterBand(1)                    band object of dataset
-    
-    """
-    pixels_x = array.shape[1]
-    pixels_y = array.shape[0]
-    
-    driver = gdal.GetDriverByName('GTiff')
-    dataset = driver.Create(
-        filename,
-        pixels_x,
-        pixels_y,
-        1,
-        gdal.GDT_Float64, )
-    dataset.SetGeoTransform(geoTransform)
-    dataset.SetProjection(projection)
-    dataset.GetRasterBand(1).WriteArray(array)
-    dataset.FlushCache()  # Write to disk.
-    return dataset, dataset.GetRasterBand(1)  #If you need to return, remenber to return  also the dataset because the band don`t live without dataset.
- 
-def clip_raster(filename, shp):
-    """
-    This function clips a raster based on a shapefile
-    input:  filename          string                input raster filename
-            shp               dataframe             input shapefile open with geopandas
-    output: clipped           array (1 x n x m)     clipped array 
-            clipped_meta      dict                  metadata
-            cr_ext            tuple                 extent of clipped data
-            gt                tuple                 affine transformation coefficients
-    """
-    inraster = rasterio.open(filename)
-    
-    extent_geojson = mapping(shp['geometry'][0])
-    clipped, crop_affine = mask(inraster, 
-                                shapes=[extent_geojson], 
-                                nodata = np.nan,
-                                crop=True)
-    clipped_meta = inraster.meta.copy()
-    # Update the metadata to have the new shape (x and y and affine information)
-    clipped_meta.update({"driver": "GTiff",
-                 "height": clipped.shape[0],
-                 "width": clipped.shape[1],
-                 "transform": crop_affine})
-    cr_ext = rasterio.transform.array_bounds(clipped_meta['height'], 
-                                            clipped_meta['width'], 
-                                            clipped_meta['transform'])
-    
-    # transform to gdal
-    gt = crop_affine.to_gdal()
-    
-    return clipped, clipped_meta, cr_ext, gt
-
 def reclassify(array, thresholds):
     """
     This function reclassifies an array
@@ -228,6 +106,9 @@ def reclassify(array, thresholds):
     return reclass
 
 def is_s3_url_valid(url):
+    """
+    This function checks if an S3 URL is valid
+    """
     s3 = boto3.client('s3')
     s3.meta.events.register('choose-signer.s3.*', disable_signing)
 
