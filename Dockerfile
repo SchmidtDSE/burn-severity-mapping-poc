@@ -11,14 +11,14 @@ RUN apt-get update && apt-get install -y \
     ssh \
     --no-install-recommends && rm -rf /var/lib/apt/lists/* 
 
+# Get AWS CLI
+RUN pip3 --no-cache-dir install --upgrade awscli
+
 # Copy repo into 
 COPY . .
 
 # Create a new conda environment from the environment.yml file 
 RUN mamba env create -f environment.yml
-
-# Source .env
-RUN echo "source .env" >> ~/.bashrc
 
 # Make 'RUN' use the new environment:
 SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
