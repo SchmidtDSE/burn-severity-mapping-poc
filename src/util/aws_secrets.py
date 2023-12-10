@@ -3,7 +3,7 @@ import json
 
 def get_ssh_secret():
 
-    secret_name = "sftp-admin-private-key"
+    secret_name = "sftp-admin-private-key-pem"
     region_name = "us-east-2"
 
     # Create a Secrets Manager client
@@ -20,7 +20,7 @@ def get_ssh_secret():
     get_secret_value_response = client.get_secret_value(SecretId=secret_name)
     
     # The secret value is a JSON string
-    ssh_private_key = json.loads(get_secret_value_response['SecretString'])['SFTP_ADMIN_PRIVATE_KEY']
+    ssh_private_key = json.loads(get_secret_value_response['SecretString'])['SFTP_ADMIN_PRIVATE_KEY_PEM']
 
     return ssh_private_key
 

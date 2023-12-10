@@ -1,26 +1,38 @@
-import pysftp
+import paramiko
 from urllib.parse import urlparse
+import io
 import os
 
 class SFTPClient:
     def __init__(self, hostname, username, private_key, port=22):
         """Constructor Method"""
-        # Set connection object to None (initial value)
         self.connection = None
         self.hostname = hostname
         self.username = username
-        self.private_key = private_key
         self.port = port
+
+        private_key_file = io.StringIO(private_key.replace("\\n", "\n"))
+        self.private_key = paramiko.RSAKey.from_private_key(private_key_file)
+
+        print(f"Initialized SFTPClient for {self.hostname} as {self.username}")
 
     def connect(self):
         """Connects to the sftp server and returns the sftp connection object"""
         try:
-            # Get the sftp connection object
-            self.connection = pysftp.Connection(
-                host=self.hostname,
-                private_key_pass=self.private_key,
+            # Create SSH client
+            ssh_client = paramiko.SSHClient()
+            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+            # Connect to the server
+            ssh_client.connect(
+                self.hostname,
                 port=self.port,
+                username=self.username,
+                pkey=self.private_key
             )
+
+            # Create SFTP client from SSH client
+            self.connection = ssh_client.open_sftp()
 
         except Exception as err:
             raise Exception(err)
@@ -78,7 +90,7 @@ class SFTPClient:
                 f"uploading to {self.hostname} as {self.username} [(remote path: {remote_path});(source local path: {source_local_path})]"
             )
 
-            # Download file from SFTP
+            # Upload file from local to SFTP
             self.connection.put(source_local_path, remote_path)
             print("upload completed")
 
