@@ -1,23 +1,34 @@
 import requests
 import geopandas as gpd
-from pystac_client import Client
+from pystac_client import Client as PystacClient
 from datetime import datetime
 import planetary_computer
 import rioxarray as rxr
 import xarray as xr
 import numpy as np
 import stackstac
+import tempfile
+import os
 from .burn_severity import calc_burn_metrics, reclassify
-from .util/sftp import SFTPClient
-SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
+from src.util.sftp import SFTPClient
+from src.util.aws_secrets import get_ssh_secret
 
+SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
+SFTP_HOSTNAME = "s-90987336df8a4faca.server.transfer.us-east-2.amazonaws.com"
+SFTP_USERNAME = "sftp-admin"
 
 class Sentinel2Client:
     def __init__(self, geojson_bounds, barc_classifications = None, buffer = .1, crs = "EPSG:4326", band_nir = "B8A", band_swir = "B12"):
         self.path = SENTINEL2_PATH
-        self.client = Client.open(
+        self.pystac_client = PystacClient.open(
             self.path,
             modifier = planetary_computer.sign_inplace
+        )
+
+        self.sftp_client = SFTPClient(
+            hostname= SFTP_HOSTNAME,
+            username = SFTP_USERNAME,
+            private_key = get_ssh_secret()
         )
 
         self.band_nir = band_nir
@@ -72,7 +83,7 @@ class Sentinel2Client:
         if max_items:
             query["max_items"] = max_items
 
-        items = self.client.search(**query).item_collection()
+        items = self.pystac_client.search(**query).item_collection()
 
         return items
 
@@ -176,4 +187,20 @@ class Sentinel2Client:
             self.derived_classifications = xr.concat(
                 [self.derived_classifications, new_classification],
                 dim = "classification_source"
+            )
+
+    def upload_cog(self, fire_event_name):
+
+        if not self.sftp_client.connection:
+            self.sftp_client.connect()
+
+        # Save our stack to a COG, in a tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cog_path = os.path.join(tmpdir, "tmp_cog.tif")
+            self.metrics_stack.rio.to_raster(cog_path)
+
+            # Upload the metrics to our SFTP server
+            self.sftp_client.upload(
+                source_local_path = cog_path,
+                remote_path = f"{fire_event_name}/metrics.tif".format(fire_event_name)
             )

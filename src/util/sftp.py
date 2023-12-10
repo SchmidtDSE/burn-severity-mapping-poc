@@ -3,13 +3,13 @@ from urllib.parse import urlparse
 import os
 
 class SFTPClient:
-    def __init__(self, hostname, username, password, port=22):
+    def __init__(self, hostname, username, private_key, port=22):
         """Constructor Method"""
         # Set connection object to None (initial value)
         self.connection = None
         self.hostname = hostname
         self.username = username
-        self.password = password
+        self.private_key = private_key
         self.port = port
 
     def connect(self):
@@ -18,10 +18,10 @@ class SFTPClient:
             # Get the sftp connection object
             self.connection = pysftp.Connection(
                 host=self.hostname,
-                username=self.username,
-                password=self.password,
+                private_key_pass=self.private_key,
                 port=self.port,
             )
+
         except Exception as err:
             raise Exception(err)
         finally:

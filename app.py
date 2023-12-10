@@ -1,5 +1,5 @@
 from flask import Flask, request
-from src.query_sentinel import Sentinel2Client
+from src.lib.query_sentinel import Sentinel2Client
 
 app = Flask(__name__)
 
@@ -9,13 +9,13 @@ def index():
 
 # create a POST endpoint for running a burn query with an input geojson
 @app.route('/analyze-burn', methods=['POST'])
-def burn():
+def analyze_burn():
 
     # get the geojson from the request body
     body = request.get_json()
     geojson = body['geojson']
     date_ranges = body['date_ranges']
-    fire_name = body['fire_name']
+    fire_event_name = body['fire_event_name']
 
     try:
         # create a Sentinel2Client instance
@@ -35,9 +35,11 @@ def burn():
         geo_client.calc_burn_metrics()
 
         # save the cog to the FTP server
-        # geo_client.upload_cog()
+        geo_client.upload_cog(
+            fire_event_name=fire_event_name
+        )
 
-        return f"cog uploaded for {fire_name}", 200
+        return f"cog uploaded for {fire_event_name}", 200
 
     except Exception as e:
 
