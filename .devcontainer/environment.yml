@@ -24,5 +24,4 @@ dependencies:
   - planetary-computer
   - flask
   - pysftp
-  - pip:
-    - zappa
+  - chalice
