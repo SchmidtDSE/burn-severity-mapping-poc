@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Chalice: Local",
+            "type": "python",
+            "request": "launch",
+            "program": "/opt/conda/envs/burn-severity/bin/chalice",
+            "args": [
+                "local",
+                "--no-autoreload",
+                "--port",
+                "5050"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
