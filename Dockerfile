@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge
 
-# Set noninteractive mode for apt-get, to avoid hanging on tzdata
+# Set noninteractive mode for apt-get, to avoid hanging on tzdata 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Get necessary utils, w/ no-install-recommends and clean up to keep image small

@@ -1,6 +1,6 @@
 # from flask import Flask, request
 from chalice import Chalice
-from src.lib.query_sentinel import Sentinel2Client
+from chalicelib.lib.query_sentinel import Sentinel2Client
 
 app = Chalice(__name__)
 
