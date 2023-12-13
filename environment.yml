@@ -16,4 +16,3 @@ dependencies:
   - planetary-computer
   - flask
   - pysftp
-  - chalice

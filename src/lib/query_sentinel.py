@@ -10,8 +10,8 @@ import stackstac
 import tempfile
 import os
 from .burn_severity import calc_burn_metrics, reclassify
-from chalicelib.util.sftp import SFTPClient
-from chalicelib.util.aws_secrets import get_ssh_secret
+from src.util.sftp import SFTPClient
+from src.util.aws_secrets import get_ssh_secret
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 SFTP_HOSTNAME = "s-90987336df8a4faca.server.transfer.us-east-2.amazonaws.com"
