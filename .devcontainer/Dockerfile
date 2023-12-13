@@ -12,12 +12,15 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && rm -rf /var/lib/apt/lists/* 
 
 # Get AWS CLI V2
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
-&& unzip awscliv2.zip \
-&& ./aws/install \
-&& rm -rf awscliv2.zip aws
+RUN ./prebuild/setup_aws.sh
 
-# Copy repo into 
+# Get gcloud SDK
+RUN ./prebuild/setup_gcloud.sh
+
+# Get OpenTofu
+RUN ./prebuild/setup_opentofu.sh
+
+# Copy repo into container 
 COPY . .
 
 # Create a new conda environment from the environment.yml file 
