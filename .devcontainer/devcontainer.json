@@ -14,6 +14,6 @@
         }
     },
     "postCreateCommand": [
-        ".devcontainer/start_container.sh"
+        ".devcontainer/init_runtime.sh"
     ]
 }

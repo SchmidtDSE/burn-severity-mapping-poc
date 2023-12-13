@@ -24,7 +24,7 @@ RUN ./prebuild/setup_opentofu.sh
 COPY . .
 
 # Create a new conda environment from the environment.yml file 
-RUN mamba env create -f environment.yml
+RUN mamba env create -f dev_environment.yml
 
 # Install nb_conda_kernels in base env to allow for env discovery in jupyter
 RUN mamba install -n base nb_conda_kernels
