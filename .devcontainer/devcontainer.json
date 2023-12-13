@@ -12,8 +12,5 @@
                 "ms-toolsai.jupyter"
             ]
         }
-    },
-    "postCreateCommand": [
-        ".devcontainer/init_runtime.sh"
-    ]
+    }
 }

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 TOFU_VERSION="1.6.0-beta4"
 OS="$(uname | tr '[:upper:]' '[:lower:]')"

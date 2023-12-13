@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./runtime/get_barc_data
+bash runtime/get_barc_data.sh
