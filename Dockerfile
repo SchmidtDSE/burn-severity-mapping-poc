@@ -11,12 +11,6 @@ RUN apt-get update && apt-get install -y \
     ssh \
     --no-install-recommends && rm -rf /var/lib/apt/lists/* 
 
-# Get AWS CLI V2
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
-&& unzip awscliv2.zip \
-&& ./aws/install \
-&& rm -rf awscliv2.zip aws
-
 # Copy repo into 
 COPY . .
 
@@ -26,8 +20,8 @@ RUN mamba env create -f environment.yml
 # Make 'RUN' use the new environment:
 SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
 
-# Expose port 5000 for the REST API
-EXPOSE 5000
+# Expose port 5050 for the REST API
+EXPOSE 5050
 
 # Start the REST API w/ the new environment:
 ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "python", "main.py"]
