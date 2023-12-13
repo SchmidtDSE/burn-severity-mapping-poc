@@ -9,6 +9,7 @@ terraform {
 
 provider "aws" {
     profile = "UCB-FederatedAdmins-557418946771"
+    region = "us-east-2"
 }
 
 resource "aws_instance" "web" {
