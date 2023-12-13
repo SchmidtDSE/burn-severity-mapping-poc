@@ -12,13 +12,13 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && rm -rf /var/lib/apt/lists/* 
 
 # Get AWS CLI V2
-RUN ./prebuild/setup_aws.sh
+RUN prebuild/setup_aws.sh
 
 # Get gcloud SDK
-RUN ./prebuild/setup_gcloud.sh
+RUN prebuild/setup_gcloud.sh
 
 # Get OpenTofu
-RUN ./prebuild/setup_opentofu.sh
+RUN prebuild/setup_opentofu.sh
 
 # Copy repo into container 
 COPY . .
