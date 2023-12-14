@@ -94,6 +94,8 @@ resource "google_service_account" "default" {
   project     = "natl-park-service"
 }
 
+
+# Give the service account permissions to deploy to Cloud Run, and to Cloud Build, and to the Workload Identity Pool
 resource "google_project_iam_member" "run_admin" {
   project  = "natl-park-service"
   role     = "roles/run.admin" 
@@ -104,6 +106,14 @@ resource "google_project_iam_member" "cloudbuild_builder" {
   project  = "natl-park-service"
   role     = "roles/cloudbuild.builds.builder"
   member   = "serviceAccount:${google_service_account.default.email}"
+}
+
+resource "google_service_account_iam_binding" "workload_identity_user" {
+  service_account_id = google_service_account.default.name
+  role = "roles/iam.workloadIdentityUser"
+  members = [
+    "workloadIdentityPool:${google_iam_workload_identity_pool.pool.workload_identity_pool_id}.svc.id.goog[${google_iam_workload_identity_pool_provider.oidc.workload_identity_pool_provider_id}/${google_service_account.default.email}]"
+  ]
 }
 
 ## We will use GitHub Actions to build and deploy the container image, so we actually don't need this
