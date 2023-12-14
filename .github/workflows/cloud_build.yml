@@ -11,13 +11,14 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@master
+    - uses: 'actions/checkout@v4'
 
     - name: Setup Workload Identity Federation
       uses: google-github-actions/auth@v2
       with:
         workload_identity_provider: 'projects/natl-park-service/locations/global/workloadIdentityPools/github/providers/oidc-provider'
-        service_account_key: ${{ secrets.GCLOUD_AUTH }}
+        project_id: 'natl-park-service'
+        service_account: 'github-actions-service-account@natl-park-service.iam.gserviceaccount.com'
 
     - id: Deploy
       name: Build and Deploy

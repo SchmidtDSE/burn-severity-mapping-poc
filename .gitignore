@@ -1,4 +1,6 @@
 data/*
-*/__pycache__/*
 */.DS_Store
 .terraform*
+
+# Ignore generated credentials from google-github-actions/auth
+gha-creds-*.json
