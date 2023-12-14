@@ -14,11 +14,12 @@ RUN apt-get update && apt-get install -y \
 # Copy repo into container 
 COPY . .
 
-# # # Get AWS CLI V2
-# RUN prebuild/setup_aws.sh
+# # Get AWS CLI V2
+RUN prebuild/setup_aws.sh
 
-# # Get gcloud SDK
-# RUN prebuild/setup_gcloud.sh
+# Get gcloud SDK
+RUN prebuild/setup_gcloud.sh
+ENV PATH $PATH:/google-cloud-sdk/bin
 
 # Get OpenTofu
 RUN prebuild/setup_opentofu.sh

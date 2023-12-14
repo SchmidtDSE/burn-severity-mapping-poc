@@ -4,7 +4,7 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 4.0"
     }
-    gcp = {
+    google = {
       source  = "hashicorp/google"
       version = "~> 3.0"
     }
@@ -18,46 +18,44 @@ provider "aws" {
 }
 
 provider "google" {
-  project     = "<PROJECT_ID>"
-  region      = "<GCP_REGION>"
+  project     = "natl-park-service"
+  region      = "us-central1-a"
 }
 
 ### AWS Transfer - SFTP Server
 
 # First the server itself
 resource "aws_transfer_server" "tf-sftp-burn-severity" {
+  name = "tf-sftp-burn-severity"
   identity_provider_type = "SERVICE_MANAGED"
   protocols = ["SFTP"]
   domain = "S3"
-  structured_log_destinations = [
-    "${aws_cloudwatch_log_group.transfer.arn}:*"
-  ]
 }
 
-# Then, keys for the public and admin users
-resource "aws_transfer_ssh_key" "sftp_ssh_key" {
-  server_id = aws_transfer_server.sftp_server.id
-  user_name = "public"
-  body      = file("<PUBLIC_KEY_FILE_PATH>")
-}
+# # Then, keys for the public and admin users
+# resource "aws_transfer_ssh_key" "sftp_ssh_key_public" {
+#   server_id = aws_transfer_server.sftp_server.id
+#   user_name = "public"
+#   body      = file("<PUBLIC_KEY_FILE_PATH>")
+# }
 
-resource "aws_transfer_ssh_key" "sftp_ssh_key" {
-  server_id = aws_transfer_server.sftp_server.id
-  user_name = "admin"
-  body      = file("<PUBLIC_KEY_FILE_PATH>")
-}
+# resource "aws_transfer_ssh_key" "sftp_ssh_key_private" {
+#   server_id = aws_transfer_server.sftp_server.id
+#   user_name = "admin"
+#   body      = file("<PUBLIC_KEY_FILE_PATH>")
+# }
 
 
 
 # Create a Cloud Run service
-resource "google_cloud_run_service" "default" {
-  name     = "<CLOUD_RUN_SERVICE_NAME>"
-  location = "<GCP_REGION>"
+resource "google_cloud_run_service" "tf-rest-burn-severity" {
+  name     = "tf-rest-burn-severity"
+  location = "us-central1-a"
 
   template {
     spec {
       containers {
-        image = "<DOCKER_IMAGE>"
+        image = "us-docker.pkg.dev/cloudrun/container/placeholder"
       }
     }
   }
@@ -67,3 +65,15 @@ resource "google_cloud_run_service" "default" {
     latest_revision = true
   }
 }
+
+# resource "google_cloudbuild_trigger" "default" {
+#   name = "burn-prod-trigger"
+#   github {
+#     owner = "SchmidtDSE"
+#     name  = "burn-severity-mapping-poc"
+#     push {
+#       branch = "prod"
+#     }
+#   }
+#   filename = "cloudbuild.yaml"
+# }
