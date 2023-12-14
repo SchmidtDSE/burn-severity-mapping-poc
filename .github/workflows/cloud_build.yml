@@ -1,0 +1,29 @@
+name: Push and Deploy
+on: [push]
+
+
+jobs:
+  setup-build-deploy:
+    name: Setup, Build and Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+      
+    - name: Setup gcloud CLI
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        service_account_key: ${{ secrets.GCLOUD_AUTH }}
+
+    - name: Configure gcloud CLI
+      run: |
+        gcloud --quiet auth configure-docker
+        gcloud --quiet config set project PROJECT_ID
+        gcloud --quiet config set compute/zone COMPUTE_ZONE
+    
+    - id: Deploy
+      name: Build and Deploy
+      run: |
+        gcloud builds submit --tag gcr.io/PROJECT_ID/SERVICE
+        gcloud beta run deploy SERVICE --image gcr.io/PROJECT_ID/SERVICE --platform managed

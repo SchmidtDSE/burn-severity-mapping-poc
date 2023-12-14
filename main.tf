@@ -6,7 +6,7 @@ terraform {
     }
     google = {
       source  = "hashicorp/google"
-      version = "~> 3.0"
+      version = "5.9.0"
     }
   }
 }
@@ -26,7 +26,6 @@ provider "google" {
 
 # First the server itself
 resource "aws_transfer_server" "tf-sftp-burn-severity" {
-  name = "tf-sftp-burn-severity"
   identity_provider_type = "SERVICE_MANAGED"
   protocols = ["SFTP"]
   domain = "S3"
@@ -45,7 +44,25 @@ resource "aws_transfer_server" "tf-sftp-burn-severity" {
 #   body      = file("<PUBLIC_KEY_FILE_PATH>")
 # }
 
+resource "google_iam_workload_identity_pool" "pool" {
+  workload_identity_pool_id = "github"
+  display_name = "Github Actions Pool"
+  description  = "Workload identity pool for GitHub actions"
+}
 
+resource "google_iam_workload_identity_pool_provider" "oidc" {
+  workload_identity_pool_provider_id = "oidc-provider"
+  workload_identity_pool_id          = google_iam_workload_identity_pool.pool.workload_identity_pool_id
+  oidc {
+    issuer_uri = "https://token.actions.githubusercontent.com"
+  }
+  attribute_mapping = {
+    "google.subject"        = "assertion.sub"
+    "attribute.actor"       = "assertion.actor"
+    "attribute.repository"  = "assertion.repository"
+  }
+  display_name = "GitHub OIDC Provider"
+}
 
 # Create a Cloud Run service
 resource "google_cloud_run_service" "tf-rest-burn-severity" {
@@ -65,6 +82,8 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
     latest_revision = true
   }
 }
+
+
 
 # resource "google_cloudbuild_trigger" "default" {
 #   name = "burn-prod-trigger"
