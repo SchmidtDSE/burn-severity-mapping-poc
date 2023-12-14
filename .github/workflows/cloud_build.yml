@@ -1,6 +1,8 @@
-name: Push and Deploy
-on: [push]
-
+name: Push and Deploy to Cloud Run
+on: 
+  push:
+    branches:
+      - dev
 
 jobs:
   setup-build-deploy:
@@ -10,20 +12,15 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@master
-      
-    - name: Setup gcloud CLI
-      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+
+    - name: Setup Workload Identity Federation
+      uses: google-github-actions/auth@v2
       with:
+        workload_identity_provider: 'projects/natl-park-service/locations/global/workloadIdentityPools/github/providers/oidc-provider' # Update with your provider
         service_account_key: ${{ secrets.GCLOUD_AUTH }}
 
-    - name: Configure gcloud CLI
-      run: |
-        gcloud --quiet auth configure-docker
-        gcloud --quiet config set project PROJECT_ID
-        gcloud --quiet config set compute/zone COMPUTE_ZONE
-    
     - id: Deploy
       name: Build and Deploy
       run: |
-        gcloud builds submit --tag gcr.io/PROJECT_ID/SERVICE
-        gcloud beta run deploy SERVICE --image gcr.io/PROJECT_ID/SERVICE --platform managed
+        gcloud builds submit --tag gcr.io/$PROJECT_ID/$SERVICE
+        gcloud beta run deploy $SERVICE --image gcr.io/$PROJECT_ID/$SERVICE --platform managed

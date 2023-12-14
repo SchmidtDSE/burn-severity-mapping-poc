@@ -44,25 +44,6 @@ resource "aws_transfer_server" "tf-sftp-burn-severity" {
 #   body      = file("<PUBLIC_KEY_FILE_PATH>")
 # }
 
-resource "google_iam_workload_identity_pool" "pool" {
-  workload_identity_pool_id = "github"
-  display_name = "Github Actions Pool"
-  description  = "Workload identity pool for GitHub actions"
-}
-
-resource "google_iam_workload_identity_pool_provider" "oidc" {
-  workload_identity_pool_provider_id = "oidc-provider"
-  workload_identity_pool_id          = google_iam_workload_identity_pool.pool.workload_identity_pool_id
-  oidc {
-    issuer_uri = "https://token.actions.githubusercontent.com"
-  }
-  attribute_mapping = {
-    "google.subject"        = "assertion.sub"
-    "attribute.actor"       = "assertion.actor"
-    "attribute.repository"  = "assertion.repository"
-  }
-  display_name = "GitHub OIDC Provider"
-}
 
 # Create a Cloud Run service
 resource "google_cloud_run_service" "tf-rest-burn-severity" {
@@ -83,8 +64,49 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
   }
 }
 
+# Create the IAM workload identity pool and provider to auth GitHub Actions
+resource "google_iam_workload_identity_pool" "pool" {
+  workload_identity_pool_id = "github"
+  display_name = "Github Actions Pool"
+  description  = "Workload identity pool for GitHub actions"
+}
+
+resource "google_iam_workload_identity_pool_provider" "oidc" {
+  workload_identity_pool_provider_id = "oidc-provider"
+  workload_identity_pool_id          = google_iam_workload_identity_pool.pool.workload_identity_pool_id
+  oidc {
+    issuer_uri = "https://token.actions.githubusercontent.com"
+  }
+  attribute_mapping = {
+    "google.subject"        = "assertion.sub"
+    "attribute.actor"       = "assertion.actor"
+    "attribute.repository"  = "assertion.repository"
+  }
+  display_name = "GitHub OIDC Provider"
+}
 
 
+# Create the IAM service account for GitHub Actions
+resource "google_service_account" "default" {
+  account_id  = "github-actions-service-account"
+  display_name = "Github Actions Service Account"
+  description = "This service account is used by GitHub Actions"
+  project     = "natl-park-service"
+}
+
+resource "google_project_iam_member" "run_admin" {
+  project  = "natl-park-service"
+  role     = "roles/run.admin" 
+  member   = "serviceAccount:${google_service_account.default.email}"
+}
+
+resource "google_project_iam_member" "cloudbuild_builder" {
+  project  = "natl-park-service"
+  role     = "roles/cloudbuild.builds.builder"
+  member   = "serviceAccount:${google_service_account.default.email}"
+}
+
+## We will use GitHub Actions to build and deploy the container image, so we actually don't need this
 # resource "google_cloudbuild_trigger" "default" {
 #   name = "burn-prod-trigger"
 #   github {
