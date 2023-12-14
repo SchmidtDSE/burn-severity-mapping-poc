@@ -20,8 +20,7 @@ jobs:
         project_id: 'natl-park-service'
         service_account: 'github-actions-service-account@natl-park-service.iam.gserviceaccount.com'
 
-    - id: Build and Deploy
-      name: Build and Deploy
+    - name: Build and Deploy
       run: |
         gcloud builds submit --tag gcr.io/$PROJECT_ID/$SERVICE
         gcloud beta run deploy $SERVICE --image gcr.io/$PROJECT_ID/$SERVICE --platform managed
