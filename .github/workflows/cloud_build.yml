@@ -16,12 +16,11 @@ jobs:
     - name: Setup Workload Identity Federation
       uses: google-github-actions/auth@v2
       with:
-        workload_identity_provider: 'projects/natl-park-service/locations/global/workloadIdentityPools/github/providers/oidc-provider'
-        project_id: 'natl-park-service'
-        service_account: 'github-actions-service-account@natl-park-service.iam.gserviceaccount.com'
+        workload_identity_provider: 'projects/dse-nps/locations/global/workloadIdentityPools/github/providers/oidc-provider'
+        project_id: 'dse-nps'
+        service_account: 'github-actions-service-account@dse-nps.iam.gserviceaccount.com'
 
     - id: Deploy
       name: Build and Deploy
       run: |
-        gcloud builds submit --tag gcr.io/$PROJECT_ID/$SERVICE
-        gcloud beta run deploy $SERVICE --image gcr.io/$PROJECT_ID/$SERVICE --platform managed
+        gcloud builds describe '123-456-789'

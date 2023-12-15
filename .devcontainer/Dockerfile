@@ -14,12 +14,13 @@ RUN apt-get update && apt-get install -y \
 # Copy repo into container 
 COPY . .
 
-# # Get AWS CLI V2
+# Get AWS CLI V2
 RUN prebuild/setup_aws.sh
 
-# Get gcloud SDK
+# Get gcloud SDK, force GCP to use IPV4, bc IPV6 issue w/ Sonic 
 RUN prebuild/setup_gcloud.sh
 ENV PATH $PATH:/google-cloud-sdk/bin
+ENV GRPC_GO_FORCE_USE_IPV4="true"
 
 # Get OpenTofu
 RUN prebuild/setup_opentofu.sh

@@ -18,8 +18,8 @@ provider "aws" {
 }
 
 provider "google" {
-  project     = "natl-park-service"
-  region      = "us-central1-a"
+  project     = "dse-nps"
+  region      = "us-central1"
 }
 
 ### AWS Transfer - SFTP Server
@@ -48,7 +48,7 @@ resource "aws_transfer_server" "tf-sftp-burn-severity" {
 # Create a Cloud Run service
 resource "google_cloud_run_service" "tf-rest-burn-severity" {
   name     = "tf-rest-burn-severity"
-  location = "us-central1-a"
+  location = "us-central1"
 
   template {
     spec {
@@ -91,19 +91,19 @@ resource "google_service_account" "default" {
   account_id  = "github-actions-service-account"
   display_name = "Github Actions Service Account"
   description = "This service account is used by GitHub Actions"
-  project     = "natl-park-service"
+  project     = "dse-nps"
 }
 
 
 # Give the service account permissions to deploy to Cloud Run, and to Cloud Build, and to the Workload Identity Pool
 resource "google_project_iam_member" "run_admin" {
-  project  = "natl-park-service"
+  project  = "dse-nps"
   role     = "roles/run.admin" 
   member   = "serviceAccount:${google_service_account.default.email}"
 }
 
 resource "google_project_iam_member" "cloudbuild_builder" {
-  project  = "natl-park-service"
+  project  = "dse-nps"
   role     = "roles/cloudbuild.builds.builder"
   member   = "serviceAccount:${google_service_account.default.email}"
 }
@@ -112,7 +112,7 @@ resource "google_service_account_iam_binding" "workload_identity_user" {
   service_account_id = google_service_account.default.name
   role = "roles/iam.workloadIdentityUser"
   members = [
-    "workloadIdentityPool:${google_iam_workload_identity_pool.pool.workload_identity_pool_id}.svc.id.goog[${google_iam_workload_identity_pool_provider.oidc.workload_identity_pool_provider_id}/${google_service_account.default.email}]"
+    "principalSet:${google_iam_workload_identity_pool.pool.workload_identity_pool_id}.svc.id.goog[${google_iam_workload_identity_pool_provider.oidc.workload_identity_pool_provider_id}/${google_service_account.default.email}]"
   ]
 }
 
