@@ -1,0 +1,18 @@
+name: burn-severity-prod
+
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python ==3.10
+  - rioxarray
+  - stackstac
+  - gdal
+  - numpy
+  - geopandas
+  - rasterio
+  - ipython
+  - pystac-client
+  - planetary-computer
+  - flask
+  - pysftp

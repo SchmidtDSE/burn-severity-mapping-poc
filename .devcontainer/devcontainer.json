@@ -1,6 +1,6 @@
 {
     "name": "Burn Severity - Dev Container",
-    "dockerFile": "Dockerfile",
+    "dockerFile": "dev.Dockerfile",
     "mounts": ["source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind"],
     "customizations": { 
         "vscode": {
