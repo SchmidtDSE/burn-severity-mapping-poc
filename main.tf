@@ -112,7 +112,7 @@ resource "google_service_account_iam_binding" "workload_identity_user" {
   service_account_id = google_service_account.default.name
   role = "roles/iam.workloadIdentityUser"
   members = [
-    "principalSet:${google_iam_workload_identity_pool.pool.workload_identity_pool_id}.svc.id.goog[${google_iam_workload_identity_pool_provider.oidc.workload_identity_pool_provider_id}/${google_service_account.default.email}]"
+    "serviceAccount:${google_service_account.default.email}",
   ]
 }
 
