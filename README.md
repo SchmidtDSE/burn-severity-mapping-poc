@@ -23,7 +23,7 @@ To account for the fact that JOTR and other arid parks exist have relatively lit
 
 Inputs:
 - High frequency, low spatial resolution, highest spectral resolution remote sensing data
-	- `Sentinel-2`, `LANDSAT`, `MODIS`
+	- `Sentinel-2`, `LANDSAT`
 - Low frequency, higher spatial resolution, low spectral resolution 
 	- National Agricultural Imagery Program (`NAIP`)
 - One-off frequency, extremely high spatial resolution, variable spectral resolution
@@ -41,7 +41,7 @@ $$RdNBR = \frac{dNBR}{|(NBR_{prefire})^{0.5}|}$$
 
 $$ RBR = \frac{dNBR}{NBR_{prefire} +1.001}$$
 
-Each of these metrics can be derived from satellite imagery, at various degrees of temporal and spatial resolution. The simplest approach would be to settle on one source (likely `Sentinel-2`, as it has the higher temporal resolution than `MODIS` and `LANDSAT`), and interpolate values between collection. However, a particular challenge identified in the case of immediate post-fire analysis is the potential occlusion of smoke - most approaches employ some manual approaches to find the best available pre-fire and post-fire images, which could lead to (1) some vegetative cover/biomass bias due phenology between image dates or (2) lag in analysis time in waiting for smoke-free imagery to be collected, since satellites return at best every 5 days. 
+Each of these metrics can be derived from satellite imagery, at various degrees of temporal and spatial resolution. The simplest approach would be to settle on one source (likely `Sentinel-2`, as it has the higher temporal resolution than `LANDSAT`), and interpolate values between collection. However, a particular challenge identified in the case of immediate post-fire analysis is the potential occlusion of smoke - most approaches employ some manual approaches to find the best available pre-fire and post-fire images, which could lead to (1) some vegetative cover/biomass bias due phenology between image dates or (2) lag in analysis time in waiting for smoke-free imagery to be collected, since satellites return at best every 5 days. 
 
 If we discover that relying on a imaging source is insufficient, either due to a lack of timeliness in imaging after fire (due to smoke or cloud occlusion) or simply due to issues with ground-truth accuracy (described in step 2), we may investigate a method which incorporates multiple imagery sources, as illustrated with `ESTARFM` fusion model employed in *Liu et. al. 2022*. 
 ### Step 2 - Validate Using NPS, BLM, USGS Ground-Truth
