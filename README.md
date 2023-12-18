@@ -32,6 +32,7 @@ Inputs:
 In the context of fire severity modelling, absolute metrics, such as the *Normalized Burn Ratio* ($NBR$), tend to be more effective for comparison across high and low biomass areas, but tend to be biased low in low biomass areas since the absolute changes ($dNBR$) are small in magnitude according to lack of adjustment. 
 
 $$ NBR = \frac{NIR - SWIR}{NIR + SWIR} $$
+
 $$ dNBR = NBR_{prefire} - NBR_{postfire}$$
 
 To address these issues, some commonly accepted adjustments include the *Relative Difference in Normalized Burn Ratio* ($RdNBR$), as well as the *Relativized Burn Ratio* ($RBR$),  both of which attempt to adjust the relative change by the reflectance of the area pre-fire, such that fire severity is scaled to local reflectance in each given pixel.
@@ -39,6 +40,7 @@ To address these issues, some commonly accepted adjustments include the *Relativ
 $$RdNBR = \frac{dNBR}{|(NBR_{prefire})^{0.5}|}$$
 
 $$ RBR = \frac{dNBR}{NBR_{prefire} +1.001}$$
+
 Each of these metrics can be derived from satellite imagery, at various degrees of temporal and spatial resolution. The simplest approach would be to settle on one source (likely `Sentinel-2`, as it has the higher temporal resolution than `MODIS` and `LANDSAT`), and interpolate values between collection. However, a particular challenge identified in the case of immediate post-fire analysis is the potential occlusion of smoke - most approaches employ some manual approaches to find the best available pre-fire and post-fire images, which could lead to (1) some vegetative cover/biomass bias due phenology between image dates or (2) lag in analysis time in waiting for smoke-free imagery to be collected, since satellites return at best every 5 days. 
 
 If we discover that relying on a imaging source is insufficient, either due to a lack of timeliness in imaging after fire (due to smoke or cloud occlusion) or simply due to issues with ground-truth accuracy (described in step 2), we may investigate a method which incorporates multiple imagery sources, as illustrated with `ESTARFM` fusion model employed in *Liu et. al. 2022*. 
