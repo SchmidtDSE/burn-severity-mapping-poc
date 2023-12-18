@@ -51,7 +51,7 @@ class Sentinel2Client:
             geojson_bbox[3].round(decimals=2) + buffer
         ]
 
-        if barc_classifications:
+        if barc_classifications is not None:
             self.barc_classifications = self.ingest_barc_classifications(barc_classifications)
 
         self.derived_classifications = None
