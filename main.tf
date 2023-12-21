@@ -22,6 +22,9 @@ provider "google" {
   region      = "us-central1"
 }
 
+# Get google project info
+data "google_project" "project" {}
+
 ### AWS Transfer - SFTP Server
 
 # First the server itself
@@ -74,17 +77,20 @@ resource "google_iam_workload_identity_pool" "pool" {
 resource "google_iam_workload_identity_pool_provider" "oidc" {
   workload_identity_pool_provider_id = "oidc-provider"
   workload_identity_pool_id          = google_iam_workload_identity_pool.pool.workload_identity_pool_id
-  oidc {
-    issuer_uri = "https://token.actions.githubusercontent.com"
-  }
-  attribute_mapping = {
-    "google.subject"        = "assertion.sub"
-    "attribute.actor"       = "assertion.actor"
-    "attribute.repository"  = "assertion.repository"
-  }
-  display_name = "GitHub OIDC Provider"
-}
 
+  display_name = "GitHub OIDC Provider"
+
+  oidc {
+    issuer_uri        = "https://token.actions.githubusercontent.com"
+    allowed_audiences = [google_service_account.default.email]
+  }
+
+  attribute_mapping = {
+    "google.subject" = "assertion.sub"
+    "attribute.actor" = "assertion.actor"
+    "attribute.repository" = "assertion.repository"
+  }
+}
 
 # Create the IAM service account for GitHub Actions
 resource "google_service_account" "default" {
@@ -110,9 +116,9 @@ resource "google_project_iam_member" "cloudbuild_builder" {
 
 resource "google_service_account_iam_binding" "workload_identity_user" {
   service_account_id = google_service_account.default.name
-  role = "roles/iam.workloadIdentityUser"
-  members = [
-    "serviceAccount:${google_service_account.default.email}",
+  role               = "roles/iam.workloadIdentityUser"
+  members            = [
+    "principal://iam.googleapis.com/projects/${google_project.project.number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.pool.workload_identity_pool_id}/subject/${SUBJECT}"
   ]
 }
 
