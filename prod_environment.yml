@@ -17,4 +17,4 @@ dependencies:
   - fastapi
   - paramiko
   - uvicorn
-  - titiler
+  - titiler.core
