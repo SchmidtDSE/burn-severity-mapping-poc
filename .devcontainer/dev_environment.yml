@@ -22,5 +22,5 @@ dependencies:
   - pystac-client
   - boto3
   - planetary-computer
-  - flask
+  - fastapi
   - pysftp
