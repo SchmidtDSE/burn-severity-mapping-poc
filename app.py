@@ -1,16 +1,23 @@
 # from flask import Flask, request
 from fastapi import FastAPI
 from src.lib.query_sentinel import Sentinel2Client
+import uvicorn
+from titiler.core.factory import TilerFactory
+from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 # app = Flask(__name__)
-app = FastAPI(__name__)
+app = FastAPI()
+cog = TilerFactory()
+app.include_router(cog.router)
+add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
-@app.route('/')
+
+@app.get('/')
 def index():
     return 'Hello World! We have some burn data in here.', 200
 
 # create a POST endpoint for running a burn query with an input geojson
-@app.route('/analyze-burn', methods=['POST'])
+@app.post('/analyze-burn')
 def analyze_burn():
 
     # get the geojson from the request body
@@ -46,6 +53,8 @@ def analyze_burn():
     except Exception as e:
 
         return f"Error: {e}", 400
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5050)

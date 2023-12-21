@@ -15,4 +15,6 @@ dependencies:
   - pystac-client
   - planetary-computer
   - fastapi
-  - pysftp
+  - paramiko
+  - uvicorn
+  - titiler
