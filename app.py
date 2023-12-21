@@ -1,7 +1,9 @@
-from flask import Flask, request
+# from flask import Flask, request
+from fastapi import FastAPI
 from src.lib.query_sentinel import Sentinel2Client
 
-app = Flask(__name__)
+# app = Flask(__name__)
+app = FastAPI(__name__)
 
 @app.route('/')
 def index():
