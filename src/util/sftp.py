@@ -118,9 +118,8 @@ class SFTPClient:
     def get_available_cogs(self):
         """Lists all available COGs on the SFTP server"""
         available_cogs = {}
-        for path in self.connection.listdir():
-            if path.endswith(".tif"):
-                fire_name = path.split("/")[-2]
-                available_cogs[fire_name] = path
+        for top_level_folder in self.connection.listdir():
+            s3_file_path = f"{top_level_folder}/metrics.tif"
+            available_cogs[top_level_folder] = s3_file_path
 
         return available_cogs

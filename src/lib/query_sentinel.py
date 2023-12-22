@@ -11,7 +11,6 @@ import tempfile
 import os
 from .burn_severity import calc_burn_metrics, reclassify
 from src.util.sftp import SFTPClient
-from src.util.aws_secrets import get_ssh_secret
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 

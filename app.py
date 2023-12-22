@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from titiler.core.dependencies import TileParams
 from src.lib.query_sentinel import Sentinel2Client
 from src.util.sftp import SFTPClient
-from src.util.aws_secrets import get_ssh_secret
+from src.util.aws_secrets import get_ssh_secret, get_signed_s3_url
 from titiler.core import factory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
@@ -18,6 +18,7 @@ add_exception_handlers(app, DEFAULT_STATUS_CODES)
 # create an SFTP client instance
 SFTP_HOSTNAME = "s-90987336df8a4faca.server.transfer.us-east-2.amazonaws.com"
 SFTP_USERNAME = "sftp-admin"
+S3_BUCKET_NAME = "burn-severity"
 sftp_client = SFTPClient(SFTP_HOSTNAME, SFTP_USERNAME, get_ssh_secret())
 
 
@@ -66,16 +67,18 @@ def analyze_burn(body: AnaylzeBurnPOSTBody):
         return f"Error: {e}", 400
 
 
-@app.get("/polygon/{fire_event_name}/tiles/{z}/{x}/{y}")
+@app.get("/{fire_event_name}/tiles/{z}/{x}/{y}")
 def read_polygon(fire_event_name: str, z: int, x: int, y: int):
     try:
         # Fetch the COG file URL corresponding to the given polygon
-        cog_url = sftp_client.available_cogs[fire_event_name]
+        cog_s3_url = sftp_client.available_cogs[fire_event_name]
+        cog_signed_url = get_signed_s3_url(cog_s3_url, bucket_name=S3_BUCKET_NAME)
+
     except KeyError:
         raise HTTPException(status_code=404, detail="Fire event not found")
 
     # Pass all request parameters along to the COG Tiler
-    return cog.tile(cog_url, z, x, y)
+    return cog.tile(cog_signed_url, z, x, y)
 
 
 if __name__ == "__main__":
