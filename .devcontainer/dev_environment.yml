@@ -27,3 +27,4 @@ dependencies:
   - paramiko
   - pip:
     - titiler.core
+    - titiler.application
