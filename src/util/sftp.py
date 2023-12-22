@@ -2,6 +2,8 @@ import paramiko
 from urllib.parse import urlparse
 import io
 import os
+import tempfile
+
 
 class SFTPClient:
     def __init__(self, hostname, username, private_key, port=22):
@@ -16,6 +18,9 @@ class SFTPClient:
         self.private_key = paramiko.RSAKey.from_private_key(private_key_file)
 
         print(f"Initialized SFTPClient for {self.hostname} as {self.username}")
+        self.connect()
+        self.available_cogs = self.get_available_cogs()
+        self.disconnect()
 
     def connect(self):
         """Connects to the sftp server and returns the sftp connection object"""
@@ -29,7 +34,7 @@ class SFTPClient:
                 self.hostname,
                 port=self.port,
                 username=self.username,
-                pkey=self.private_key
+                pkey=self.private_key,
             )
 
             # Create SFTP client from SSH client
@@ -97,3 +102,25 @@ class SFTPClient:
 
         except Exception as err:
             raise Exception(err)
+
+    def upload_cog(self, metrics_stack, fire_event_name):
+        # Save our stack to a COG, in a tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cog_path = os.path.join(tmpdir, "tmp_cog.tif")
+            metrics_stack.rio.to_raster(cog_path)
+
+            # Upload the metrics to our SFTP server
+            self.upload(
+                source_local_path=cog_path,
+                remote_path=f"{fire_event_name}/metrics.tif".format(fire_event_name),
+            )
+
+    def get_available_cogs(self):
+        """Lists all available COGs on the SFTP server"""
+        available_cogs = {}
+        for path in self.connection.listdir():
+            if path.endswith(".tif"):
+                fire_name = path.split("/")[-2]
+                available_cogs[fire_name] = path
+
+        return available_cogs
