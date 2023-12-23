@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  dev_container:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ${HOME}/.aws:/root/.aws
+    ports:
+      - 5050:5050
+
+  titiler:
+    image: ghcr.io/developmentseed/titiler:latest
+    ports:
+      - 8000:8000
