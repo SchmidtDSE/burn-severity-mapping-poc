@@ -1,23 +1,14 @@
 # from flask import Flask, request
 from fastapi import FastAPI, Depends, HTTPException
-from titiler.core.dependencies import TileParams
 from src.lib.query_sentinel import Sentinel2Client
 from src.util.sftp import SFTPClient
 from src.util.aws_secrets import get_ssh_secret, get_signed_s3_url
-from titiler.core import factory
-from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 import uvicorn
 
 from pydantic import BaseModel
 
 # app = Flask(__name__)
 app = FastAPI()
-cog = factory.TilerFactory()
-# app.include_router(cog.router, prefix="/cog", tags=["Cloud Optimized GeoTIFF"])
-# add_exception_handlers(app, DEFAULT_STATUS_CODES)
-
-app.include_router(cog.router)
-add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
 # create an SFTP client instance
 SFTP_HOSTNAME = "s-90987336df8a4faca.server.transfer.us-east-2.amazonaws.com"
@@ -60,7 +51,7 @@ def analyze_burn(body: AnaylzeBurnPOSTBody):
 
         # save the cog to the FTP server
         sftp_client.connect()
-        sftp_client.upload_cog(
+        sftp_client.upload_cogs(
             metrics_stack=geo_client.metrics_stack, fire_event_name=fire_event_name
         )
         sftp_client.disconnect()
