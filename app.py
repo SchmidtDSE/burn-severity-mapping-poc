@@ -1,11 +1,12 @@
-# from flask import Flask, request
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import HTMLResponse
+from pathlib import Path
+import uvicorn
+from pydantic import BaseModel
+
 from src.lib.query_sentinel import Sentinel2Client
 from src.util.sftp import SFTPClient
-from src.util.aws_secrets import get_ssh_secret, get_signed_s3_url
-import uvicorn
-
-from pydantic import BaseModel
+from src.util.aws_secrets import get_ssh_secret
 
 # app = Flask(__name__)
 app = FastAPI()
@@ -61,23 +62,10 @@ def analyze_burn(body: AnaylzeBurnPOSTBody):
     except Exception as e:
         return f"Error: {e}", 400
 
-
-# @app.get("/{fire_event_name}/tiles/{z}/{x}/{y}")
-# def read_polygon(fire_event_name: str, z: int, x: int, y: int):
-#     try:
-#         # Fetch the COG file URL corresponding to the given polygon
-#         cog_s3_url = sftp_client.available_cogs[fire_event_name]
-#         # cog_signed_url = get_signed_s3_url(cog_s3_url, bucket_name=S3_BUCKET_NAME)
-#         cog_https_url = (
-#             f"https://burn-severity.s3.us-east-2.amazonaws.com/public/{cog_s3_url}"
-#         )
-
-#     except KeyError:
-#         raise HTTPException(status_code=404, detail="Fire event not found")
-
-#     # Pass all request parameters along to the COG Tiler
-#     return cog.tile(cog_https_url, z, x, y)
-
+@app.get("/map/{fire_event_name}", response_class=HTMLResponse)
+def serve_map(fire_event_name: str):
+    html_content = Path("src/index.html").read_text()
+    return html_content
 
 if __name__ == "__main__":
     # app.run(debug=True, port=5050)
