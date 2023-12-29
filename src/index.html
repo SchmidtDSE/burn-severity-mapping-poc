@@ -34,7 +34,7 @@
         }).addTo(map);
 
         // Add COG layer
-        L.tileLayer('http://localhost:8000/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png?url=https://burn-severity.s3.us-east-2.amazonaws.com/public/geology/rbr.tif', {
+        L.tileLayer('http://localhost:8000/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png?url=https://burn-severity.s3.us-east-2.amazonaws.com/public/geology/rbr.tif?rescale=-.2,.2', {
             maxZoom: 20,
         }).addTo(map);
     </script>

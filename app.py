@@ -3,6 +3,8 @@ from fastapi.responses import HTMLResponse
 from pathlib import Path
 import uvicorn
 from pydantic import BaseModel
+from titiler.core.dependencies import TMSParams
+from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from src.lib.query_sentinel import Sentinel2Client
 from src.util.sftp import SFTPClient
@@ -10,13 +12,15 @@ from src.util.aws_secrets import get_ssh_secret
 
 # app = Flask(__name__)
 app = FastAPI()
+cog = TilerFactory()
+app.include_router(cog.router, tags=["Cloud Optimized GeoTIFF"])
+add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
 # create an SFTP client instance
 SFTP_HOSTNAME = "s-90987336df8a4faca.server.transfer.us-east-2.amazonaws.com"
 SFTP_USERNAME = "sftp-admin"
 S3_BUCKET_NAME = "burn-severity"
 sftp_client = SFTPClient(SFTP_HOSTNAME, SFTP_USERNAME, get_ssh_secret())
-
 
 @app.get("/")
 def index():
