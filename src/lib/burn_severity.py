@@ -91,7 +91,7 @@ def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
 
     return burn_stack
 
-def reclassify(array, thresholds):
+def classify_burn(array, thresholds):
     """
     This function reclassifies an array
     input:  array           xarray.DataArray    input array

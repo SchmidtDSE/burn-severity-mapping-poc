@@ -34,7 +34,7 @@
         }).addTo(map);
 
         // Add COG layer
-        L.tileLayer('http://localhost:8000/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png?url=https://burn-severity.s3.us-east-2.amazonaws.com/public/geology/rbr.tif?rescale=-.2,.2', {
+        L.tileLayer('http://localhost:5050/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png?url=https://burn-severity.s3.us-east-2.amazonaws.com/public/geology/dnbr.tif&nodata=0&algorithm=classify&algorithm_params={%22thresholds%22:{%220.045%22:100,%220.222%22:150,%220.8%22:200}}', {
             maxZoom: 20,
         }).addTo(map);
     </script>

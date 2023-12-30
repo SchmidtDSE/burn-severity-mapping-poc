@@ -9,7 +9,7 @@ import numpy as np
 import stackstac
 import tempfile
 import os
-from .burn_severity import calc_burn_metrics, reclassify
+from .burn_severity import calc_burn_metrics, classify_burn
 from src.util.sftp import SFTPClient
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
@@ -157,7 +157,7 @@ class Sentinel2Client:
         )
 
     def classify(self, thresholds, threshold_source, burn_metric="dnbr"):
-        new_classification = reclassify(
+        new_classification = classify_burn(
             self.metrics_stack.sel(burn_metric=burn_metric), thresholds=thresholds
         )
         new_classification = new_classification.expand_dims(dim="classification_source")
