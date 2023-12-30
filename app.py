@@ -3,16 +3,19 @@ from fastapi.responses import HTMLResponse
 from pathlib import Path
 import uvicorn
 from pydantic import BaseModel
+
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
+
 
 from src.lib.query_sentinel import Sentinel2Client
 from src.util.sftp import SFTPClient
 from src.util.aws_secrets import get_ssh_secret
+from src.lib.titiler_algorithms import algorithms
 
 # app = Flask(__name__)
 app = FastAPI()
-cog = TilerFactory()
+cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix='/cog', tags=["Cloud Optimized GeoTIFF"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
