@@ -22,7 +22,7 @@ dependencies:
   - pystac-client
   - boto3
   - planetary-computer
-  - fastapi <.108.0 #to avoid AssertionError bug w/ titiler
+  - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - uvicorn
   - paramiko
   - pip:
