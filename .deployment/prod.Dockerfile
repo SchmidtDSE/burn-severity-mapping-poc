@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 # Copy necessary files into container
 COPY src/ /src/
 COPY app.py /
-COPY prod_environment.yml /
+COPY .deployment/prod_environment.yml /
 
 # Create a new conda environment from the environment.yml file 
 RUN mamba env create -f prod_environment.yml
