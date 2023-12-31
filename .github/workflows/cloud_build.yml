@@ -24,6 +24,7 @@ jobs:
         project_id: 'dse-nps'
         token_format: 'access_token'
         access_token_lifetime: 300
+        service_account: 'github-actions-service-account@dse-nps.iam.gserviceaccount.com'
 
     - name: Build and Deploy
       run: |
