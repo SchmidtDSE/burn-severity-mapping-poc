@@ -12,19 +12,6 @@ jobs:
       contents: 'read'
       id-token: 'write'
 
-    steps:
-    - name: Checkout actions-oidc-debugger
-      uses: actions/checkout@v3
-      with:
-        repository: github/actions-oidc-debugger
-        ref: main
-        token: ${{ secrets.GITHUB_TOKEN }}
-        path: ./.github/actions/actions-oidc-debugger
-    - name: Debug OIDC Claims
-      uses: ./.github/actions/actions-oidc-debugger
-      with:
-        audience: 'projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/YOUR_PROJECT_ID/providers/YOUR_WIF_PROVIDER_POOL_NAME'
-  
     - name: Checkout
       uses: 'actions/checkout@v4'
 
@@ -33,8 +20,8 @@ jobs:
       with:
         workload_identity_provider: 'projects/dse-nps/locations/global/workloadIdentityPools/github/providers/oidc-provider'
         project_id: 'dse-nps'
-        audience: 'github-actions-service-account@dse-nps.iam.gserviceaccount.com'
-        service_account: 'github-actions-service-account@dse-nps.iam.gserviceaccount.com'
+        token_format: 'access_token'
+        access_token_lifetime: 300
 
     - name: Build and Deploy
       run: |
