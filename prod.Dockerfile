@@ -24,4 +24,4 @@ SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
 EXPOSE 5050
 
 # Start the REST API w/ the new environment:
-ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "python", "main.py"]
+ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "uvicorn", "app:app", "--host=0.0.0.0", "--port=5050"]
