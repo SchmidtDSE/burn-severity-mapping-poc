@@ -119,6 +119,12 @@ resource "google_project_iam_member" "SA_get_access_token" {
   member   = "serviceAccount:${google_service_account.default.email}"
 }
 
+resource "google_project_iam_member" "run_service_agent" {
+  project  = "dse-nps"
+  role    = "roles/run.serviceAgent"
+  member   = "serviceAccount:${google_service_account.default.email}"
+}
+
 resource "google_service_account_iam_binding" "workload_identity_user" {
   service_account_id = google_service_account.default.name
   role               = "roles/iam.workloadIdentityUser"

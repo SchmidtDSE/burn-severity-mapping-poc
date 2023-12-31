@@ -1,6 +1,6 @@
 data/*
 */.DS_Store
-.terraform*
+.deployment/.terraform*
 seed_*
 __pycache__/
 *.pyc
