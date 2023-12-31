@@ -14,7 +14,7 @@ dependencies:
   - ipython
   - pystac-client
   - planetary-computer
-  - fastapi
+  - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - paramiko
   - uvicorn
   - pip:
