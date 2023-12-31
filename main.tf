@@ -113,6 +113,12 @@ resource "google_project_iam_member" "cloudbuild_builder" {
   member   = "serviceAccount:${google_service_account.default.email}"
 }
 
+resource "google_project_iam_member" "SA_get_access_token" {
+  project  = "dse-nps"
+  role    = "roles/iam.serviceAccountUser"
+  member   = "serviceAccount:${google_service_account.default.email}"
+}
+
 resource "google_service_account_iam_binding" "workload_identity_user" {
   service_account_id = google_service_account.default.name
   role               = "roles/iam.workloadIdentityUser"
