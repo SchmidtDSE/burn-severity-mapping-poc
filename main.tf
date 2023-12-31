@@ -82,7 +82,7 @@ resource "google_iam_workload_identity_pool_provider" "oidc" {
 
   oidc {
     issuer_uri        = "https://token.actions.githubusercontent.com"
-    allowed_audiences = [google_service_account.default.email]
+    allowed_audiences = ["https://github.com/SchmidtDSE"]
   }
 
   attribute_mapping = {
