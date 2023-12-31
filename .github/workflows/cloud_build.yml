@@ -2,7 +2,7 @@ name: Push and Deploy to Cloud Run
 on: 
   push:
     branches:
-      - not_a_branch
+      - dev
 
 jobs:
   setup-build-deploy:

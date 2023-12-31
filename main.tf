@@ -118,19 +118,6 @@ resource "google_service_account_iam_binding" "workload_identity_user" {
   service_account_id = google_service_account.default.name
   role               = "roles/iam.workloadIdentityUser"
   members            = [
-    "principal://iam.googleapis.com/projects/${google_project.project.number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.pool.workload_identity_pool_id}/subject/${SUBJECT}"
+    "serviceAccount:${google_service_account.default.email}"
   ]
 }
-
-## We will use GitHub Actions to build and deploy the container image, so we actually don't need this
-# resource "google_cloudbuild_trigger" "default" {
-#   name = "burn-prod-trigger"
-#   github {
-#     owner = "SchmidtDSE"
-#     name  = "burn-severity-mapping-poc"
-#     push {
-#       branch = "prod"
-#     }
-#   }
-#   filename = "cloudbuild.yaml"
-# }
