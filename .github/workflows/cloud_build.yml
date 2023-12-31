@@ -21,8 +21,8 @@ jobs:
       with:
         workload_identity_provider: 'projects/dse-nps/locations/global/workloadIdentityPools/github/providers/oidc-provider'
         project_id: 'dse-nps'
-        audience: 'https://iam.googleapis.com/projects/113009620257/locations/global/workloadIdentityPools/github/providers/oidc-provider'
-        # service_account: 'github-actions-service-account@dse-nps.iam.gserviceaccount.com'
+        audience: 'https://iam.googleapis.com/projects/dse-nps/locations/global/workloadIdentityPools/github/providers/oidc-provider'
+        service_account: 'github-actions-service-account@dse-nps.iam.gserviceaccount.com'
 
     - name: Build and Deploy
       run: |
