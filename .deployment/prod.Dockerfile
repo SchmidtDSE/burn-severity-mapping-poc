@@ -22,8 +22,8 @@ RUN mamba env create -f prod_environment.yml
 # Make 'RUN' use the new environment:
 SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
 
-# Expose port 5050 for the REST API
-EXPOSE 5050
+# Expose port 8080 for the REST API
+EXPOSE 8080
 
 # Start the REST API w/ the new environment:
-ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "uvicorn", "app:app", "--host=0.0.0.0", "--port=5050"]
+ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "uvicorn", "app:app", "--host=0.0.0.0", "--port=8080"]
