@@ -26,5 +26,5 @@ jobs:
 
     - name: Build and Deploy
       run: |
-        gcloud builds submit --tag gcr.io/113009620257/burn-backend
-        gcloud beta run deploy burn-backend --image gcr.io/113009620257/burn-backend --platform managed
+        gcloud builds submit --tag us-central1-docker.pkg.dev/dse-nps/burn-severity-mapping-poc/burn-backend
+        gcloud beta run deploy burn-backend --image us-central1-docker.pkg.dev/dse-nps/burn-severity-mapping-poc/burn-backend --platform managed

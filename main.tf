@@ -126,3 +126,10 @@ resource "google_service_account_iam_binding" "workload_identity_user" {
     "principalSet://iam.googleapis.com/projects/${data.google_project.project.number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.pool.workload_identity_pool_id}/attribute.repository/SchmidtDSE/burn-severity-mapping-poc"
   ]
 }
+
+# Create an Artifact Registry repo for the container image
+resource "google_artifact_registry_repository" "burn-backend" {
+  repository_id = "burn-backend"
+  format        = "DOCKER"
+  location      = "us-central1"
+}
