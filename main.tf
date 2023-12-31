@@ -115,7 +115,7 @@ resource "google_project_iam_member" "cloudbuild_builder" {
 
 resource "google_project_iam_member" "SA_get_access_token" {
   project  = "dse-nps"
-  role    = "roles/iam.serviceAccountUser"
+  role    = "roles/iam.serviceAccountTokenCreator"
   member   = "serviceAccount:${google_service_account.default.email}"
 }
 
