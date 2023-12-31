@@ -21,7 +21,7 @@ jobs:
       with:
         workload_identity_provider: 'projects/dse-nps/locations/global/workloadIdentityPools/github/providers/oidc-provider'
         project_id: 'dse-nps'
-        audience: 'sigstore'
+        audience: 'github-actions-service-account@dse-nps.iam.gserviceaccount.com'
         service_account: 'github-actions-service-account@dse-nps.iam.gserviceaccount.com'
 
     - name: Build and Deploy
