@@ -11,11 +11,13 @@ RUN apt-get update && apt-get install -y \
     ssh \
     --no-install-recommends && rm -rf /var/lib/apt/lists/* 
 
-# Copy repo into 
-COPY . .
+# Copy necessary files into container
+COPY src/ /src/
+COPY app.py /
+COPY prod_environment.yml /
 
 # Create a new conda environment from the environment.yml file 
-RUN mamba env create -f environment.yml
+RUN mamba env create -f prod_environment.yml
 
 # Make 'RUN' use the new environment:
 SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
