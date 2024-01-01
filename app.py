@@ -73,7 +73,3 @@ def analyze_burn(body: AnaylzeBurnPOSTBody):
 def serve_map(fire_event_name: str):
     html_content = Path("src/index.html").read_text()
     return html_content
-
-if __name__ == "__main__":
-    # app.run(debug=True, port=5050)
-    uvicorn.run(app=app, host="127.0.0.1", port=8080, log_level="debug")
