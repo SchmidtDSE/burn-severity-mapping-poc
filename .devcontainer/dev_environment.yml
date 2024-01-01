@@ -25,5 +25,6 @@ dependencies:
   - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - uvicorn
   - paramiko
+  - pip
   - pip:
     - titiler.core

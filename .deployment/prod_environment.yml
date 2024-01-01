@@ -12,10 +12,12 @@ dependencies:
   - geopandas
   - rasterio
   - ipython
+  - boto3
   - pystac-client
   - planetary-computer
   - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - paramiko
   - uvicorn
+  - pip
   - pip:
     - titiler.core
