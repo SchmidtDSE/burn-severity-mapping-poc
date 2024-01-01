@@ -76,4 +76,4 @@ def serve_map(fire_event_name: str):
 
 if __name__ == "__main__":
     # app.run(debug=True, port=5050)
-    uvicorn.run(app=app, host="127.0.0.1", port=5050, log_level="debug")
+    uvicorn.run(app=app, host="127.0.0.1", port=8080, log_level="debug")
