@@ -4,6 +4,7 @@ steps:
     - 'build'
     - '--tag=us-central1-docker.pkg.dev/dse-nps/burn-backend/prod'
     - '--file=.deployment/prod.Dockerfile'
+    - '--no-cache'
     - '.'
 
 options:

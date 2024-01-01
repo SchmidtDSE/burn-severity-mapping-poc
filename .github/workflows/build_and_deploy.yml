@@ -26,5 +26,5 @@ jobs:
 
     - name: Build and Deploy
       run: |
-        gcloud builds submit --config .deployment/cloudbuild.yml --no-cache
+        gcloud builds submit --config .deployment/cloudbuild.yml
         gcloud beta run deploy tf-rest-burn-severity --image us-central1-docker.pkg.dev/dse-nps/burn-backend/prod --platform managed --region us-central1
