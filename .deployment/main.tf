@@ -87,6 +87,10 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
       service_account_name = google_service_account.access_aws_secrets.email
       containers {
         image = "us-docker.pkg.dev/cloudrun/container/placeholder"
+        env {
+          name = "ENV"
+          value = "CLOUD"
+        }
       }
     }
   }

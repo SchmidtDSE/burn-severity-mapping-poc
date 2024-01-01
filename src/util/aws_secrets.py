@@ -1,18 +1,50 @@
+import os
 import boto3
 import json
+import google.auth
+import google.auth.transport.requests
 
 AWS_PROFILE = "UCB-FederatedAdmins-557418946771"
-
+IAM_ROLE_ARN = "arn:aws:iam::557418946771:role/aws_secrets_access_role"
+ROLE_SESSION_NAME = "burn"
 
 def get_ssh_secret():
     secret_name = "sftp-admin-private-key-pem"
     region_name = "us-east-2"
 
-    # Create a Secrets Manager client
-    session = boto3.session.Session(
-        profile_name=AWS_PROFILE,
-        region_name=region_name,
-    )
+    if os.getenv('ENV') == 'CLOUD':
+        # Obtain an OIDC token for the GCP service account
+        creds, _ = google.auth.default()
+        auth_request = google.auth.transport.requests.Request()
+        oidc_token = creds.fetch_id_token(auth_request)
+
+        # Assume the IAM role using the OIDC token
+        sts_client = boto3.client('sts')
+        response = sts_client.assume_role_with_web_identity(
+            RoleArn=IAM_ROLE_ARN,
+            RoleSessionName=ROLE_SESSION_NAME,
+            WebIdentityToken=oidc_token
+        )
+
+        # Use the temporary security credentials to access the SSH private key
+        aws_access_key_id = response['Credentials']['AccessKeyId']
+        aws_secret_access_key = response['Credentials']['SecretAccessKey']
+        aws_session_token = response['Credentials']['SessionToken']
+
+        # Create a Secrets Manager client
+        session = boto3.session.Session(
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+            region_name=region_name,
+        )
+    else:  # ENV=LOCAL
+        # Create a Secrets Manager client
+        session = boto3.session.Session(
+            profile_name=AWS_PROFILE,
+            region_name=region_name,
+        )
+
     client = session.client(
         service_name="secretsmanager",
         region_name=region_name,
@@ -27,23 +59,3 @@ def get_ssh_secret():
     ]
 
     return ssh_private_key
-
-
-def get_signed_s3_url(s3_file_path, bucket_name):
-    session = boto3.session.Session(
-        profile_name=AWS_PROFILE,
-        region_name="us-east-2",
-    )
-    s3_client = session.client(
-        service_name="s3",
-        region_name="us-east-2",
-    )
-    return s3_client.generate_presigned_url(
-        ClientMethod="get_object",
-        Params={"Bucket": bucket_name, "Key": s3_file_path},
-        ExpiresIn=604800,  # Set the expiration time to 1 week (maximum)
-    )
-
-
-if __name__ == "__main__":
-    print(get_ssh_secret())
