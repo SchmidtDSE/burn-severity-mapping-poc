@@ -34,18 +34,49 @@ resource "aws_transfer_server" "tf-sftp-burn-severity" {
   domain = "S3"
 }
 
-# # Then, keys for the public and admin users
-# resource "aws_transfer_ssh_key" "sftp_ssh_key_public" {
-#   server_id = aws_transfer_server.sftp_server.id
-#   user_name = "public"
-#   body      = file("<PUBLIC_KEY_FILE_PATH>")
-# }
+# Then, the user for the server
 
-# resource "aws_transfer_ssh_key" "sftp_ssh_key_private" {
-#   server_id = aws_transfer_server.sftp_server.id
-#   user_name = "admin"
-#   body      = file("<PUBLIC_KEY_FILE_PATH>")
-# }
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["transfer.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "admin" {
+  name               = "tf-sftp-user-iam-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+resource "aws_transfer_user" "tf-sftp-burn-severity" {
+  server_id = aws_transfer_server.tf-sftp-burn-severity.id
+  user_name = "admin"
+  role      = aws_iam_role.admin.arn
+  home_directory = "/public"
+}
+
+# Then, keys for the public and admin users - get from local env
+
+variable "ssh_key_public_admin" {
+  type = string
+}
+
+variable "ssh_key_private_admin" {
+  type = string
+}
+
+resource "aws_transfer_ssh_key" "sftp_ssh_key_public" {
+  depends_on = [aws_transfer_user.tf-sftp-burn-severity]
+  server_id = aws_transfer_server.tf-sftp-burn-severity.id
+  user_name = "admin"
+  body      = var.ssh_key_public_admin
+}
 
 # Set up STS to allow the GCP server to assume a role for AWS secrets
 data "aws_iam_policy_document" "assume_role_policy" {
@@ -90,6 +121,10 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
         env {
           name  = "ENV"
           value = "CLOUD"
+        }
+        env {
+          name  = "SFTP_SSH_KEY_PRIVATE"
+          value = var.ssh_key_private_admin
         }
       }
     }

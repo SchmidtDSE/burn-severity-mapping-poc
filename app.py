@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.responses import HTMLResponse
+import os
 # from pathlib import Path
 # import uvicorn
 # from pydantic import BaseModel
@@ -32,7 +33,8 @@ def index():
 @app.get("/test_aws")
 def test_aws():
     try:
-        aws_secret = get_ssh_secret()
+        # aws_secret = get_ssh_secret()
+        aws_secret = os.getenv('SFTP_SSH_KEY_PRIVATE')
         return f"Here's some secret: {aws_secret[0:10]}", 200
     except Exception as e:
         return f"Error: {e}", 400

@@ -16,8 +16,14 @@ def get_ssh_secret():
         # Obtain an OIDC token for the GCP service account
         creds, _ = google.auth.default()
         auth_request = google.auth.transport.requests.Request()
-        oidc_token = creds.fetch_id_token(auth_request)
 
+        if isinstance(creds, google.auth.credentials.Credentials):
+            creds = Credentials.from_signer(creds, 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app/')
+
+        creds.refresh(auth_request)
+
+        oidc_token = creds.id_tokenb64
+        
         # Assume the IAM role using the OIDC token
         sts_client = boto3.client('sts')
         response = sts_client.assume_role_with_web_identity(
