@@ -4,7 +4,6 @@ steps:
     - 'build'
     - '--tag=us-central1-docker.pkg.dev/dse-nps/burn-backend/prod:latest'
     - '--file=.deployment/prod.Dockerfile'
-    - '--region=us-central1'
     - '--no-cache'
     - '.'
 
