@@ -26,6 +26,6 @@ dependencies:
   - uvicorn
   - paramiko
   - pip
-  - google.auth
+  - google-auth
   - pip:
     - titiler.core
