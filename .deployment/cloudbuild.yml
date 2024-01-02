@@ -4,8 +4,14 @@ steps:
     - 'build'
     - '--tag=us-central1-docker.pkg.dev/dse-nps/burn-backend/prod:latest'
     - '--file=.deployment/prod.Dockerfile'
+    - '--region=us-central1'
     - '--no-cache'
     - '.'
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: 
+    - 'push'
+    - 'us-central1-docker.pkg.dev/dse-nps/burn-backend/prod:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
