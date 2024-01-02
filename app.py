@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 
 # from src.lib.query_sentinel import Sentinel2Client
 # from src.util.sftp import SFTPClient
-# from src.util.aws_secrets import get_ssh_secret
+from src.util.aws_secrets import get_ssh_secret
 # from src.lib.titiler_algorithms import algorithms
 
 # app = Flask(__name__)
