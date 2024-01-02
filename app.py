@@ -29,7 +29,7 @@ app = FastAPI()
 def index():
     return "Hello World! We have some burn data in here.", 200
 
-@app.get("test_aws")
+@app.get("/test_aws")
 def test_aws():
     aws_secret = get_ssh_secret()
     return f"Here's some secret: {aws_secret[0:10]}", 200
