@@ -2,7 +2,7 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: 
     - 'build'
-    - '--tag=us-central1-docker.pkg.dev/dse-nps/burn-backend/prod'
+    - '--tag=us-central1-docker.pkg.dev/dse-nps/burn-backend/prod:latest'
     - '--file=.deployment/prod.Dockerfile'
     - '--no-cache'
     - '.'
