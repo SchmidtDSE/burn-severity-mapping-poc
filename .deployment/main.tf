@@ -88,7 +88,7 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
       containers {
         image = "us-docker.pkg.dev/cloudrun/container/placeholder"
         env {
-          name = "ENV"
+          name  = "ENV"
           value = "CLOUD"
         }
       }
@@ -99,6 +99,14 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
     percent         = 100
     latest_revision = true
   }
+}
+
+# Allow unauthenticated invocations
+resource "google_cloud_run_service_iam_member" "public" {
+  service = google_cloud_run_service.tf-rest-burn-severity.name
+  location = google_cloud_run_service.tf-rest-burn-severity.location
+  role = "roles/run.invoker"
+  member = "allUsers"
 }
 
 # Create the IAM workload identity pool and provider to auth GitHub Actions
