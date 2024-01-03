@@ -45,7 +45,7 @@ resource "aws_transfer_server" "tf-sftp-burn-severity" {
   domain = "S3"
 }
 
-# Then, the user for the server
+# Then, the user for the server, allowing it access to Transfer Family
 
 data "aws_iam_policy_document" "assume_role" {
   statement {
@@ -61,10 +61,58 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "admin" {
-  name               = "tf-sftp-user-iam-role"
+  name               = "tf-sftp-admin-iam-role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
+# Then, allow it to actually access the S3 assets themselves
+# Define the policy
+
+data "aws_iam_policy_document" "s3_policy" {
+  statement {
+    sid    = "ReadWriteS3"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      "arn:aws:s3:::burn-severity",
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:GetObjectTagging",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:GetObjectVersion",
+      "s3:GetObjectVersionTagging",
+      "s3:GetObjectACL",
+      "s3:PutObjectACL",
+    ]
+    resources = [
+      "arn:aws:s3:::burn-severity/*",
+    ]
+  }
+}
+
+# Create the s3_policy
+resource "aws_iam_policy" "s3_admin_policy" {
+  name        = "s3_admin_policy"
+  description = "S3 policy for admin user"
+  policy      = data.aws_iam_policy_document.s3_policy.json
+}
+
+# Attach the policy to the role
+resource "aws_iam_role_policy_attachment" "s3_policy_attachment" {
+  role       = aws_iam_role.admin.name
+  policy_arn = aws_iam_policy.s3_admin_policy.arn
+}
+
+# Finally, create the user within Transfer Family
 resource "aws_transfer_user" "tf-sftp-burn-severity" {
   server_id = aws_transfer_server.tf-sftp-burn-severity.id
   user_name = "admin"

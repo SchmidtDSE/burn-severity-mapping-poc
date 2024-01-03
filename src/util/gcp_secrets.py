@@ -1,4 +1,5 @@
 from google.cloud import secretmanager
+import json
 
 def get_ssh_secret():
     # GCP project and secret details
@@ -15,6 +16,6 @@ def get_ssh_secret():
     response = client.access_secret_version(request={"name": name})
 
     # Parse the secret value as a string.
-    ssh_private_key = response.payload.data.decode("UTF-8")
+    ssh_private_key = json.loads(response.payload.data.decode("UTF-8"))['SSH_KEY_ADMIN_PRIVATE']
 
     return ssh_private_key.replace("\\n", "\n")

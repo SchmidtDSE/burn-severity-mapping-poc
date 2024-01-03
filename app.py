@@ -32,15 +32,6 @@ sftp_client = SFTPClient(SFTP_HOSTNAME, SFTP_USERNAME, SSH_SECRET)
 def index():
     return "Hello World! We have some burn data in here.", 200
 
-@app.get("/test_aws")
-def test_aws():
-    try:
-        # aws_secret = get_ssh_secret()
-        aws_secret = os.getenv('SFTP_SSH_KEY_PRIVATE')
-        return f"Here's some secret: {aws_secret[0:10]}", 200
-    except Exception as e:
-        return f"Error: {e}", 400
-
 # # create a POST endpoint for running a burn query with an input geojson, with its associated POST body class
 class AnaylzeBurnPOSTBody(BaseModel):
     geojson: dict
