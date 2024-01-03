@@ -72,16 +72,6 @@ resource "aws_transfer_user" "tf-sftp-burn-severity" {
   home_directory = "/public"
 }
 
-# Then, keys for the public and admin users - get from local env
-
-variable "ssh_key_public_admin" {
-  type = string
-}
-
-variable "ssh_key_private_admin" {
-  type = string
-}
-
 resource "aws_transfer_ssh_key" "sftp_ssh_key_public" {
   depends_on = [aws_transfer_user.tf-sftp-burn-severity]
   server_id = aws_transfer_server.tf-sftp-burn-severity.id
@@ -135,7 +125,7 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
         }
         env {
           name  = "SFTP_SSH_KEY_PRIVATE"
-          value = var.ssh_key_private_admin
+          value = local.ssh_pairs["SSH_KEY_ADMIN_PRIVATE"]
         }
       }
     }
