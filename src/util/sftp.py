@@ -14,7 +14,8 @@ class SFTPClient:
         self.port = port
 
         # TODO: This doesn't seem best practice - AWS is adding a leading \ to newlines \n
-        private_key_file = io.StringIO(private_key.replace("\\n", "\n"))
+        # private_key_file = io.StringIO(private_key.replace("\\n", "\n"))
+        private_key_file = io.StringIO(private_key)
         self.private_key = paramiko.RSAKey.from_private_key(private_key_file)
 
         print(f"Initialized SFTPClient for {self.hostname} as {self.username}")

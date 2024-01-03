@@ -25,6 +25,17 @@ provider "google" {
 # Get google project info
 data "google_project" "project" {}
 
+# Get the one secret we need - ssh key
+data "google_secret_manager_secret_version" "burn_sftp_ssh_keys" {
+  secret = "burn_sftp_ssh_keys"
+}
+
+locals {
+  ssh_pairs = jsondecode(
+    data.google_secret_manager_secret_version.burn_sftp_ssh_keys.secret_data
+  )
+}
+
 ### AWS ###
 
 # First the server itself
@@ -75,7 +86,7 @@ resource "aws_transfer_ssh_key" "sftp_ssh_key_public" {
   depends_on = [aws_transfer_user.tf-sftp-burn-severity]
   server_id = aws_transfer_server.tf-sftp-burn-severity.id
   user_name = "admin"
-  body      = var.ssh_key_public_admin
+  body      = local.ssh_pairs["SSH_KEY_ADMIN_PUBLIC"]
 }
 
 # Set up STS to allow the GCP server to assume a role for AWS secrets

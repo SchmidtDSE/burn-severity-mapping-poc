@@ -5,6 +5,8 @@ channels:
   - defaults
 dependencies:
   - python ==3.10.*
+  - google-auth
+  - google-cloud-secret-manager
   - ipykernel
   - rioxarray
   - stackstac
@@ -26,6 +28,5 @@ dependencies:
   - uvicorn
   - paramiko
   - pip
-  - google-auth
   - pip:
     - titiler.core
