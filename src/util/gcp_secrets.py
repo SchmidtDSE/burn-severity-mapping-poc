@@ -1,34 +1,20 @@
-import os
-import boto3
-import json
-import google.auth
-import google.auth.transport.requests
-
-AWS_PROFILE = "UCB-FederatedAdmins-557418946771"
-IAM_ROLE_ARN = "arn:aws:iam::557418946771:role/aws_secrets_access_role"
-ROLE_SESSION_NAME = "burn"
+from google.cloud import secretmanager
 
 def get_ssh_secret():
-    secret_name = "sftp-admin-private-key-pem"
-    region_name = "us-east-2"
+    # GCP project and secret details
+    project_id = "dse-nps"
+    secret_id = "burn_sftp_ssh_keys"
 
-    # Create a Secrets Manager client
-    session = boto3.session.Session(
-        profile_name=AWS_PROFILE,
-        region_name=region_name,
-    )
+    # Create the Secret Manager client.
+    client = secretmanager.SecretManagerServiceClient()
 
-    client = session.client(
-        service_name="secretsmanager",
-        region_name=region_name,
-    )
+    # Build the resource name of the secret version.
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
 
-    # Use the client to retrieve the secret
-    get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+    # Access the secret version.
+    response = client.access_secret_version(request={"name": name})
 
-    # The secret value is a JSON string
-    ssh_private_key = json.loads(get_secret_value_response["SecretString"])[
-        "SFTP_ADMIN_PRIVATE_KEY_PEM"
-    ]
+    # Parse the secret value as a string.
+    ssh_private_key = response.payload.data.decode("UTF-8")
 
-    return ssh_private_key
+    return ssh_private_key.replace("\\n", "\n")
