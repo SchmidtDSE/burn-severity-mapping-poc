@@ -15,9 +15,6 @@ RUN apt-get update && apt-get install -y \
 COPY . /workspace
 WORKDIR /workspace/.devcontainer
 
-# # Setup SSH keys for tf (temporarily til we sort out secrets / OIDC)
-RUN prebuild/setup_secrets.sh
-
 # # Get AWS CLI V2
 RUN prebuild/setup_aws.sh
 
