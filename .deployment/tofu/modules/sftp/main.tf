@@ -250,7 +250,7 @@ resource "aws_transfer_ssh_key" "sftp_ssh_key_public" {
 #       variable = "https://${var.google_project_number}.svc.id.goog:sub"
 
 #       values = [
-#         "system:serviceaccount:${var.google_project_number}.svc.id.goog[default/${google_service_account.access_aws_secrets.account_id}]"
+#         "system:serviceaccount:${var.google_project_number}.svc.id.goog[default/${google_service_account.burn-backend-service.account_id}]"
 #       ]
 #     }
 #   }

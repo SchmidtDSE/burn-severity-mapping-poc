@@ -6,7 +6,7 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
 
   template {
     spec {
-      service_account_name = google_service_account.access_aws_secrets.email
+      service_account_name = google_service_account.burn-backend-service.email
       containers {
         image = "us-docker.pkg.dev/cloudrun/container/placeholder"
         env {
@@ -77,12 +77,18 @@ resource "google_service_account" "github_actions" {
   project     = "dse-nps"
 }
 
-# Create the IAM service account for the Cloud Run service to access AWS
-resource "google_service_account" "access_aws_secrets" {
-  account_id   = "cloud-run-aws-access"
-  display_name = "Cloud Run AWS Access Service Account"
-  description  = "This service account is used by the Cloud Run service to access AWS Secrets"
+# Create the IAM service account for the Cloud Run service
+resource "google_service_account" "burn-backend-service" {
+  account_id   = "burn-backend-service"
+  display_name = "Cloud Run Service Account for burn backend"
+  description  = "This service account is used by the Cloud Run service to access GCP Secrets Manager"
   project      = "dse-nps"
+}
+
+resource "google_project_iam_member" "secret_accessor" {
+  project = "dse-nps"
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
 }
 
 # Give the service account permissions to deploy to Cloud Run, and to Cloud Build, and to the Workload Identity Pool
