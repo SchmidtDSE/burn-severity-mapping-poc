@@ -121,7 +121,8 @@ class SFTPClient:
         """Lists all available COGs on the SFTP server"""
         available_cogs = {}
         for top_level_folder in self.connection.listdir():
-            s3_file_path = f"{top_level_folder}/metrics.tif"
-            available_cogs[top_level_folder] = s3_file_path
+            if not top_level_folder.endswith(".json"):
+                s3_file_path = f"{top_level_folder}/metrics.tif"
+                available_cogs[top_level_folder] = s3_file_path
 
         return available_cogs
