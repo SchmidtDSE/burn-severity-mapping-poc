@@ -1,6 +1,6 @@
 data/*
 */.DS_Store
-.deployment/.terraform*
+.deployment/tofu/.terraform*
 seed_*
 __pycache__/
 src/__pycache__
