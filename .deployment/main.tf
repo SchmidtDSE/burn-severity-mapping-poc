@@ -11,6 +11,13 @@ terraform {
   }
 }
 
+terraform {
+  backend "gcs" {
+    bucket  = "dse-tofu-state"
+    prefix  = "terraform/burn-severity-mapping-poc"
+  }
+}
+
 # Configure providers using berkeley profiles
 provider "aws" {
   profile = "UCB-FederatedAdmins-557418946771"
@@ -38,11 +45,60 @@ locals {
 
 ### AWS ###
 
+# Create the CloudWatch logs policy
+data "aws_iam_policy_document" "cloudwatch_logs_policy" {
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:DescribeLogStreams",
+    ]
+
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+}
+
+data "aws_iam_policy_document" "cloudwatch_logs_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["transfer.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_policy" "cloudwatch_logs_policy" {
+  name        = "cloudwatch_logs_policy"
+  description = "CloudWatch Logs policy for AWS Transfer logging"
+  policy      = data.aws_iam_policy_document.cloudwatch_logs_policy.json
+}
+
+# Create the IAM role for CloudWatch logging
+resource "aws_iam_role" "cloudwatch_logs_role" {
+  name = "cloudwatch_logs_role"
+  assume_role_policy = data.aws_iam_policy_document.cloudwatch_logs_role.json
+}
+
+# Attach the CloudWatch logs policy to the new role
+resource "aws_iam_role_policy_attachment" "cloudwatch_logs_policy_attachment" {
+  role       = aws_iam_role.cloudwatch_logs_role.name
+  policy_arn = aws_iam_policy.cloudwatch_logs_policy.arn
+}
+
+resource "aws_cloudwatch_log_group" "transfer_log_group" {
+  name = "/aws/transfer/${aws_transfer_server.tf-sftp-burn-severity.id}"
+  retention_in_days = 14
+}
+
+
 # First the server itself
 resource "aws_transfer_server" "tf-sftp-burn-severity" {
   identity_provider_type = "SERVICE_MANAGED"
   protocols = ["SFTP"]
   domain = "S3"
+  logging_role = aws_iam_role.cloudwatch_logs_role.arn
 }
 
 # Then, the user for the server, allowing it access to Transfer Family
@@ -112,12 +168,54 @@ resource "aws_iam_role_policy_attachment" "s3_policy_attachment" {
   policy_arn = aws_iam_policy.s3_admin_policy.arn
 }
 
+# Add the necessary session policy to the user
+data "aws_iam_policy_document" "session_policy" {
+  statement {
+    sid    = "AllowListingOfUserFolder"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      "arn:aws:s3:::burn-severity",
+    ]
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values = [
+        "/public/*",
+        "/public",
+        "/"
+      ]
+    }
+  }
+
+  statement {
+    sid    = "HomeDirObjectAccess"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject",
+      "s3:GetObjectVersion",
+    ]
+    resources = [
+      "arn:aws:s3:::burn-severity/*",
+    ]
+  }
+}
+
 # Finally, create the user within Transfer Family
 resource "aws_transfer_user" "tf-sftp-burn-severity" {
   server_id = aws_transfer_server.tf-sftp-burn-severity.id
   user_name = "admin"
   role      = aws_iam_role.admin.arn
-  home_directory = "/public"
+  home_directory_mappings {
+    entry = "/"
+    target = "/burn-severity/public"
+  }
+  home_directory_type = "LOGICAL"
+  policy = data.aws_iam_policy_document.session_policy.json
 }
 
 resource "aws_transfer_ssh_key" "sftp_ssh_key_public" {

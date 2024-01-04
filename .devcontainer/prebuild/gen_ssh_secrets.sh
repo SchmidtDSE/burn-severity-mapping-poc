@@ -1,9 +1,8 @@
 # Generate RSA key pair for user
-ssh-keygen -t rsa -b 4096 -f user_key -N ""
+ssh-keygen -t rsa -b 4096 -m PEM -f user_key -N ""
 
 # Generate RSA key pair for admin
-ssh-keygen -t rsa -b 4096 -f admin_key -N ""
-
+ssh-keygen -t rsa -b 4096 -m PEM -f admin_key -N ""
 
 # Save public and private keys as a list of JSON objects
 # Create an array to store the key-value pairs
@@ -31,7 +30,7 @@ for ((i=0; i<${#keys[@]}; i++)); do
 done
 echo '}' >> ssh_keys.json
 
-# Use the AWS CLI to update, or just create the secrets in gcloud (delete the existing ones first)
+# Use the gcloud CLI to update, or just create the secrets in gcloud (delete the existing ones first)
 gcloud secrets delete burn_sftp_ssh_keys --project=dse-nps --quiet
 gcloud secrets create burn_sftp_ssh_keys --data-file=ssh_keys.json --project=dse-nps --quiet
 
