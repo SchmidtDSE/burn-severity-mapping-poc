@@ -38,15 +38,18 @@ locals {
   google_project_number = data.google_project.project.number
 }
 
-# Initialize the modules
-module "burn_backend" {
-  source = "./modules/burn_backend"
-  ssh_pairs = local.ssh_pairs
-  google_project_number = local.google_project_number
-}
 
+# Initialize the modules
 module "sftp" {
   source = "./modules/sftp"
   ssh_pairs = local.ssh_pairs
   google_project_number = local.google_project_number
+}
+
+module "burn_backend" {
+  source = "./modules/burn_backend"
+  ssh_pairs = local.ssh_pairs
+  google_project_number = local.google_project_number
+  sftp_server_endpoint = module.sftp.sftp_server_endpoint
+  sftp_admin_username = module.sftp.sftp_admin_username
 }

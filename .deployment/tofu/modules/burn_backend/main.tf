@@ -8,7 +8,7 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
     spec {
       service_account_name = google_service_account.burn-backend-service.email
       containers {
-        image = "us-docker.pkg.dev/cloudrun/container/placeholder"
+        image = "us-docker.pkg.dev/cloudrun/container/placeholder" # This is a placeholder for first time creation only, replaced by CI/CD in GitHub Actions
         env {
           name  = "ENV"
           value = "CLOUD"
@@ -17,6 +17,14 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
           name  = "SFTP_SSH_KEY_PRIVATE"
           value = var.ssh_pairs["SSH_KEY_ADMIN_PRIVATE"]
         }
+        env {
+          name  = "SFTP_ENDPOINT"
+          value = var.sftp_server_endpoint
+        }
+        env {
+          name  = "SFTP_USERNAME"
+          value = var.sftp_admin_username
+        }
       }
     }
   }
@@ -24,6 +32,12 @@ resource "google_cloud_run_service" "tf-rest-burn-severity" {
   traffic {
     percent         = 100
     latest_revision = true
+  }
+
+  lifecycle { # This helps to not replace the service if it already exists (the placeholder is just for first time creation)
+    ignore_changes = [
+      template[0].spec[0].containers[0].image,
+    ]
   }
 }
 
