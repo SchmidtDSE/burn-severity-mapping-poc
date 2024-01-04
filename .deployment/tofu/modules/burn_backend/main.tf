@@ -37,12 +37,13 @@ resource "google_cloud_run_service_iam_member" "public" {
 
 # Create the IAM workload identity pool and provider to auth GitHub Actions
 resource "google_iam_workload_identity_pool" "pool" {
-  workload_identity_pool_id = "github"
+  workload_identity_pool_id = "github-actions"
   display_name = "Github Actions Pool"
   description  = "Workload identity pool for GitHub actions"
 }
 
 resource "google_iam_workload_identity_pool_provider" "oidc" {
+  depends_on = [google_iam_workload_identity_pool.pool]
   workload_identity_pool_provider_id = "oidc-provider"
   workload_identity_pool_id          = google_iam_workload_identity_pool.pool.workload_identity_pool_id
 
@@ -57,6 +58,15 @@ resource "google_iam_workload_identity_pool_provider" "oidc" {
     "attribute.actor" = "assertion.actor"
     "attribute.repository" = "assertion.repository"
   }
+}
+
+resource "google_service_account_iam_binding" "workload_identity_user" {
+  depends_on = [google_iam_workload_identity_pool_provider.oidc]
+  service_account_id = google_service_account.github_actions.name
+  role               = "roles/iam.workloadIdentityUser"
+  members            = [
+    "principalSet://iam.googleapis.com/projects/${var.google_project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.pool.workload_identity_pool_id}/attribute.repository/SchmidtDSE/burn-severity-mapping-poc"
+  ]
 }
 
 # Create the IAM service account for GitHub Actions
@@ -104,14 +114,6 @@ resource "google_project_iam_member" "artifact_registry_writer" {
   project = "dse-nps"
   role    = "roles/artifactregistry.writer"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
-}
-
-resource "google_service_account_iam_binding" "workload_identity_user" {
-  service_account_id = google_service_account.github_actions.name
-  role               = "roles/iam.workloadIdentityUser"
-  members            = [
-    "principalSet://iam.googleapis.com/projects/${var.google_project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.pool.workload_identity_pool_id}/attribute.repository/SchmidtDSE/burn-severity-mapping-poc"
-  ]
 }
 
 # Create an Artifact Registry repo for the container image

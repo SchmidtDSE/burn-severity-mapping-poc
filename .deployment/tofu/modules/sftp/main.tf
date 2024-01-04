@@ -53,7 +53,58 @@ resource "aws_transfer_server" "tf-sftp-burn-severity" {
   identity_provider_type = "SERVICE_MANAGED"
   protocols = ["SFTP"]
   domain = "S3"
+  endpoint_type = "PUBLIC"
   logging_role = aws_iam_role.cloudwatch_logs_role.arn
+}
+
+# Then, the s3 bucket for the server
+resource "aws_s3_bucket" "burn-severity-backend" {
+  bucket = "burn-severity-backend" # replace with your bucket name
+}
+
+resource "aws_s3_bucket_ownership_controls" "burn-severity-backend" {
+  bucket = aws_s3_bucket.burn-severity-backend.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "burn-severity-backend" {
+  bucket = aws_s3_bucket.burn-severity-backend.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_acl" "burn-severity-backend" {
+  depends_on = [
+    aws_s3_bucket_ownership_controls.burn-severity-backend,
+    aws_s3_bucket_public_access_block.burn-severity-backend,
+  ]
+
+  bucket = aws_s3_bucket.burn-severity-backend.id
+  acl    = "public-read"
+}
+
+resource "aws_s3_bucket_website_configuration" "burn-severity-backend" {
+  bucket = aws_s3_bucket.burn-severity-backend.id
+  index_document {
+    suffix = "index.html"
+  }
+  error_document {
+    key = "error.html"
+  }
+}
+
+// Add the contents of ../assets to the bucket
+resource "aws_s3_bucket_object" "assets" {
+  for_each = fileset("../assets", "**/*")
+
+  bucket = aws_s3_bucket.burn-severity-backend.id
+  key    = each.value
+  source = "../assets/${each.value}"
 }
 
 # Then, the user for the server, allowing it access to Transfer Family
@@ -87,7 +138,7 @@ data "aws_iam_policy_document" "s3_policy" {
       "s3:ListBucket",
     ]
     resources = [
-      "arn:aws:s3:::burn-severity",
+      "arn:aws:s3:::burn-severity-backend",
     ]
   }
 
@@ -105,7 +156,7 @@ data "aws_iam_policy_document" "s3_policy" {
       "s3:PutObjectACL",
     ]
     resources = [
-      "arn:aws:s3:::burn-severity/*",
+      "arn:aws:s3:::burn-severity-backend/*",
     ]
   }
 }
@@ -132,7 +183,7 @@ data "aws_iam_policy_document" "session_policy" {
       "s3:ListBucket",
     ]
     resources = [
-      "arn:aws:s3:::burn-severity",
+      "arn:aws:s3:::burn-severity-backend",
     ]
     condition {
       test     = "StringLike"
@@ -155,7 +206,7 @@ data "aws_iam_policy_document" "session_policy" {
       "s3:GetObjectVersion",
     ]
     resources = [
-      "arn:aws:s3:::burn-severity/*",
+      "arn:aws:s3:::burn-severity-backend/*",
     ]
   }
 }
@@ -167,7 +218,7 @@ resource "aws_transfer_user" "tf-sftp-burn-severity" {
   role      = aws_iam_role.admin.arn
   home_directory_mappings {
     entry = "/"
-    target = "/burn-severity/public"
+    target = "/burn-severity-backend/public"
   }
   home_directory_type = "LOGICAL"
   policy = data.aws_iam_policy_document.session_policy.json
