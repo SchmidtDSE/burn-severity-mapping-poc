@@ -12,7 +12,8 @@
                 "--port=5050",
                 "--reload"
             ],
-            "justMyCode": true
+            "justMyCode": true,
+            "envFile": "/workspace/.devcontainer/.env", // Path to the ".env" file.
         }
     ]
 }

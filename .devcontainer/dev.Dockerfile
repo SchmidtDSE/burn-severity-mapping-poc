@@ -26,9 +26,6 @@ ENV GRPC_GO_FORCE_USE_IPV4="true"
 # Get OpenTofu
 RUN prebuild/setup_opentofu.sh
 
-# Get Env vars from OpenTofu
-RUN prebuild/export_tofu_env_vars.sh
-
 # Create a new conda environment from the environment.yml file 
 RUN mamba env create -f dev_environment.yml
 
