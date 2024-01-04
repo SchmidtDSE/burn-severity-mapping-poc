@@ -25,10 +25,10 @@ def index():
     return "Alive", 200
 
 def get_sftp_client():
-    SFTP_HOSTNAME = "s-1f683c6ff06147a3b.server.transfer.us-east-2.amazonaws.com"
-    SFTP_USERNAME = "admin"
+    SFTP_SERVER_ENDPOINT = os.getenv('SFTP_SERVER_ENDPOINT')
+    SFTP_ADMIN_USERNAME = os.getenv('SFTP_ADMIN_USERNAME')
     SSH_SECRET = get_ssh_secret()
-    return SFTPClient(SFTP_HOSTNAME, SFTP_USERNAME, SSH_SECRET)
+    return SFTPClient(SFTP_SERVER_ENDPOINT, SFTP_ADMIN_USERNAME, SSH_SECRET)
 
 @app.get("/update-available-cogs")
 def update_available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
