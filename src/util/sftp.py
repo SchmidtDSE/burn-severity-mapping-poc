@@ -13,15 +13,12 @@ class SFTPClient:
         self.username = username
         self.port = port
 
-        # TODO: This doesn't seem best practice - AWS is adding a leading \ to newlines \n
-        # private_key_file = io.StringIO(private_key.replace("\\n", "\n"))
         private_key_file = io.StringIO(private_key)
         self.private_key = paramiko.RSAKey.from_private_key(private_key_file)
 
+        self.available_cogs = None
+
         print(f"Initialized SFTPClient for {self.hostname} as {self.username}")
-        self.connect()
-        self.available_cogs = self.get_available_cogs()
-        self.disconnect()
 
     def connect(self):
         """Connects to the sftp server and returns the sftp connection object"""
@@ -126,3 +123,8 @@ class SFTPClient:
                 available_cogs[top_level_folder] = s3_file_path
 
         return available_cogs
+
+    def update_available_cogs(self):
+        self.connect()
+        self.available_cogs = self.get_available_cogs()
+        self.disconnect()
