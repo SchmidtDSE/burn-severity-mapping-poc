@@ -96,10 +96,10 @@ resource "aws_transfer_server" "tf-sftp-burn-severity" {
   identity_provider_type = "SERVICE_MANAGED"
   protocols = ["SFTP"]
   domain = "S3"
-  endpoint_type = "PUBLIC"
-  # endpoint_details {
-  #   vpc_endpoint_id     = aws_vpc_endpoint.sftp_endpoint.id
-  # }
+  endpoint_type = "VPC"
+  endpoint_details {
+    vpc_id              = aws_vpc.sftp_vpc.id
+  }
   logging_role = aws_iam_role.cloudwatch_logs_role.arn
 }
 
