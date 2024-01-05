@@ -28,6 +28,7 @@ logger = logging_client.logger(log_name)
 
 @app.get("/")
 def index():
+    logger.log_text("ping pong")
     return "Alive", 200
 
 def get_sftp_client():
@@ -50,8 +51,10 @@ def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
             "message": "updated available cogs",
             "available_cogs": sftp_client.available_cogs
         }
+        logger.log_text(f"Available COGs updated: {sftp_client.available_cogs}")
         return response, 200
     except Exception as e:
+        logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
 
 # # create a POST endpoint for running a burn query with an input geojson, with its associated POST body class
@@ -65,6 +68,7 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
     geojson = body.geojson
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
+    logger.log_text(f"Received analyze-burn request for {fire_event_name}")
 
     try:
         # create a Sentinel2Client instance
@@ -76,9 +80,11 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
             postfire_date_range=date_ranges["postfire"],
             from_bbox=True,
         )
+        logger.log_text(f"Obtained imagery for {fire_event_name}")
 
         # calculate burn metrics
         geo_client.calc_burn_metrics()
+        logger.log_text(f"Calculated burn metrics for {fire_event_name}")
 
         # save the cog to the FTP server
         sftp_client.connect()
@@ -86,13 +92,16 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
             metrics_stack=geo_client.metrics_stack, fire_event_name=fire_event_name
         )
         sftp_client.disconnect()
-
-        return f"cog uploaded for {fire_event_name}", 200
+        logger.log_text(f"Cogs uploaded for {fire_event_name}")
+        
+        return f"cog uploadeds for {fire_event_name}", 200
 
     except Exception as e:
+        logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
 
 @app.get("/map/{fire_event_name}", response_class=HTMLResponse)
 def serve_map(fire_event_name: str):
     html_content = Path("src/index.html").read_text()
+    logger.log_text(f"Serving map for {fire_event_name}")
     return html_content
