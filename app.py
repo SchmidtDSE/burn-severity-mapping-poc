@@ -6,6 +6,11 @@ import uvicorn
 from pydantic import BaseModel
 from google.cloud import logging
 
+# For network debugging
+import socket
+import requests
+from fastapi import HTTPException
+
 
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
@@ -30,6 +35,27 @@ logger = logging_client.logger(log_name)
 def index():
     logger.log_text("ping pong")
     return "Alive", 200
+
+@app.get("/check-connectivity")
+def check_connectivity():
+    try:
+        response = requests.get("http://example.com")
+        logger.log_text(f"Connectivity check: Got response {response.status_code} from http://example.com")
+        return {"status_code": response.status_code, "response_body": response.text}
+    except Exception as e:
+        logger.log_text(f"Connectivity check: Error {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/check-dns")
+def check_dns():
+    try:
+        SFTP_SERVER_ENDPOINT = os.getenv('SFTP_SERVER_ENDPOINT')
+        ip_address = socket.gethostbyname(SFTP_SERVER_ENDPOINT)
+        logger.log_text(f"DNS check: Resolved {SFTP_SERVER_ENDPOINT} to {ip_address}")
+        return {"ip_address": ip_address}
+    except Exception as e:
+        logger.log_text(f"DNS check: Error {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 def get_sftp_client():
     SFTP_SERVER_ENDPOINT = os.getenv('SFTP_SERVER_ENDPOINT')
