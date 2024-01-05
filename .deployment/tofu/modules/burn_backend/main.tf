@@ -1,50 +1,80 @@
 
+# Create a VPC access connector, to let the Cloud Run service access the AWS Transfer server
+resource "google_vpc_access_connector" "burn_backend_vpc_connector" {
+  name          = "vpc-burn2023" # just to match aws naming reqs
+  network       = google_compute_network.burn_backend_network.id
+  region        = "us-central1"
+  ip_cidr_range = "10.3.0.0/28"
+  depends_on    = [google_compute_network.burn_backend_network]
+}
+
+resource "google_compute_subnetwork" "burn_backend_subnetwork" {
+  name          = "run-subnetwork"
+  ip_cidr_range = "10.2.0.0/28"
+  region        = "us-central1"
+  network       = google_compute_network.burn_backend_network.id
+  depends_on    = [google_compute_network.burn_backend_network]
+}
+
+resource "google_compute_network" "burn_backend_network" {
+  name                    = "burn-backend-run-network"
+  auto_create_subnetworks = false
+}
+
 # Create a Cloud Run service
-resource "google_cloud_run_service" "tf-rest-burn-severity" {
+resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
   name     = "tf-rest-burn-severity"
   location = "us-central1"
 
   template {
-    spec {
-      service_account_name = google_service_account.burn-backend-service.email
-      containers {
-        image = "us-docker.pkg.dev/cloudrun/container/placeholder" # This is a placeholder for first time creation only, replaced by CI/CD in GitHub Actions
-        env {
-          name  = "ENV"
-          value = "CLOUD"
-        }
-        env {
-          name  = "SFTP_SSH_KEY_PRIVATE"
-          value = var.ssh_pairs["SSH_KEY_ADMIN_PRIVATE"]
-        }
-        env {
-          name  = "SFTP_ENDPOINT"
-          value = var.sftp_server_endpoint
-        }
-        env {
-          name  = "SFTP_USERNAME"
-          value = var.sftp_admin_username
+    service_account = google_service_account.burn-backend-service.email
+    containers {
+      image = "us-docker.pkg.dev/cloudrun/container/placeholder" # This is a placeholder for first time creation only, replaced by CI/CD in GitHub Actions
+      env {
+        name  = "ENV"
+        value = "CLOUD"
+      }
+      env {
+        name  = "SFTP_SSH_KEY_PRIVATE"
+        value = var.ssh_pairs["SSH_KEY_ADMIN_PRIVATE"]
+      }
+      env {
+        name  = "SFTP_ENDPOINT"
+        value = var.sftp_server_endpoint
+      }
+      env {
+        name  = "SFTP_USERNAME"
+        value = var.sftp_admin_username
+      }
+      resources {
+        limits = {
+          cpu    = "8"
+          memory = "16Gi"
         }
       }
+    }
+    vpc_access {
+      connector = google_vpc_access_connector.burn_backend_vpc_connector.id
+      egress = "ALL_TRAFFIC"
     }
   }
 
   traffic {
     percent         = 100
-    latest_revision = true
+    type            = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
   }
 
   lifecycle { # This helps to not replace the service if it already exists (the placeholder is just for first time creation)
     ignore_changes = [
-      template[0].spec[0].containers[0].image,
+      template[0].containers[0].image,
     ]
   }
 }
 
 # Allow unauthenticated invocations
 resource "google_cloud_run_service_iam_member" "public" {
-  service = google_cloud_run_service.tf-rest-burn-severity.name
-  location = google_cloud_run_service.tf-rest-burn-severity.location
+  service = google_cloud_run_v2_service.tf-rest-burn-severity.name
+  location = google_cloud_run_v2_service.tf-rest-burn-severity.location
   role = "roles/run.invoker"
   member = "allUsers"
 }
