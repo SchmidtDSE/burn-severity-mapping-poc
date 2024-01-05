@@ -32,15 +32,16 @@ def get_sftp_client():
 
 @app.get("/available-cogs")
 def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
-        # # create an SFTP client instance
-    sftp_client.update_available_cogs()
+    try:
+        sftp_client.update_available_cogs()
 
-    response = {
-        "message": "updated available cogs",
-        "available_cogs": sftp_client.available_cogs
-    }
-
-    return response, 200
+        response = {
+            "message": "updated available cogs",
+            "available_cogs": sftp_client.available_cogs
+        }
+        return response, 200
+    except Exception as e:
+        return f"Error: {e}", 400
 
 # # create a POST endpoint for running a burn query with an input geojson, with its associated POST body class
 class AnaylzeBurnPOSTBody(BaseModel):
