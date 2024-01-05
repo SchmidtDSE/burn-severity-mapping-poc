@@ -4,21 +4,27 @@ import os
 from pathlib import Path
 import uvicorn
 from pydantic import BaseModel
+from google.cloud import logging
+
 
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
-
 
 from src.lib.query_sentinel import Sentinel2Client
 from src.util.sftp import SFTPClient
 from src.util.gcp_secrets import get_ssh_secret
 from src.lib.titiler_algorithms import algorithms
 
+
 # app = Flask(__name__)
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix='/cog', tags=["Cloud Optimized GeoTIFF"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
+
+logging_client = logging.Client()
+log_name = "burn-backend"
+logger = logging_client.logger(log_name)
 
 @app.get("/")
 def index():
@@ -28,6 +34,11 @@ def get_sftp_client():
     SFTP_SERVER_ENDPOINT = os.getenv('SFTP_SERVER_ENDPOINT')
     SFTP_ADMIN_USERNAME = os.getenv('SFTP_ADMIN_USERNAME')
     SSH_SECRET = get_ssh_secret()
+
+    logger.log_text(f"SFTP_SERVER_ENDPOINT: {SFTP_SERVER_ENDPOINT}")
+    logger.log_text(f"SFTP_ADMIN_USERNAME: {SFTP_ADMIN_USERNAME}")
+    logger.log_text(f"SSH_SECRET (trunc): {SSH_SECRET[:20]}")
+
     return SFTPClient(SFTP_SERVER_ENDPOINT, SFTP_ADMIN_USERNAME, SSH_SECRET)
 
 @app.get("/available-cogs")
