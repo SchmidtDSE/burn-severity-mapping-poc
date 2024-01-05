@@ -3,7 +3,8 @@ from urllib.parse import urlparse
 import io
 import os
 import tempfile
-
+import logging
+from google.cloud import logging as cloud_logging
 
 class SFTPClient:
     def __init__(self, hostname, username, private_key, port=22):
@@ -18,7 +19,17 @@ class SFTPClient:
 
         self.available_cogs = None
 
-        print(f"Initialized SFTPClient for {self.hostname} as {self.username}")
+        # Set up logging
+        logging_client = cloud_logging.Client()
+        log_name = "burn-backend"
+        self.logger = logging_client.logger(log_name)
+
+        # Route Paramiko logs to Google Cloud Logging
+        paramiko_logger = logging.getLogger("paramiko")
+        paramiko_logger.setLevel(logging.DEBUG)
+        paramiko_logger.addHandler(cloud_logging.handlers.CloudLoggingHandler(logging_client, name=log_name))
+
+        self.logger.log_text(f"Initialized SFTPClient for {self.hostname} as {self.username}")
 
     def connect(self):
         """Connects to the sftp server and returns the sftp connection object"""
