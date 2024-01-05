@@ -28,6 +28,7 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
 
   template {
     service_account = google_service_account.burn-backend-service.email
+    timeout = "3599s" # max timeout is one hour
     containers {
       image = "us-docker.pkg.dev/cloudrun/container/placeholder" # This is a placeholder for first time creation only, replaced by CI/CD in GitHub Actions
       env {
@@ -70,7 +71,6 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
     ]
   }
 }
-
 # Allow unauthenticated invocations
 resource "google_cloud_run_service_iam_member" "public" {
   service = google_cloud_run_v2_service.tf-rest-burn-severity.name

@@ -31,7 +31,7 @@ def get_sftp_client():
     return SFTPClient(SFTP_SERVER_ENDPOINT, SFTP_ADMIN_USERNAME, SSH_SECRET)
 
 @app.get("/available-cogs")
-def update_available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
+def available-cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
         # # create an SFTP client instance
     sftp_client.update_available_cogs()
 
