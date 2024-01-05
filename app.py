@@ -30,15 +30,17 @@ def get_sftp_client():
     SSH_SECRET = get_ssh_secret()
     return SFTPClient(SFTP_SERVER_ENDPOINT, SFTP_ADMIN_USERNAME, SSH_SECRET)
 
-@app.get("/update-available-cogs")
+@app.get("/available-cogs")
 def update_available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
         # # create an SFTP client instance
     sftp_client.update_available_cogs()
 
-    # Use the keys of the available_cogs dict to create a list of available cogs
-    available_cogs_fmt = [name for name, __path in sftp_client.available_cogs.items()]
-    html_content = "<br>".join(available_cogs_fmt)
-    return html_content, 200
+    response = {
+        "message": "updated available cogs",
+        "available_cogs": sftp_client.available_cogs
+    }
+
+    return response, 200
 
 # # create a POST endpoint for running a burn query with an input geojson, with its associated POST body class
 class AnaylzeBurnPOSTBody(BaseModel):
