@@ -36,15 +36,11 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
         value = "CLOUD"
       }
       env {
-        name  = "SFTP_SSH_KEY_PRIVATE"
-        value = var.ssh_pairs["SSH_KEY_ADMIN_PRIVATE"]
-      }
-      env {
-        name  = "SFTP_ENDPOINT"
+        name  = "SFTP_SERVER_ENDPOINT"
         value = var.sftp_server_endpoint
       }
       env {
-        name  = "SFTP_USERNAME"
+        name  = "SFTP_ADMIN_USERNAME"
         value = var.sftp_admin_username
       }
       resources {
@@ -132,6 +128,12 @@ resource "google_service_account" "burn-backend-service" {
 resource "google_project_iam_member" "secret_accessor" {
   project = "dse-nps"
   role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
+}
+
+resource "google_project_iam_member" "log_writer" {
+  project = "dse-nps"
+  role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
 }
 
