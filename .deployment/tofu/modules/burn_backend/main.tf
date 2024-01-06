@@ -99,6 +99,7 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
     ]
   }
 }
+
 # Allow unauthenticated invocations
 resource "google_cloud_run_service_iam_member" "public" {
   service = google_cloud_run_v2_service.tf-rest-burn-severity.name
