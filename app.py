@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.responses import HTMLResponse
 import os
+import json
 from pathlib import Path
 import uvicorn
 from pydantic import BaseModel
@@ -11,6 +10,9 @@ import socket
 import requests
 from fastapi import HTTPException
 
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
@@ -26,6 +28,8 @@ app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix='/cog', tags=["Cloud Optimized GeoTIFF"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
+
+templates = Jinja2Templates(directory="src/")
 
 logging_client = logging.Client(project='dse-nps')
 log_name = "burn-backend"
@@ -67,6 +71,16 @@ def get_sftp_client():
     logger.log_text(f"SSH_SECRET (trunc): {SSH_SECRET[:20]}")
 
     return SFTPClient(SFTP_SERVER_ENDPOINT, SFTP_ADMIN_USERNAME, SSH_SECRET)
+
+def get_manifest(sfpt_client: SFTPClient = Depends(get_sftp_client)):
+    try:
+        sfpt_client.connect()
+        manifest = sfpt_client.get_manifest()
+        sfpt_client.disconnect()
+        return manifest
+    except Exception as e:
+        logger.log_text(f"Error: {e}")
+        return f"Error: {e}", 400
 
 @app.get("/available-cogs")
 def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
@@ -130,7 +144,19 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
         return f"Error: {e}", 400
 
 @app.get("/map/{fire_event_name}", response_class=HTMLResponse)
-def serve_map(fire_event_name: str):
-    html_content = Path("src/index.html").read_text()
-    logger.log_text(f"Serving map for {fire_event_name}")
-    return html_content
+def serve_map(request: Request, fire_event_name: str, manifest: dict = Depends(get_manifest)):
+    # tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
+    tileserver_endpoint = 'http://localhost:5050'
+    cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{fire_event_name}/rbr.tif"
+    cog_tileserver_url_prefix = tileserver_endpoint + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=0&algorithm=classify&algorithm_params="
+    # cog_tileserver_url_prefix = tileserver_endpoint + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}"
+
+    fire_metadata = manifest[fire_event_name]
+    fire_metadata_json = json.dumps(fire_metadata)
+
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "fire_event_name": fire_event_name,
+        "fire_metadata_json": fire_metadata_json,
+        "cog_tileserver_url_prefix": cog_tileserver_url_prefix
+    })

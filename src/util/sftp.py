@@ -140,9 +140,8 @@ class SFTPClient:
 
     def update_manifest(self, fire_event_name, bounds, prefire_date_range, postfire_date_range):
         with tempfile.TemporaryDirectory() as tmpdir:
-            self.download('manifest.json', '/tmp_manifest.json')
-            self.logger.log_text(f"Downloaded manifest.json")
-            manifest = json.load(open('/tmp_manifest.json', 'r'))
+
+            manifest = self.get_manifest()
 
             if fire_event_name in manifest:
                 self.logger.log_text(f"Fire event {fire_event_name} already exists in manifest. Overwriting.")
@@ -183,3 +182,10 @@ class SFTPClient:
             prefire_date_range=prefire_date_range,
             postfire_date_range=postfire_date_range
         )
+    
+    def get_manifest(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self.download('manifest.json', tmpdir + 'tmp_manifest.json')
+            self.logger.log_text(f"Got manifest.json")
+            manifest = json.load(open(tmpdir + 'tmp_manifest.json', 'r'))
+            return manifest

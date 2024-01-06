@@ -105,6 +105,25 @@ resource "aws_s3_bucket" "burn-severity-backend" {
   bucket = "burn-severity-backend" # replace with your bucket name
 }
 
+data "aws_iam_policy_document" "burn-severity-backend-policy" {
+  statement {
+    sid       = "PublicReadGetObject"
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.burn-severity-backend.arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "burn-severity-backend-policy" {
+  bucket = aws_s3_bucket.burn-severity-backend.id
+  policy = data.aws_iam_policy_document.burn-severity-backend-policy.json
+}
+
 resource "aws_s3_bucket_ownership_controls" "burn-severity-backend" {
   bucket = aws_s3_bucket.burn-severity-backend.id
   rule {
