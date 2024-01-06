@@ -4,6 +4,8 @@ import io
 import os
 import tempfile
 import logging
+import json
+import datetime
 from google.cloud import logging as cloud_logging
 
 class SFTPClient:
@@ -115,6 +117,16 @@ class SFTPClient:
     def upload_cogs(self, metrics_stack, fire_event_name):
         # Save our stack to a COG, in a tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
+
+            self.download('manifest.json', 'tmp_manifest.json')
+            self.logger.log_text(f"Downloaded manifest.json: {manifest}")
+            manifest = json.load(open('tmp_manifest.json', 'r'))
+
+            if fire_event_name in manifest:
+                self.logger.log_text(f"Fire event {fire_event_name} already exists in manifest. Overwriting.")
+                del manifest[fire_event_name]
+
+
             for band_name in metrics_stack.burn_metric.to_index():
                 local_cog_path = os.path.join(tmpdir, f"{band_name}.tif")
                 band_cog = metrics_stack.sel(burn_metric = band_name).rio
