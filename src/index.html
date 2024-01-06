@@ -35,7 +35,7 @@
     var fireMetadata = JSON.parse({{fire_metadata_json | tojson | safe}});
     console.log(fireMetadata);
 
-    var fire_bounds = [[fireMetadata.bounds[0], fireMetadata.bounds[1]], [fireMetadata.bounds[2], fireMetadata.bounds[3]]]
+    var fire_bounds = [[fireMetadata.bounds[1], fireMetadata.bounds[0]], [fireMetadata.bounds[3], fireMetadata.bounds[2]]]
     console.log("fire bounds - ", fire_bounds)
 
     // Add base map
