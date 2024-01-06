@@ -22,7 +22,7 @@ class SFTPClient:
         self.available_cogs = None
 
         # Set up logging
-        logging_client = cloud_logging.Client()
+        logging_client = cloud_logging.Client(project='dse-nps')
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
@@ -78,9 +78,6 @@ class SFTPClient:
         """
 
         try:
-            print(
-                f"downloading from {self.hostname} as {self.username} [(remote path : {remote_path});(local path: {target_local_path})]"
-            )
 
             # Create the target directory if it does not exist
             path, _ = os.path.split(target_local_path)
@@ -92,7 +89,6 @@ class SFTPClient:
 
             # Download from remote sftp server to local
             self.connection.get(remote_path, target_local_path)
-            print("download completed")
 
         except Exception as err:
             raise Exception(err)
@@ -114,29 +110,6 @@ class SFTPClient:
         except Exception as err:
             raise Exception(err)
 
-    def upload_cogs(self, metrics_stack, fire_event_name):
-        # Save our stack to a COG, in a tempfile
-        with tempfile.TemporaryDirectory() as tmpdir:
-
-            self.download('manifest.json', 'tmp_manifest.json')
-            self.logger.log_text(f"Downloaded manifest.json: {manifest}")
-            manifest = json.load(open('tmp_manifest.json', 'r'))
-
-            if fire_event_name in manifest:
-                self.logger.log_text(f"Fire event {fire_event_name} already exists in manifest. Overwriting.")
-                del manifest[fire_event_name]
-
-
-            for band_name in metrics_stack.burn_metric.to_index():
-                local_cog_path = os.path.join(tmpdir, f"{band_name}.tif")
-                band_cog = metrics_stack.sel(burn_metric = band_name).rio
-                band_cog.to_raster(local_cog_path)
-                # Upload the metrics to our SFTP server
-                self.upload(
-                    source_local_path=local_cog_path,
-                    remote_path=f"{fire_event_name}/{band_name}.tif",
-                )
-
     def get_available_cogs(self):
         """Lists all available COGs on the SFTP server"""
         available_cogs = {}
@@ -151,3 +124,62 @@ class SFTPClient:
         self.connect()
         self.available_cogs = self.get_available_cogs()
         self.disconnect()
+
+    def upload_cogs(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range):
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+
+            for band_name in metrics_stack.burn_metric.to_index():
+                local_cog_path = os.path.join(tmpdir, f"{band_name}.tif")
+                band_cog = metrics_stack.sel(burn_metric = band_name).rio
+                band_cog.to_raster(local_cog_path, driver="GTiff")
+                self.upload(
+                    source_local_path=local_cog_path,
+                    remote_path=f"{fire_event_name}/{band_name}.tif",
+                )
+
+    def update_manifest(self, fire_event_name, bounds, prefire_date_range, postfire_date_range):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self.download('manifest.json', '/tmp_manifest.json')
+            self.logger.log_text(f"Downloaded manifest.json")
+            manifest = json.load(open('/tmp_manifest.json', 'r'))
+
+            if fire_event_name in manifest:
+                self.logger.log_text(f"Fire event {fire_event_name} already exists in manifest. Overwriting.")
+                del manifest[fire_event_name]
+
+            manifest[fire_event_name] = {
+                'bounds': bounds,
+                'prefire_date_range': prefire_date_range,
+                'postfire_date_range': postfire_date_range,
+                'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+            # Upload the manifest to our SFTP server
+            tmp_manifest_path = os.path.join(tmpdir, 'manifest_updated.json')
+            with open(tmp_manifest_path, 'w') as f:
+                json.dump(manifest, f)
+            self.upload(
+                source_local_path=tmp_manifest_path,
+                remote_path='manifest.json'
+            )
+            self.logger.log_text(f"Uploaded/updated manifest.json")
+
+    def upload_fire_event(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range):
+        self.logger.log_text(f"Uploading fire event {fire_event_name}")
+
+        self.upload_cogs(
+            metrics_stack=metrics_stack,
+            fire_event_name=fire_event_name,
+            prefire_date_range=prefire_date_range,
+            postfire_date_range=postfire_date_range
+        )
+
+        bounds = [round(pos, 4) for pos in metrics_stack.rio.bounds()]
+
+        self.update_manifest(
+            fire_event_name=fire_event_name, 
+            bounds=bounds,
+            prefire_date_range=prefire_date_range,
+            postfire_date_range=postfire_date_range
+        )

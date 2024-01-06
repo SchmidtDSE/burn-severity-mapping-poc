@@ -27,7 +27,7 @@ cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix='/cog', tags=["Cloud Optimized GeoTIFF"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
-logging_client = logging.Client()
+logging_client = logging.Client(project='dse-nps')
 log_name = "burn-backend"
 logger = logging_client.logger(log_name)
 
@@ -114,8 +114,11 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
 
         # save the cog to the FTP server
         sftp_client.connect()
-        sftp_client.upload_cogs(
-            metrics_stack=geo_client.metrics_stack, fire_event_name=fire_event_name
+        sftp_client.upload_fire_event(
+            metrics_stack=geo_client.metrics_stack,
+            fire_event_name=fire_event_name,
+            prefire_date_range=date_ranges["prefire"],
+            postfire_date_range=date_ranges["postfire"]
         )
         sftp_client.disconnect()
         logger.log_text(f"Cogs uploaded for {fire_event_name}")
