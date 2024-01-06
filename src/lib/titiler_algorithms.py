@@ -16,8 +16,8 @@ class Classify(BaseAlgorithm):
         values = list(float_thresholds.values())
         classified = np.select(checks, values, default=0).astype(np.uint8)
 
-        # Generate mask where classified is not 0 
-        mask = classified != 0
+        # Generate mask where classified is 0 
+        mask = classified == 0
 
         # Squeeze 1-length dim
         classified_squeezed = np.squeeze(classified)
