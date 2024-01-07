@@ -11,6 +11,8 @@
 
     <!-- Include Leaflet JS -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Leaflet.TileLayer.GlColorScale
+    <script src="https://unpkg.com/leaflet.tilelayer.glcolorscale/dist/bundle.min.js"></script> -->
 
     <style>
         #mapid { 
@@ -27,7 +29,9 @@
     <div id="mapid"></div>
 
 <script>
-    var map = L.map('mapid').setView([51.505, -0.09], 13);
+    // const { GLColorScale } = L.TileLayer;
+    // var map = L.map('mapid').setView([51.505, -0.09], 13);
+    var map = L.map('mapid');
 
     console.log("tileserver_prefix - {{ cog_tileserver_url_prefix }}")
     console.log("fire_event_name - {{ fire_event_name }}")
@@ -43,15 +47,22 @@
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // Add COG layer 
-    // {"thresholds":{"0.045":100,"0.222":150,"0.8":200}}
+    // Create a new L.TileLayer.GLColorScale layer
+    // const tileLayer = new GLColorScale({
+    //     url: '{{ cog_tileserver_url_prefix | safe }}{"thresholds":{"0.045":100,"0.222":150,"0.8":200}}',
+    //     colorScale: [
+    //         { offset: -.2, color: 'rgb(255, 0, 0)', label: 'zero' },
+    //         { offset: .2, color: 'rgb(0, 0, 255)', label: 'one' },
+    //     ],
+    //     nodataValue: 0,
+    // }).addTo(map);
+
     L.tileLayer('{{ cog_tileserver_url_prefix | safe }}{"thresholds":{"0.045":100,"0.222":150,"0.8":200}}', {
         maxZoom: 20,
     }).addTo(map);
 
     // Center map on fire, based on `bounds` metadata
     map.fitBounds(fire_bounds);
-
 </script>
 
 </body>
