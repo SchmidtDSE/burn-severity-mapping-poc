@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
@@ -29,11 +30,13 @@ cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix='/cog', tags=["Cloud Optimized GeoTIFF"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
-templates = Jinja2Templates(directory="src/")
 
 logging_client = logging.Client(project='dse-nps')
 log_name = "burn-backend"
 logger = logging_client.logger(log_name)
+
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
+templates = Jinja2Templates(directory="src/static")
 
 @app.get("/")
 def index():
@@ -143,19 +146,23 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
 
-@app.get("/map/{fire_event_name}", response_class=HTMLResponse)
-def serve_map(request: Request, fire_event_name: str, manifest: dict = Depends(get_manifest)):
+@app.get("/map/{fire_event_name}/{burn_metric}", response_class=HTMLResponse)
+def serve_map(request: Request, fire_event_name: str, burn_metric: str, manifest: dict = Depends(get_manifest)):
     tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
-    # tileserver_endpoint = 'http://localhost:5050'
-    cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{fire_event_name}/rbr.tif"
+    cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{fire_event_name}/{burn_metric}.tif"
     cog_tileserver_url_prefix = tileserver_endpoint + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&return_mask=true&nodata=-.9999&algorithm=classify&algorithm_params="
 
     fire_metadata = manifest[fire_event_name]
     fire_metadata_json = json.dumps(fire_metadata)
 
+    with open('src/static/burn_metric_text.json') as json_file:
+        burn_metric_text = json.load(json_file)
+
     return templates.TemplateResponse("index.html", {
         "request": request,
         "fire_event_name": fire_event_name,
+        "burn_metric": burn_metric,
+        "burn_metric_text": burn_metric_text,
         "fire_metadata_json": fire_metadata_json,
         "cog_tileserver_url_prefix": cog_tileserver_url_prefix
     })
