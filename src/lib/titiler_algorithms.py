@@ -33,8 +33,6 @@ class Classify(BaseAlgorithm):
             axis=0
         ).squeeze()
         final_img = np.ma.MaskedArray(classified_rgb, mask=rgb_mask)
-        # final_img = classified_rgb
-
 
         # Create output ImageData
         return ImageData(

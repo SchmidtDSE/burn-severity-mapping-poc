@@ -6,6 +6,9 @@ import tempfile
 import logging
 import json
 import datetime
+import rasterio
+from rasterio.enums import Resampling
+
 from google.cloud import logging as cloud_logging
 
 class SFTPClient:
@@ -130,9 +133,17 @@ class SFTPClient:
         with tempfile.TemporaryDirectory() as tmpdir:
 
             for band_name in metrics_stack.burn_metric.to_index():
+                # Save the band as a local COG
                 local_cog_path = os.path.join(tmpdir, f"{band_name}.tif")
                 band_cog = metrics_stack.sel(burn_metric = band_name).rio
                 band_cog.to_raster(local_cog_path, driver="GTiff")
+
+                # Update the COG with overviews, for faster loading at lower zoom levels
+                self.logger.log_text(f"Updating {band_name} with overviews")
+                with rasterio.open(local_cog_path, 'r+') as ds:
+                    ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
+                    ds.update_tags(ns='rio_overview', resampling='nearest')
+
                 self.upload(
                     source_local_path=local_cog_path,
                     remote_path=f"{fire_event_name}/{band_name}.tif",
