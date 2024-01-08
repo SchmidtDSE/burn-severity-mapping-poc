@@ -57,7 +57,7 @@
     //     nodataValue: 0,
     // }).addTo(map);
 
-    L.tileLayer('{{ cog_tileserver_url_prefix | safe }}{"thresholds":{"0.045":100,"0.222":150,"0.8":200}}', {
+    L.tileLayer('{{ cog_tileserver_url_prefix | safe }}{"thresholds":{"-0.9998":0, "0.045":175,"0.222":100,"0.8":25}}', {
         maxZoom: 20,
     }).addTo(map);
 

@@ -22,8 +22,19 @@ class Classify(BaseAlgorithm):
         # Squeeze 1-length dim
         classified_squeezed = np.squeeze(classified)
 
-        # Convert classified_squeezed to a MaskedArray
-        final_img = np.ma.MaskedArray(classified_squeezed, mask=mask)
+        # Convert to a red rgb image, from grayscale
+        r_channel = np.full_like(classified_squeezed, 255)
+        classified_rgb = np.stack(
+            [r_channel, classified_squeezed, classified_squeezed],
+            axis=0
+        )
+        rgb_mask = np.stack(
+            [mask, mask, mask],
+            axis=0
+        ).squeeze()
+        final_img = np.ma.MaskedArray(classified_rgb, mask=rgb_mask)
+        # final_img = classified_rgb
+
 
         # Create output ImageData
         return ImageData(
