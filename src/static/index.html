@@ -19,21 +19,19 @@
     <!-- Include noUiSlider JS -->
     <script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
-
-    <!-- Include our css styling -->
-    <link rel="stylesheet" type="text/css" href="index.css">
+    <script src="https://cdn.jsdelivr.net/npm/wnumb@1.2.0/wNumb.min.js"></script>
 
 </head>
 <style>
     /* CSS to style the colored areas of the treshold slider to match map */
-    .noUi-connect {
-        background: #FF0000; /* Red color */
-    }
-    .noUi-connects .noUi-connect:nth-child(2) {
-        background: #00FF00; /* Green color */
+    .noUi-connects .noUi-connect:nth-child(4) {
+        background: rgb(255,25,25);
     }
     .noUi-connects .noUi-connect:nth-child(3) {
-        background: #0000FF; /* Blue color */
+        background: rgb(255,100,100);
+    }
+    .noUi-connects .noUi-connect:nth-child(2) {
+        background: rgb(255,175,175);
     }
 
     /* Style for the map */
@@ -47,7 +45,7 @@
         z-index: 0;
     }
 
-    /* Style for the UI elements container */
+    /* Style for the UI elements top right */
     #ui-elements-top-right {
         position: absolute;
         top: 10px;
@@ -58,7 +56,7 @@
         background-color: #f0f0f0;
     }
 
-    /* Style for the UI elements container */
+    /* Style for the UI elements bottom left */
     #ui-elements-bottom-left {
         position: absolute;
         bottom: 10px;
@@ -67,6 +65,22 @@
         padding: 10px;
         border-radius: 10px;
         background-color: #f0f0f0;
+    }
+
+    /* Style for the UI elements bottom right */
+    #ui-elements-bottom-right {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        z-index: 1000;
+        padding: 10px;
+        height: 60%;
+        width: 15%;
+        border-radius: 10px;
+        background-color: #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     /* Style for the tooltip container */
@@ -90,6 +104,14 @@
         background-color: #ffe875;
     }
 
+    #threshold-slider {
+        height: 90%;
+        float: left;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     /* Style for the burn metric info div */
     .burn-metric-info {
         position: absolute;
@@ -109,20 +131,21 @@
         <!-- Opacity -->
         <label for="opacity-slider">Burn Severity Layer Opacity</label>
         <input type="range" min="0" max="1" step="0.1" value=".7" id="opacity-slider">
+    </div>
 
-        <!-- Threshold slider -->
+    <!-- Bottom right ui elements -->
+    <div id="ui-elements-bottom-right">
+        <!-- Thresholds -->
         <div id="threshold-slider"></div>
     </div>
 
-    <!-- BVottom left ui elements -->
+    <!-- Bottom left ui elements -->
     <div id="ui-elements-bottom-left">
         <!-- Burn metric info -->
         <div id="burn-metric-info"></div>
     </div>
 
 <script>
-    var map = L.map('burn-map');
-
     // Data from Jinja2
     console.log("burn_metric - {{ burn_metric }}")
     var burn_metric = "{{ burn_metric }}";
@@ -138,18 +161,41 @@
     var burnMetricText = JSON.parse('{{ burn_metric_text | tojson | safe }}');
 
     // Add base map
-    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    var openTopoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    })
 
-    // Add COG tile layer, with opacity slider
-    var cogTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}{"thresholds":{"0.045":175,"0.222":100,"0.8":25}}', {
+    // Add COG tile layer for classifications
+    var classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"0.045":175,"0.222":100,"0.8":25}}', {
         maxZoom: 20,
         setOpacity: 0.7,
+    })
+
+    // Add COG tile layer for continious metric, no classification
+    var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&rescale=-.8,.8&colormap_name=reds', {
+        maxZoom: 20,
+        setOpacity: 0.7,
+    })
+
+    // Create map
+    var map = L.map('burn-map', {
+        layers: [openTopoLayer],
+    });
+
+    // Add layer control
+    L.control.layers({
+        "Continious": continiousTileLayer,
+        "Classifications": classifiedTileLayer
+    }, null, {
+        collapsed: false,
+        position: 'topleft'
     }).addTo(map);
+
+    // Add opacity slider for metric layers
     var slider = document.getElementById('opacity-slider');
     slider.addEventListener('input', function(e) {
-        cogTileLayer.setOpacity(e.target.value);
+        classifiedTileLayer.setOpacity(e.target.value);
+        continiousTileLayer.setOpacity(e.target.value);
     });
 
     // Iterate over each metric
@@ -177,33 +223,54 @@
         MathJax.typeset([div]);
     }
 
-    // // Append the container to the body
-    // document.body.appendChild(container);
-
     // Add threshold sliders w/ noUiSlider
     var slider = document.getElementById('threshold-slider');
     noUiSlider.create(slider, {
-        start: [0.045, 0.222, 0.8],
-        connect: [true, true, true, false],
+        start: [-.8, 0.05, 0.225, 0.8],
+        connect: [true, true, true, true, true],
         range: {
-            'min': -1,
-            'max': 1
-        }
+            'min': -.8,
+            'max': .8
+        },
+        step: .025,
+        direction: 'rtl',
+        orientation: 'vertical',
+        pips: {
+            mode: 'steps',
+            stepped: true,
+            density: 16,
+            format: wNumb({
+                decimals: 2,
+                to: function(value) {
+                    // Convert to percentage from float
+                    return (value * 100).toFixed(0) + '%';
+                }
+            }),
+            filter: function(value, type) {
+                return value % (4 * 0.025) === 0 ? 1 : -1;
+            }
+        },
+        behaviour: 'tap-drag',
+        tooltips: true,
+        format: wNumb({
+            decimals: 3
+        }),
     });
 
     // Add event listener
     slider.noUiSlider.on('update', function(values, handle) {
-        map.removeLayer(cogTileLayer); // remove the old layer before creating a new one
+        map.removeLayer(classifiedTileLayer); // remove the old layer before creating a new one
         var thresholds = {
-            [values[0]]: 175,
-            [values[1]]: 100,
-            [values[2]]: 25
+            [values[0]]: 250,
+            [values[1]]: 175,
+            [values[2]]: 100,
+            [values[3]]: 25
         };
-        cogTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}' + JSON.stringify({thresholds: thresholds}), {
+        classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}), {
             maxZoom: 20,
             setOpacity: 0.7,
         });
-        cogTileLayer.addTo(map);
+        classifiedTileLayer.addTo(map);
     });
 
     // Center map on fire, based on `bounds` metadata
