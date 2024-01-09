@@ -16,25 +16,112 @@
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-    <style>
-        #mapid { 
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 100%;
-        }
-    </style>
+    <!-- Include noUiSlider JS -->
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
+
+    <!-- Include our css styling -->
+    <link rel="stylesheet" type="text/css" href="index.css">
+
 </head>
+<style>
+    /* CSS to style the colored areas of the treshold slider to match map */
+    .noUi-connect {
+        background: #FF0000; /* Red color */
+    }
+    .noUi-connects .noUi-connect:nth-child(2) {
+        background: #00FF00; /* Green color */
+    }
+    .noUi-connects .noUi-connect:nth-child(3) {
+        background: #0000FF; /* Blue color */
+    }
+
+    /* Style for the map */
+    #burn-map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        z-index: 0;
+    }
+
+    /* Style for the UI elements container */
+    #ui-elements-top-right {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        padding: 10px;
+        border-radius: 10px;
+        background-color: #f0f0f0;
+    }
+
+    /* Style for the UI elements container */
+    #ui-elements-bottom-left {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        z-index: 1000;
+        padding: 10px;
+        border-radius: 10px;
+        background-color: #f0f0f0;
+    }
+
+    /* Style for the tooltip container */
+    #tooltip-container {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        z-index: 1000;
+        padding: 10px;
+        border-radius: 10px;
+        background-color: #f0f0f0;
+    }
+
+    /* Style for the tooltip divs */
+    #tooltip-container div {
+        padding: 10px;
+    }
+
+    /* Style for the highlighted metric */
+    #tooltip-container div.highlighted {
+        background-color: #ffe875;
+    }
+
+    /* Style for the burn metric info div */
+    .burn-metric-info {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        z-index: 1000;
+        padding: 10px;
+        border-radius: 10px;
+        background-color: #f0f0f0;
+    }
+</style>
 <body>
-    <div id="mapid"></div>
-    <div style="position: absolute; top: 10px; right: 10px; z-index: 1000; padding: 10px; border-radius: 10px; background-color: #f0f0f0;">
+    <div id="burn-map"></div>
+
+    <!-- Top right ui elements -->
+    <div id="ui-elements-top-right">
+        <!-- Opacity -->
         <label for="opacity-slider">Burn Severity Layer Opacity</label>
         <input type="range" min="0" max="1" step="0.1" value=".7" id="opacity-slider">
+
+        <!-- Threshold slider -->
+        <div id="threshold-slider"></div>
     </div>
+
+    <!-- BVottom left ui elements -->
+    <div id="ui-elements-bottom-left">
+        <!-- Burn metric info -->
+        <div id="burn-metric-info"></div>
+    </div>
+
 <script>
-    var map = L.map('mapid');
+    var map = L.map('burn-map');
 
     // Data from Jinja2
     console.log("burn_metric - {{ burn_metric }}")
@@ -56,7 +143,7 @@
     }).addTo(map);
 
     // Add COG tile layer, with opacity slider
-    var cogTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}{"thresholds":{"-0.9998":0, "0.045":175,"0.222":100,"0.8":25}}', {
+    var cogTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}{"thresholds":{"0.045":175,"0.222":100,"0.8":25}}', {
         maxZoom: 20,
         setOpacity: 0.7,
     }).addTo(map);
@@ -65,18 +152,8 @@
         cogTileLayer.setOpacity(e.target.value);
     });
 
-    // Add tooltip for burn metrics, in bottom left
-    // Get the container
-    var container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.bottom = '10px';
-    container.style.left = '10px';
-    container.style.zIndex = '1000';
-    container.style.padding = '10px';
-    container.style.borderRadius = '10px';
-    container.style.backgroundColor = '#f0f0f0';
-
     // Iterate over each metric
+    burnMetricInfo = document.getElementById('burn-metric-info');
     for (var key in burnMetricText) {
         // Create a div for the metric
         var div = document.createElement('div');
@@ -86,6 +163,7 @@
 
         // Add padding between divs
         div.style.padding = '10px';
+        div.style.zIndex = 1000;
 
         // Highlight the current metric
         if (key.toLowerCase() === burn_metric.toLowerCase()) {
@@ -93,14 +171,40 @@
         }
 
         // Append the div to the container
-        container.appendChild(div);
+        burnMetricInfo.appendChild(div);
 
         // Ask MathJax to typeset the new div
         MathJax.typeset([div]);
     }
 
-    // Append the container to the body
-    document.body.appendChild(container);
+    // // Append the container to the body
+    // document.body.appendChild(container);
+
+    // Add threshold sliders w/ noUiSlider
+    var slider = document.getElementById('threshold-slider');
+    noUiSlider.create(slider, {
+        start: [0.045, 0.222, 0.8],
+        connect: [true, true, true, false],
+        range: {
+            'min': -1,
+            'max': 1
+        }
+    });
+
+    // Add event listener
+    slider.noUiSlider.on('update', function(values, handle) {
+        map.removeLayer(cogTileLayer); // remove the old layer before creating a new one
+        var thresholds = {
+            [values[0]]: 175,
+            [values[1]]: 100,
+            [values[2]]: 25
+        };
+        cogTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}' + JSON.stringify({thresholds: thresholds}), {
+            maxZoom: 20,
+            setOpacity: 0.7,
+        });
+        cogTileLayer.addTo(map);
+    });
 
     // Center map on fire, based on `bounds` metadata
     map.fitBounds(fire_bounds);

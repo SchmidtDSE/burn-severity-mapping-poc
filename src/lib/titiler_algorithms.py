@@ -9,23 +9,19 @@ class Classify(BaseAlgorithm):
     thresholds: dict # There is no default, which means calls to this algorithm without any parameter will fail
 
     def __call__(self, img: ImageData) -> ImageData:
-
+        float_burn_data = img.data.squeeze()
         float_thresholds = {float(k):v for k,v in self.thresholds.items()}
+        png_int_values = list(float_thresholds.values())
 
-        checks = [img.data < float(threshold) for threshold in float_thresholds]
-        values = list(float_thresholds.values())
-        classified = np.select(checks, values, default=0).astype(np.uint8)
+        threshold_checks = [float_burn_data < float(threshold) for threshold in float_thresholds]
+        mask = (np.isnan(float_burn_data)) | (float_burn_data == -99)
 
-        # Generate mask where classified is 0 
-        mask = classified == 0
-
-        # Squeeze 1-length dim
-        classified_squeezed = np.squeeze(classified)
+        classified = np.select(threshold_checks, png_int_values).astype(np.uint8)
 
         # Convert to a red rgb image, from grayscale
-        r_channel = np.full_like(classified_squeezed, 255)
+        r_channel = np.full_like(classified, 255)
         classified_rgb = np.stack(
-            [r_channel, classified_squeezed, classified_squeezed],
+            [r_channel, classified, classified],
             axis=0
         )
         rgb_mask = np.stack(
