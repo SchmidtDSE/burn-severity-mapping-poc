@@ -5,6 +5,9 @@ channels:
   - defaults
 dependencies:
   - python ==3.10.*
+  - google-auth
+  - google-cloud-secret-manager
+  - google-cloud-logging
   - ipykernel
   - rioxarray
   - stackstac
@@ -22,5 +25,9 @@ dependencies:
   - pystac-client
   - boto3
   - planetary-computer
-  - flask
-  - pysftp
+  - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
+  - uvicorn
+  - paramiko
+  - pip
+  - pip:
+    - titiler.core

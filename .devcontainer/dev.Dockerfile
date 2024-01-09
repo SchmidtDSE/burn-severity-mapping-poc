@@ -12,14 +12,15 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && rm -rf /var/lib/apt/lists/* 
 
 # Copy repo into container 
-COPY . .
+COPY . /workspace
+WORKDIR /workspace/.devcontainer
 
 # Get AWS CLI V2
 RUN prebuild/setup_aws.sh
 
 # Get gcloud SDK, force GCP to use IPV4, bc IPV6 issue w/ Sonic 
 RUN prebuild/setup_gcloud.sh
-ENV PATH $PATH:/google-cloud-sdk/bin
+ENV PATH $PATH:/usr/local/google-cloud-sdk/bin
 ENV GRPC_GO_FORCE_USE_IPV4="true"
 
 # Get OpenTofu
@@ -30,3 +31,6 @@ RUN mamba env create -f dev_environment.yml
 
 # Install nb_conda_kernels in base env to allow for env discovery in jupyter
 RUN mamba install -n base nb_conda_kernels
+
+# Start a shell w/ this dev environment - need to keep container running w/ docker-compose
+CMD ["tail", "-f", "/dev/null"]

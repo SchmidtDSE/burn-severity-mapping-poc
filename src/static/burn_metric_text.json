@@ -1,0 +1,18 @@
+{
+    "NBR": {
+        "metric_name": "Normalized Burn Ratio",
+        "formula": "NBR = \\\\frac{NIR - SWIR}{NIR + SWIR}"
+    },
+    "dNBR": {
+        "metric_name": "Difference in Normalized Burn Ratio",
+        "formula": "dNBR = NBR_{prefire} - NBR_{postfire}"
+    },
+    "RdNBR": {
+        "metric_name": "Relative Difference in Normalized Burn Ratio",
+        "formula": "RdNBR = \\\\frac{dNBR}{|(NBR_{prefire})^{0.5}|}"
+    },
+    "RBR": {
+        "metric_name": "Relativized Burn Ratio",
+        "formula": "RBR = \\\\frac{dNBR}{NBR_{prefire} +1.001}"
+    }
+}

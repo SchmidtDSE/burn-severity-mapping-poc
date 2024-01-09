@@ -1,0 +1,26 @@
+name: burn-severity-prod
+
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python ==3.10
+  - google-auth
+  - google-cloud-secret-manager
+  - google-cloud-logging
+  - rioxarray
+  - stackstac
+  - gdal
+  - numpy
+  - geopandas
+  - rasterio
+  - ipython
+  - boto3
+  - pystac-client
+  - planetary-computer
+  - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
+  - paramiko
+  - uvicorn
+  - pip
+  - pip:
+    - titiler.core

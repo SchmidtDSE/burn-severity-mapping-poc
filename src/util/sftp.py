@@ -2,6 +2,14 @@ import paramiko
 from urllib.parse import urlparse
 import io
 import os
+import tempfile
+import logging
+import json
+import datetime
+import rasterio
+from rasterio.enums import Resampling
+
+from google.cloud import logging as cloud_logging
 
 class SFTPClient:
     def __init__(self, hostname, username, private_key, port=22):
@@ -11,11 +19,22 @@ class SFTPClient:
         self.username = username
         self.port = port
 
-        # TODO: This doesn't seem best practice - AWS is adding a leading \ to newlines \n
-        private_key_file = io.StringIO(private_key.replace("\\n", "\n"))
+        private_key_file = io.StringIO(private_key)
         self.private_key = paramiko.RSAKey.from_private_key(private_key_file)
 
-        print(f"Initialized SFTPClient for {self.hostname} as {self.username}")
+        self.available_cogs = None
+
+        # Set up logging
+        logging_client = cloud_logging.Client(project='dse-nps')
+        log_name = "burn-backend"
+        self.logger = logging_client.logger(log_name)
+
+        # Route Paramiko logs to Google Cloud Logging
+        paramiko_logger = logging.getLogger("paramiko")
+        paramiko_logger.setLevel(logging.DEBUG)
+        paramiko_logger.addHandler(cloud_logging.handlers.CloudLoggingHandler(logging_client, name=log_name))
+
+        self.logger.log_text(f"Initialized SFTPClient for {self.hostname} as {self.username}")
 
     def connect(self):
         """Connects to the sftp server and returns the sftp connection object"""
@@ -29,7 +48,7 @@ class SFTPClient:
                 self.hostname,
                 port=self.port,
                 username=self.username,
-                pkey=self.private_key
+                pkey=self.private_key,
             )
 
             # Create SFTP client from SSH client
@@ -62,9 +81,6 @@ class SFTPClient:
         """
 
         try:
-            print(
-                f"downloading from {self.hostname} as {self.username} [(remote path : {remote_path});(local path: {target_local_path})]"
-            )
 
             # Create the target directory if it does not exist
             path, _ = os.path.split(target_local_path)
@@ -76,7 +92,6 @@ class SFTPClient:
 
             # Download from remote sftp server to local
             self.connection.get(remote_path, target_local_path)
-            print("download completed")
 
         except Exception as err:
             raise Exception(err)
@@ -97,3 +112,91 @@ class SFTPClient:
 
         except Exception as err:
             raise Exception(err)
+
+    def get_available_cogs(self):
+        """Lists all available COGs on the SFTP server"""
+        available_cogs = {}
+        for top_level_folder in self.connection.listdir():
+            if not top_level_folder.endswith(".json"):
+                s3_file_path = f"{top_level_folder}/metrics.tif"
+                available_cogs[top_level_folder] = s3_file_path
+
+        return available_cogs
+
+    def update_available_cogs(self):
+        self.connect()
+        self.available_cogs = self.get_available_cogs()
+        self.disconnect()
+
+    def upload_cogs(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range):
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+
+            for band_name in metrics_stack.burn_metric.to_index():
+                # Save the band as a local COG
+                local_cog_path = os.path.join(tmpdir, f"{band_name}.tif")
+                band_cog = metrics_stack.sel(burn_metric = band_name).rio
+                band_cog.to_raster(local_cog_path, driver="GTiff")
+
+                # Update the COG with overviews, for faster loading at lower zoom levels
+                self.logger.log_text(f"Updating {band_name} with overviews")
+                with rasterio.open(local_cog_path, 'r+') as ds:
+                    ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
+                    ds.update_tags(ns='rio_overview', resampling='nearest')
+
+                self.upload(
+                    source_local_path=local_cog_path,
+                    remote_path=f"{fire_event_name}/{band_name}.tif",
+                )
+
+    def update_manifest(self, fire_event_name, bounds, prefire_date_range, postfire_date_range):
+        with tempfile.TemporaryDirectory() as tmpdir:
+
+            manifest = self.get_manifest()
+
+            if fire_event_name in manifest:
+                self.logger.log_text(f"Fire event {fire_event_name} already exists in manifest. Overwriting.")
+                del manifest[fire_event_name]
+
+            manifest[fire_event_name] = {
+                'bounds': bounds,
+                'prefire_date_range': prefire_date_range,
+                'postfire_date_range': postfire_date_range,
+                'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+            # Upload the manifest to our SFTP server
+            tmp_manifest_path = os.path.join(tmpdir, 'manifest_updated.json')
+            with open(tmp_manifest_path, 'w') as f:
+                json.dump(manifest, f)
+            self.upload(
+                source_local_path=tmp_manifest_path,
+                remote_path='manifest.json'
+            )
+            self.logger.log_text(f"Uploaded/updated manifest.json")
+
+    def upload_fire_event(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range):
+        self.logger.log_text(f"Uploading fire event {fire_event_name}")
+
+        self.upload_cogs(
+            metrics_stack=metrics_stack,
+            fire_event_name=fire_event_name,
+            prefire_date_range=prefire_date_range,
+            postfire_date_range=postfire_date_range
+        )
+
+        bounds = [round(pos, 4) for pos in metrics_stack.rio.bounds()]
+
+        self.update_manifest(
+            fire_event_name=fire_event_name, 
+            bounds=bounds,
+            prefire_date_range=prefire_date_range,
+            postfire_date_range=postfire_date_range
+        )
+    
+    def get_manifest(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self.download('manifest.json', tmpdir + 'tmp_manifest.json')
+            self.logger.log_text(f"Got manifest.json")
+            manifest = json.load(open(tmpdir + 'tmp_manifest.json', 'r'))
+            return manifest

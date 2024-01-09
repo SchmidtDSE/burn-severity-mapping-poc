@@ -1,3 +1,8 @@
+#### To serve tiles via TiTiler, pointed at S3 url from burn severity backend:
+```
+http://localhost:8000/cog/map?url=https://burn-severity.s3.us-east-2.amazonaws.com/public/geology/rbr.tif&rescale=-.15,.15
+```
+
 ## Local Development
 
 ### Dev Container
