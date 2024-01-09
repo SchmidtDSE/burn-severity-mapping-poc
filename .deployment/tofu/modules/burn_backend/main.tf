@@ -54,6 +54,7 @@ resource "google_compute_router_nat" "burn_backend_nat" {
 }
 
 # Create a Cloud Run service
+# Create a Cloud Run service
 resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
   name     = "tf-rest-burn-severity"
   location = "us-central1"
@@ -74,6 +75,46 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
       env {
         name  = "SFTP_ADMIN_USERNAME"
         value = var.sftp_admin_username
+      }
+      env {
+        name  = "CPL_VSIL_CURL_ALLOWED_EXTENSIONS"
+        value = ".tif,.TIF,.tiff"
+      }
+      env {
+        name  = "GDAL_CACHEMAX"
+        value = "200"
+      }
+      env {
+        name  = "CPL_VSIL_CURL_CACHE_SIZE"
+        value = "200000000"
+      }
+      env {
+        name  = "GDAL_BAND_BLOCK_CACHE"
+        value = "HASHSET"
+      }
+      env {
+        name  = "GDAL_DISABLE_READDIR_ON_OPEN"
+        value = "EMPTY_DIR"
+      }
+      env {
+        name  = "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES"
+        value = "YES"
+      }
+      env {
+        name  = "GDAL_HTTP_MULTIPLEX"
+        value = "YES"
+      }
+      env {
+        name  = "GDAL_HTTP_VERSION"
+        value = "2"
+      }
+      env {
+        name  = "VSI_CACHE"
+        value = "TRUE"
+      }
+      env {
+        name  = "VSI_CACHE_SIZE"
+        value = "5000000"
       }
       resources {
         limits = {
