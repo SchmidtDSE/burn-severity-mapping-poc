@@ -20,7 +20,7 @@ from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from src.lib.query_sentinel import Sentinel2Client
 from src.util.sftp import SFTPClient
-from src.util.gcp_secrets import get_ssh_secret
+from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
 from src.lib.titiler_algorithms import algorithms
 
 
@@ -148,6 +148,8 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
 
 @app.get("/map/{fire_event_name}/{burn_metric}", response_class=HTMLResponse)
 def serve_map(request: Request, fire_event_name: str, burn_metric: str, manifest: dict = Depends(get_manifest)):
+    mapbox_token = get_mapbox_secret()
+
     tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
     # tileserver_endpoint = 'http://localhost:5050'
     cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{fire_event_name}/{burn_metric}.tif"
@@ -159,8 +161,9 @@ def serve_map(request: Request, fire_event_name: str, burn_metric: str, manifest
     with open('src/static/burn_metric_text.json') as json_file:
         burn_metric_text = json.load(json_file)
 
-    return templates.TemplateResponse("index.html", {
+    return templates.TemplateResponse("map.html", {
         "request": request,
+        "mapbox_token": mapbox_token, # for NAIP and Satetllite in V0
         "fire_event_name": fire_event_name,
         "burn_metric": burn_metric,
         "burn_metric_text": burn_metric_text,

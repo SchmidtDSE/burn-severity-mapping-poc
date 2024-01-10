@@ -151,46 +151,84 @@
 
 <script>
     // Data from Jinja2
-    console.log("burn_metric - {{ burn_metric }}")
-    var burn_metric = "{{ burn_metric }}";
-
-    console.log("fire metadata")
+    var burnMetric = "{{ burn_metric }}";
     var fireMetadata = JSON.parse({{fire_metadata_json | tojson | safe}});
-    console.log(fireMetadata);
+    var fireBounds = [[fireMetadata.bounds[1], fireMetadata.bounds[0]], [fireMetadata.bounds[3], fireMetadata.bounds[2]]]
+    var mapboxToken = "{{ mapbox_token }}"
 
-    var fire_bounds = [[fireMetadata.bounds[1], fireMetadata.bounds[0]], [fireMetadata.bounds[3], fireMetadata.bounds[2]]]
-    console.log("fire bounds - ", fire_bounds)
+    // Define the URLs for the Mapbox NAIP and Satellite layers
+    var mapboxNaipUrl = 'https://api.mapbox.com/v4/mapbox.naip/{z}/{x}/{y}.png?access_token=' + mapboxToken;
+    var mapboxSatelliteUrl = 'https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.png?access_token=' + mapboxToken;
 
     // Content for the webpage, defined as JSON
     var burnMetricText = JSON.parse('{{ burn_metric_text | tojson | safe }}');
 
-    // Add base map
-    var openTopoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    })
 
     // Add COG tile layer for classifications
     var classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"0.045":175,"0.222":100,"0.8":25}}', {
         maxZoom: 20,
-        setOpacity: 0.7,
+        pane: 'metrics'
     })
 
     // Add COG tile layer for continious metric, no classification
     var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&rescale=-.8,.8&colormap_name=reds', {
         maxZoom: 20,
-        setOpacity: 0.7,
+        pane: 'metrics'
+    })
+
+    // Easy peasy Mapbox tileservers for the NAIP and Satellite layers
+    var naipLayer = L.tileLayer(mapboxNaipUrl, {
+        maxZoom: 20,
+        pane: 'basemaps'
+    });
+    var satelliteLayer = L.tileLayer(mapboxSatelliteUrl, {
+        maxZoom: 20,
+        pane: 'basemaps'
+    });
+
+    // Add OSM Topo
+    var openTopoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        pane: 'basemaps'
     })
 
     // Create map
     var map = L.map('burn-map', {
-        layers: [openTopoLayer],
+        layers: [openTopoLayer, classifiedTileLayer],
     });
 
-    // Add layer control
-    L.control.layers({
+
+    // Create panes to properly order basemaps and metrics
+    map.createPane('basemaps');
+    map.getPane('basemaps').style.zIndex = 200;
+    map.createPane('metrics');
+    map.getPane('metrics').style.zIndex = 500;
+
+    // Add layer controls - one for basemap, one for metrics
+    var baseLayers = {
+        "OpenTopoMap": openTopoLayer,
+        "NAIP": naipLayer,
+        "Satellite": satelliteLayer
+    };
+
+    var overlayLayers = {
         "Continuous": continiousTileLayer,
         "Classifications": classifiedTileLayer
-    }, null, {
+    };
+
+    for (var key in baseLayers) {
+        baseLayers[key].setZIndex(1);
+    }
+    for (var key in overlayLayers) {
+        overlayLayers[key].setZIndex(2);
+    }
+
+    L.control.layers(baseLayers, null, {
+        collapsed: false,
+        position: 'topleft'
+    }).addTo(map);
+
+    L.control.layers(null, overlayLayers, {
         collapsed: false,
         position: 'topleft'
     }).addTo(map);
@@ -198,6 +236,11 @@
     // Add opacity slider for metric layers
     var slider = document.getElementById('opacity-slider');
     slider.addEventListener('input', function(e) {
+        console.log('e.target.value:', e.target.value);
+        console.log('classifiedTileLayer:', classifiedTileLayer);
+        console.log('classifiedTileLayer.setOpacity:', classifiedTileLayer.setOpacity);
+        console.log('continiousTileLayer:', continiousTileLayer);
+        console.log('continiousTileLayer.setOpacity:', continiousTileLayer.setOpacity);
         classifiedTileLayer.setOpacity(e.target.value);
         continiousTileLayer.setOpacity(e.target.value);
     });
@@ -216,7 +259,7 @@
         div.style.zIndex = 1000;
 
         // Highlight the current metric
-        if (key.toLowerCase() === burn_metric.toLowerCase()) {
+        if (key.toLowerCase() === burnMetric.toLowerCase()) {
             div.style.backgroundColor = '#ffe875';
         }
 
@@ -272,14 +315,27 @@
         };
         classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}), {
             maxZoom: 20,
-            setOpacity: 0.7,
         });
         classifiedTileLayer.addTo(map);
     });
 
     // Center map on fire, based on `bounds` metadata
-    map.fitBounds(fire_bounds);
+    map.fitBounds(fireBounds);
 
+    // Don't put the basemap over the metric layer, if it exists
+    // map.on('baselayerchange', function(eventLayer) 
+    // {
+    //     console.log(eventLayer.name);
+    //     console.log(map.hasLayer(continiousTileLayer));
+    //     if (map.hasLayer(continiousTileLayer)) {
+    //         map.removeLayer(continiousTileLayer);
+    //         continiousTileLayer.addTo(map);
+    //     }
+    //     if (map.hasLayer(classifiedTileLayer)) {
+    //         map.removeLayer(classifiedTileLayer);
+    //         classifiedTileLayer.addTo(map);
+    //     }
+    // });
 </script>
 
 </body>

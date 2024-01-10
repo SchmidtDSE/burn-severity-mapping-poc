@@ -19,3 +19,22 @@ def get_ssh_secret():
     ssh_private_key = json.loads(response.payload.data.decode("UTF-8"))['SSH_KEY_ADMIN_PRIVATE']
 
     return ssh_private_key.replace("\\n", "\n")
+
+def get_mapbox_secret():
+    # GCP project and secret details
+    project_id = "dse-nps"
+    secret_id = "mapbox_api_key"
+
+    # Create the Secret Manager client.
+    client = secretmanager.SecretManagerServiceClient()
+
+    # Build the resource name of the secret version.
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+
+    # Access the secret version.
+    response = client.access_secret_version(request={"name": name})
+
+    # Parse the secret value as a string.
+    mapbox_api_key = response.payload.data.decode("UTF-8")
+
+    return mapbox_api_key
