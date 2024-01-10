@@ -5,6 +5,7 @@ channels:
   - defaults
 dependencies:
   - python ==3.10.*
+  - python-multipart
   - google-auth
   - google-cloud-secret-manager
   - google-cloud-logging

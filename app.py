@@ -10,7 +10,14 @@ import socket
 import requests
 from fastapi import HTTPException
 
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import (
+    FastAPI,
+    Depends,
+    HTTPException,
+    Request,
+    UploadFile,
+    File
+)
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -106,7 +113,7 @@ class AnaylzeBurnPOSTBody(BaseModel):
     date_ranges: dict
     fire_event_name: str
 
-@app.post("/analyze-burn")
+@app.post("/api/analyze-burn")
 def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
     geojson = body.geojson
     date_ranges = body.date_ranges
@@ -170,3 +177,20 @@ def serve_map(request: Request, fire_event_name: str, burn_metric: str, manifest
         "fire_metadata_json": fire_metadata_json,
         "cog_tileserver_url_prefix": cog_tileserver_url_prefix
     })
+
+@app.get("/upload", response_class=HTMLResponse)
+def upload(request: Request):
+    return templates.TemplateResponse("upload.html", {"request": request})
+
+@app.post("/api/upload-shapefile")
+async def upload_shapefile(file: UploadFile = File(...)):
+    try:
+        # Read the file
+        shapefile_content = await file.read()
+
+        # TODO: Convert the shapefile to GeoJSON and upload it to burn-severity-backend s3
+        s3_url = convert_and_upload(shapefile_content)
+
+        return JSONResponse(status_code=200, content={"s3_url": s3_url})
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})

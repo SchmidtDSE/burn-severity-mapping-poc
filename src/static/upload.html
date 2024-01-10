@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fire Analysis Form</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <form id="fire-analysis-form">
+        <label for="geojson">GeoJSON:</label><br>
+        <input type="file" id="geojson" name="geojson"><br>
+
+        <label for="prefire">Prefire Date Range:</label><br>
+        <input type="date" id="prefire-start" name="prefire-start">
+        <input type="date" id="prefire-end" name="prefire-end"><br>
+        <label for="postfire">Postfire Date Range:</label><br>
+        <input type="date" id="postfire-start" name="postfire-start">
+        <input type="date" id="postfire-end" name="postfire-end"><br>
+
+        <label for="fire_event_name">Fire Event Name:</label><br>
+        <input type="text" id="fire_event_name" name="fire_event_name"><br>
+        <label for="affiliation">Affiliation:</label><br>
+        <input type="text" id="affiliation" name="affiliation"><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <div id="loading" style="display: none;">
+        <img src="spinner.gif" alt="Loading..." />
+    </div>
+
+    <div id="success" style="display: none;">
+        <img src="checkmark.png" alt="Success!" />
+    </div>
+
+    <script>
+    $("#fire-analysis-form").on("submit", function(event) {
+        event.preventDefault();
+
+        // Show the loading spinner
+        $("#loading").show();
+
+        var formData = new FormData();
+        formData.append('shapefile', $('#geojson')[0].files[0]);
+
+        // First, make a request to convert the shapefile to GeoJSON
+        $.ajax({
+            url: '/upload-shapefile',
+            type: 'post',
+            processData: false,
+            contentType: false,
+            success: function (data) {
+                // The shapefile has been converted, now make the request to analyze the burn
+                var data = {
+                    geojson: data.s3_url, // Use the returned S3 URL
+                    date_ranges: {
+                        prefire: {
+                            start: $("#prefire-start").val(),
+                            end: $("#prefire-end").val()
+                        },
+                        postfire: {
+                            start: $("#postfire-start").val(),
+                            end: $("#postfire-end").val()
+                        }
+                    },
+                    fire_event_name: $("#fire_event_name").val(),
+                    affiliation: $("#affiliation").val()
+                };
+
+                $.ajax({
+                    url: '/analyze-burn',
+                    type: 'post',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    success: function (data) {
+                        // Hide the loading spinner and show the success checkmark
+                        $("#loading").hide();
+                        $("#success").show();
+                    },
+                    data: JSON.stringify(data)
+                });
+            },
+            data: formData
+        });
+    });
+    </script>
+</body>
+</html>
