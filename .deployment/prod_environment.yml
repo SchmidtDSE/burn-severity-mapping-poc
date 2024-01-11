@@ -10,7 +10,6 @@ dependencies:
   - google-cloud-logging
   - rioxarray
   - stackstac
-  - ogr
   - gdal
   - numpy
   - geopandas

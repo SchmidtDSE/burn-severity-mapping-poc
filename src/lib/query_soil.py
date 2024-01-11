@@ -5,7 +5,7 @@ from shapely.geometry import shape
 from shapely.ops import transform
 import xml.etree.ElementTree as ET
 import tempfile
-import ogr
+from osgeo import ogr
 
 SDM_ENDPOINT_TABULAR = "https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest"
 SDM_ENDPOINT_SPATIAL = "https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs"
