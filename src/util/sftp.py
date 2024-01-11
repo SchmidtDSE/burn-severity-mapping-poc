@@ -128,7 +128,7 @@ class SFTPClient:
         self.available_cogs = self.get_available_cogs()
         self.disconnect()
 
-    def upload_cogs(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range):
+    def upload_cogs(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range, affiliation):
 
         with tempfile.TemporaryDirectory() as tmpdir:
 
@@ -146,10 +146,10 @@ class SFTPClient:
 
                 self.upload(
                     source_local_path=local_cog_path,
-                    remote_path=f"{fire_event_name}/{band_name}.tif",
+                    remote_path=f"{affiliation}/{fire_event_name}/{band_name}.tif",
                 )
 
-    def update_manifest(self, fire_event_name, bounds, prefire_date_range, postfire_date_range):
+    def update_manifest(self, fire_event_name, bounds, prefire_date_range, postfire_date_range, affiliation):
         with tempfile.TemporaryDirectory() as tmpdir:
 
             manifest = self.get_manifest()
@@ -162,7 +162,8 @@ class SFTPClient:
                 'bounds': bounds,
                 'prefire_date_range': prefire_date_range,
                 'postfire_date_range': postfire_date_range,
-                'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'requester_affiliation': affiliation
             }
 
             # Upload the manifest to our SFTP server
@@ -175,14 +176,15 @@ class SFTPClient:
             )
             self.logger.log_text(f"Uploaded/updated manifest.json")
 
-    def upload_fire_event(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range):
+    def upload_fire_event(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range, affiliation):
         self.logger.log_text(f"Uploading fire event {fire_event_name}")
 
         self.upload_cogs(
             metrics_stack=metrics_stack,
             fire_event_name=fire_event_name,
             prefire_date_range=prefire_date_range,
-            postfire_date_range=postfire_date_range
+            postfire_date_range=postfire_date_range,
+            affiliation=affiliation
         )
 
         bounds = [round(pos, 4) for pos in metrics_stack.rio.bounds()]
@@ -191,7 +193,8 @@ class SFTPClient:
             fire_event_name=fire_event_name, 
             bounds=bounds,
             prefire_date_range=prefire_date_range,
-            postfire_date_range=postfire_date_range
+            postfire_date_range=postfire_date_range,
+            affiliation=affiliation
         )
 
     def get_manifest(self):

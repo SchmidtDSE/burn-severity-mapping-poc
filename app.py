@@ -112,15 +112,17 @@ def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
 
 # # create a POST endpoint for running a burn query with an input geojson, with its associated POST body class
 class AnaylzeBurnPOSTBody(BaseModel):
-    geojson: dict
+    geojson: str
     date_ranges: dict
     fire_event_name: str
+    affiliation: str
 
 @app.post("/api/analyze-burn")
 def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
-    geojson = body.geojson
+    geojson = json.loads(body.geojson)
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
+    affiliation = body.affiliation  
     logger.log_text(f"Received analyze-burn request for {fire_event_name}")
 
     try:
@@ -143,6 +145,7 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
         sftp_client.connect()
         sftp_client.upload_fire_event(
             metrics_stack=geo_client.metrics_stack,
+            affiliation=affiliation,
             fire_event_name=fire_event_name,
             prefire_date_range=date_ranges["prefire"],
             postfire_date_range=date_ranges["postfire"]
@@ -213,7 +216,7 @@ async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = 
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
             with open(tmp_geojson, "w") as f:
-                f.write(json.dumps(geojson))
+                f.write(geojson)
             sftp_client.upload(
                 source_local_path=tmp_geojson,
                 remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson"
@@ -221,9 +224,8 @@ async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = 
 
         sftp_client.disconnect()
 
-        remote_geojson_path = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/boundary.geojson"
 
-        return JSONResponse(status_code=200, content={"s3_geojson_url": remote_geojson_path})
+        return JSONResponse(status_code=200, content={"geojson": geojson})
 
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})

@@ -24,19 +24,19 @@
     </form>
 
     <div id="upload-loading" style="display: none;">
-        <img src="spinner.gif" alt="Uploading shapefile... this may take a few moments." />
+        <img src="/static/spinner.gif" alt="Uploading shapefile... this may take a few moments." />
     </div>
 
     <div id="upload-success" style="display: none;">
-        <img src="checkmark.png" alt="Upload Success!" />
+        <img src="/static/checkmark.png" alt="Upload Success!" />
     </div>
 
     <div id="analysis-loading" style="display: none;">
-        <img src="spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes." />
+        <img src="/static/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes." />
     </div>
 
     <div id="analysis-success" style="display: none;">
-        <img src="checkmark.png" alt="Analysis Success!" />
+        <img src="/static/checkmark.png" alt="Analysis Success!" />
     </div>
 
     <script>
@@ -53,48 +53,44 @@
         formData.append('affiliation', $("#affiliation").val());
 
         // Make a request to upload the shapefile
-        $.ajax({
+        var upload = $.ajax({
             url: `/api/upload-shapefile-zip`,
             type: 'post',
             processData: false,
             contentType: false,
-            data: formData,
-            success: function (data) {
-                // Hide the upload loading spinner and show the upload success checkmark
-                $("#upload-loading").hide();
-                $("#upload-success").show();
+            data: formData
+        });
 
-                // Make a request to analyze the burn
-                $.ajax({
-                    url: '/api/analyze-burn',
-                    type: 'post',
-                    dataType: 'json',
-                    contentType: 'application/json',
-                    success: function (data) {
-                        // Hide the analysis loading spinner and show the analysis success checkmark
-                        $("#analysis-loading").hide();
-                        $("#analysis-success").show();
-                    },
-                    error: function (error) {
-                        // Handle error
-                        console.error(error);
-                    },
-                    data: JSON.stringify({
-                        fire_event_name: $("#fire_event_name").val(),
-                        affiliation: $("#affiliation").val(),
-                        date_ranges: {
-                            prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
-                            postfire: [$("#postfire-start").val(), $("#postfire-end").val()]
-                        }
-                    })
-                });
-            },
-            error: function (error) {
-                // Handle error
-                console.error(error);
-            }
+        $.when(upload).done(function(uploadResponse) {
+            // Log the data returned from the first AJAX call
+            console.log('upload success', uploadResponse);
+
+            // Make a request to analyze the burn
+            $.ajax({
+                url: '/api/analyze-burn',
+                type: 'post',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    geojson: uploadResponse.geojson,
+                    fire_event_name: $("#fire_event_name").val(),
+                    affiliation: $("#affiliation").val(),
+                    date_ranges: {
+                        prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
+                        postfire: [$("#postfire-start").val(), $("#postfire-end").val()]
+                    }
+                }),
+                success: function (analysisResponse) {
+                    console.log(analysisResponse);
+                },
+                error: function (error) {
+                    console.error(error);
+                }
+            });
+        }).fail(function(error) {
+            console.error(error);
         });
     });
-</script>
+    </script>
 </body>
 </html>
