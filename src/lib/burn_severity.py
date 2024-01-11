@@ -1,26 +1,6 @@
-import os
-from osgeo import osr
-from osgeo import ogr
-from osgeo import gdal
 import numpy as np
-import boto3
-from botocore.exceptions import NoCredentialsError
-from botocore.handlers import disable_signing
-import requests
-import matplotlib
-import matplotlib.pyplot as plt
-import rasterio
-from rasterio.merge import merge
-import glob
-from rasterio.mask import mask
-from shapely.geometry import mapping
-import geopandas as gpd
-import math
 import xarray as xr
-import rioxarray as rxr
 import pandas as pd
-
-os.environ["AWS_NO_SIGN_REQUEST"] = "YES" # to avoid signing requests, avoid AWS auth
 
 def calc_nbr(band_nir, band_swir):
     """

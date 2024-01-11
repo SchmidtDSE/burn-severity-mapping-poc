@@ -53,8 +53,50 @@ resource "google_compute_router_nat" "burn_backend_nat" {
   }
 }
 
-# Create a Cloud Run service
-# Create a Cloud Run service
+# Create a Cloud Run service for titiler - for later
+# resource "google_cloud_run_v2_service" "titiler_service" {
+#   name     = "titiler-service"
+#   location = "us-central1"
+
+#   template {
+#     service_account = google_service_account.burn-backend-service.email
+#     timeout = "3599s" # max timeout is one hour
+#     containers {
+#       image = "ghcr.io/developmentseed/titiler:0.15.8" # Use the titiler Docker image
+#       resources {
+#         limits = {
+#           cpu    = "2"
+#           memory = "2Gi"
+#         }
+#       }
+#     }
+#     vpc_access {
+#       connector = google_vpc_access_connector.burn_backend_vpc_connector.id
+#       egress = "ALL_TRAFFIC"
+#     }
+#   }
+
+#   traffic {
+#     percent         = 100
+#     type            = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+#   }
+
+#   lifecycle { # This helps to not replace the service if it already exists
+#     ignore_changes = [
+#       template[0].containers[0].image,
+#     ]
+#   }
+# }
+
+# # Allow unauthenticated invocations
+# resource "google_cloud_run_service_iam_member" "public_titiler" {
+#   service = google_cloud_run_v2_service.titiler_service.name
+#   location = google_cloud_run_v2_service.titiler_service.location
+#   role = "roles/run.invoker"
+#   member = "allUsers"
+# }
+
+# Create a Cloud Run service for burn-backend services
 resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
   name     = "tf-rest-burn-severity"
   location = "us-central1"

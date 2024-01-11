@@ -32,7 +32,7 @@ from src.util.sftp import SFTPClient
 from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
 from src.util.ingest_burn_zip import ingest_esri_zip_file, shp_to_geojson
 from src.lib.titiler_algorithms import algorithms
-
+from src.lib.query_soil import create_aoi_query
 
 # app = Flask(__name__)
 app = FastAPI()
@@ -47,6 +47,8 @@ logger = logging_client.logger(log_name)
 
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 templates = Jinja2Templates(directory="src/static")
+
+### HELPERS ###
 
 @app.get("/")
 def index():
@@ -74,6 +76,8 @@ def check_dns():
         logger.log_text(f"DNS check: Error {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+### DEPENDENCIES ###
+
 def get_sftp_client():
     SFTP_SERVER_ENDPOINT = os.getenv('SFTP_SERVER_ENDPOINT')
     SFTP_ADMIN_USERNAME = os.getenv('SFTP_ADMIN_USERNAME')
@@ -95,7 +99,9 @@ def get_manifest(sfpt_client: SFTPClient = Depends(get_sftp_client)):
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
 
-@app.get("/available-cogs")
+### API ENDPOINTS ###
+
+@app.get("/api/available-cogs")
 def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
     try:
         sftp_client.update_available_cogs()
@@ -120,6 +126,8 @@ class AnaylzeBurnPOSTBody(BaseModel):
 @app.post("/api/analyze-burn")
 def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
     geojson = json.loads(body.geojson)
+    # geojson = body.geojson
+
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation  
@@ -159,34 +167,19 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
 
-@app.get("/map/{affiliation}/{fire_event_name}/{burn_metric}", response_class=HTMLResponse)
-def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliation: str, manifest: dict = Depends(get_manifest)):
-    mapbox_token = get_mapbox_secret()
 
-    tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
-    # tileserver_endpoint = 'http://localhost:5050'
-    cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
-    cog_tileserver_url_prefix = tileserver_endpoint + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
+class QuerySoilPOSTBody(BaseModel):
+    geojson: dict
+    fire_event_name: str
 
-    fire_metadata = manifest[fire_event_name]
-    fire_metadata_json = json.dumps(fire_metadata)
-
-    with open('src/static/burn_metric_text.json') as json_file:
-        burn_metric_text = json.load(json_file)
-
-    return templates.TemplateResponse("map.html", {
-        "request": request,
-        "mapbox_token": mapbox_token, # for NAIP and Satetllite in V0
-        "fire_event_name": fire_event_name,
-        "burn_metric": burn_metric,
-        "burn_metric_text": burn_metric_text,
-        "fire_metadata_json": fire_metadata_json,
-        "cog_tileserver_url_prefix": cog_tileserver_url_prefix
-    })
-
-@app.get("/upload", response_class=HTMLResponse)
-def upload(request: Request):
-    return templates.TemplateResponse("upload.html", {"request": request})
+@app.post("/api/query-soil/create-aoi")
+def query_soil(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
+    # geojson = json.loads(body.geojson)
+    geojson = body.geojson
+    fire_event_name = body.fire_event_name
+    aoi_response = create_aoi_query(geojson)
+    aoi_smd_id = aoi_response.json()['id']
+    return JSONResponse(status_code=200, content={"aoi_smd_id": aoi_smd_id})
 
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = Form(...), file: UploadFile = File(...), sftp_client: SFTPClient = Depends(get_sftp_client)):
@@ -229,3 +222,34 @@ async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = 
 
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
+
+### WEB PAGES ###
+
+@app.get("/map/{affiliation}/{fire_event_name}/{burn_metric}", response_class=HTMLResponse)
+def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliation: str, manifest: dict = Depends(get_manifest)):
+    mapbox_token = get_mapbox_secret()
+
+    tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
+    # tileserver_endpoint = 'http://localhost:5050'
+    cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
+    cog_tileserver_url_prefix = tileserver_endpoint + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
+
+    fire_metadata = manifest[fire_event_name]
+    fire_metadata_json = json.dumps(fire_metadata)
+
+    with open('src/static/burn_metric_text.json') as json_file:
+        burn_metric_text = json.load(json_file)
+
+    return templates.TemplateResponse("map.html", {
+        "request": request,
+        "mapbox_token": mapbox_token, # for NAIP and Satetllite in V0
+        "fire_event_name": fire_event_name,
+        "burn_metric": burn_metric,
+        "burn_metric_text": burn_metric_text,
+        "fire_metadata_json": fire_metadata_json,
+        "cog_tileserver_url_prefix": cog_tileserver_url_prefix
+    })
+
+@app.get("/upload", response_class=HTMLResponse)
+def upload(request: Request):
+    return templates.TemplateResponse("upload.html", {"request": request})
