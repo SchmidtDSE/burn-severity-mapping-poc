@@ -181,6 +181,8 @@ def query_soil(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(get_sf
     aoi_smd_id = aoi_response.json()['id']
     return JSONResponse(status_code=200, content={"aoi_smd_id": aoi_smd_id})
 
+
+
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = Form(...), file: UploadFile = File(...), sftp_client: SFTPClient = Depends(get_sftp_client)):
     try:

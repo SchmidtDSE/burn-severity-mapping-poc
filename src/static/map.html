@@ -236,11 +236,6 @@
     // Add opacity slider for metric layers
     var slider = document.getElementById('opacity-slider');
     slider.addEventListener('input', function(e) {
-        console.log('e.target.value:', e.target.value);
-        console.log('classifiedTileLayer:', classifiedTileLayer);
-        console.log('classifiedTileLayer.setOpacity:', classifiedTileLayer.setOpacity);
-        console.log('continiousTileLayer:', continiousTileLayer);
-        console.log('continiousTileLayer.setOpacity:', continiousTileLayer.setOpacity);
         classifiedTileLayer.setOpacity(e.target.value);
         continiousTileLayer.setOpacity(e.target.value);
     });
@@ -313,8 +308,11 @@
             [values[2]]: 100,
             [values[3]]: 25
         };
+        var opacity = slider.value; // get current opacity slider value
         classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}), {
             maxZoom: 20,
+            pane: 'metrics', // specify the pane
+            opacity: opacity // set opacity
         });
         classifiedTileLayer.addTo(map);
     });
