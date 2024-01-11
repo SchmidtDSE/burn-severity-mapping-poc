@@ -32,8 +32,7 @@ from src.util.sftp import SFTPClient
 from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
 from src.util.ingest_burn_zip import ingest_esri_zip_file, shp_to_geojson
 from src.lib.titiler_algorithms import algorithms
-from src.lib.query_soil import create_aoi_query
-
+from src.lib.query_soil import sdm_create_aoi, sdm_get_available_interpretations, sdm_get_esa_mapunitid_poly
 # app = Flask(__name__)
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
@@ -116,7 +115,6 @@ def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
 
-# # create a POST endpoint for running a burn query with an input geojson, with its associated POST body class
 class AnaylzeBurnPOSTBody(BaseModel):
     geojson: str
     date_ranges: dict
@@ -172,16 +170,27 @@ class QuerySoilPOSTBody(BaseModel):
     geojson: dict
     fire_event_name: str
 
-@app.post("/api/query-soil/create-aoi")
-def query_soil(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
-    # geojson = json.loads(body.geojson)
+# @app.post("/api/query-soil/create-aoi")
+# def create_aoi(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
+#     # geojson = json.loads(body.geojson)
+#     geojson = body.geojson
+#     fire_event_name = body.fire_event_name
+#     aoi_response = sdm_create_aoi(geojson)
+#     aoi_smd_id = aoi_response.json()['id']
+#     return JSONResponse(status_code=200, content={"aoi_smd_id": aoi_smd_id})
+
+# @app.get("/api/query-soil/get-available-interpretations")
+# def get_sdm_interpretations(aoi_smd_id: str):
+#     available_interpretations = sdm_get_available_interpretations(aoi_smd_id)
+#     return JSONResponse(status_code=200, content={"available_interpretations": available_interpretations})
+
+@app.post('/api/query-soil/get-esa-mapunitid-poly')
+def get_esa_mapunitid_poly(body: QuerySoilPOSTBody):
     geojson = body.geojson
     fire_event_name = body.fire_event_name
-    aoi_response = create_aoi_query(geojson)
-    aoi_smd_id = aoi_response.json()['id']
-    return JSONResponse(status_code=200, content={"aoi_smd_id": aoi_smd_id})
-
-
+    mapunitpoly_geojson = sdm_get_esa_mapunitid_poly(geojson)
+    return JSONResponse(status_code=200, content={"mapunitpoly_geojson": json.loads(mapunitpoly_geojson)})
+    # return polygon_response
 
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = Form(...), file: UploadFile = File(...), sftp_client: SFTPClient = Depends(get_sftp_client)):
