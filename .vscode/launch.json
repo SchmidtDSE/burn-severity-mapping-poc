@@ -13,7 +13,7 @@
                 "--reload"
             ],
             "justMyCode": true,
-            "envFile": "/workspace/.devcontainer/.env", // Path to the ".env" file.
+            "envFile": "/workspace/.devcontainer/.env"
         }
     ]
 }

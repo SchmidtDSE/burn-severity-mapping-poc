@@ -6,8 +6,8 @@
 </head>
 <body>
     <form id="fire-analysis-form">
-        <label for="geojson">GeoJSON:</label><br>
-        <input type="file" id="geojson" name="geojson"><br>
+        <label for="geojson">Zipped Shapefile:</label><br>
+        <input type="file" id="shp_zip" name="shp_zip"><br>
 
         <label for="prefire">Prefire Date Range:</label><br>
         <input type="date" id="prefire-start" name="prefire-start">
@@ -23,64 +23,78 @@
         <input type="submit" value="Submit">
     </form>
 
-    <div id="loading" style="display: none;">
-        <img src="spinner.gif" alt="Loading..." />
+    <div id="upload-loading" style="display: none;">
+        <img src="spinner.gif" alt="Uploading shapefile... this may take a few moments." />
     </div>
 
-    <div id="success" style="display: none;">
-        <img src="checkmark.png" alt="Success!" />
+    <div id="upload-success" style="display: none;">
+        <img src="checkmark.png" alt="Upload Success!" />
+    </div>
+
+    <div id="analysis-loading" style="display: none;">
+        <img src="spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes." />
+    </div>
+
+    <div id="analysis-success" style="display: none;">
+        <img src="checkmark.png" alt="Analysis Success!" />
     </div>
 
     <script>
     $("#fire-analysis-form").on("submit", function(event) {
         event.preventDefault();
 
-        // Show the loading spinner
-        $("#loading").show();
+        // Show the upload loading spinner
+        $("#upload-loading").show();
+        $("#analysis-loading").show();
 
         var formData = new FormData();
-        formData.append('shapefile', $('#geojson')[0].files[0]);
+        formData.append('file', $('#shp_zip')[0].files[0]);
+        formData.append('fire_event_name', $("#fire_event_name").val());
+        formData.append('affiliation', $("#affiliation").val());
 
-        // First, make a request to convert the shapefile to GeoJSON
+        // Make a request to upload the shapefile
         $.ajax({
-            url: '/upload-shapefile',
+            url: `/api/upload-shapefile-zip`,
             type: 'post',
             processData: false,
             contentType: false,
+            data: formData,
             success: function (data) {
-                // The shapefile has been converted, now make the request to analyze the burn
-                var data = {
-                    geojson: data.s3_url, // Use the returned S3 URL
-                    date_ranges: {
-                        prefire: {
-                            start: $("#prefire-start").val(),
-                            end: $("#prefire-end").val()
-                        },
-                        postfire: {
-                            start: $("#postfire-start").val(),
-                            end: $("#postfire-end").val()
-                        }
-                    },
-                    fire_event_name: $("#fire_event_name").val(),
-                    affiliation: $("#affiliation").val()
-                };
+                // Hide the upload loading spinner and show the upload success checkmark
+                $("#upload-loading").hide();
+                $("#upload-success").show();
 
+                // Make a request to analyze the burn
                 $.ajax({
-                    url: '/analyze-burn',
+                    url: '/api/analyze-burn',
                     type: 'post',
                     dataType: 'json',
                     contentType: 'application/json',
                     success: function (data) {
-                        // Hide the loading spinner and show the success checkmark
-                        $("#loading").hide();
-                        $("#success").show();
+                        // Hide the analysis loading spinner and show the analysis success checkmark
+                        $("#analysis-loading").hide();
+                        $("#analysis-success").show();
                     },
-                    data: JSON.stringify(data)
+                    error: function (error) {
+                        // Handle error
+                        console.error(error);
+                    },
+                    data: JSON.stringify({
+                        fire_event_name: $("#fire_event_name").val(),
+                        affiliation: $("#affiliation").val(),
+                        date_ranges: {
+                            prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
+                            postfire: [$("#postfire-start").val(), $("#postfire-end").val()]
+                        }
+                    })
                 });
             },
-            data: formData
+            error: function (error) {
+                // Handle error
+                console.error(error);
+            }
         });
     });
-    </script>
+</script>
 </body>
 </html>

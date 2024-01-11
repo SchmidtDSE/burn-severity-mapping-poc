@@ -193,7 +193,7 @@ class SFTPClient:
             prefire_date_range=prefire_date_range,
             postfire_date_range=postfire_date_range
         )
-    
+
     def get_manifest(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.download('manifest.json', tmpdir + 'tmp_manifest.json')

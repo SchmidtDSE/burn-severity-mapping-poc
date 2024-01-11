@@ -4,6 +4,7 @@ from pathlib import Path
 import uvicorn
 from pydantic import BaseModel
 from google.cloud import logging
+import tempfile
 
 # For network debugging
 import socket
@@ -16,9 +17,10 @@ from fastapi import (
     HTTPException,
     Request,
     UploadFile,
-    File
+    File,
+    Form
 )
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
@@ -28,6 +30,7 @@ from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 from src.lib.query_sentinel import Sentinel2Client
 from src.util.sftp import SFTPClient
 from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
+from src.util.ingest_burn_zip import ingest_esri_zip_file, shp_to_geojson
 from src.lib.titiler_algorithms import algorithms
 
 
@@ -182,15 +185,45 @@ def serve_map(request: Request, fire_event_name: str, burn_metric: str, manifest
 def upload(request: Request):
     return templates.TemplateResponse("upload.html", {"request": request})
 
-@app.post("/api/upload-shapefile")
-async def upload_shapefile(file: UploadFile = File(...)):
+@app.post("/api/upload-shapefile-zip")
+async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = Form(...), file: UploadFile = File(...), sftp_client: SFTPClient = Depends(get_sftp_client)):
     try:
         # Read the file
-        shapefile_content = await file.read()
+        zip_content = await file.read()
 
-        # TODO: Convert the shapefile to GeoJSON and upload it to burn-severity-backend s3
-        s3_url = convert_and_upload(shapefile_content)
+        # Write the content to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
+            tmp.write(zip_content)
+            tmp_zip = tmp.name
 
-        return JSONResponse(status_code=200, content={"s3_url": s3_url})
+        valid_shp, valid_tiff = ingest_esri_zip_file(tmp_zip)
+
+        # For now assert that there is only one shapefile
+        assert len(valid_shp) == 1, "Zip must contain exactly one shapefile (with associated files: .shx, .prj and optionally, .dbf)" 
+        __shp_paths, geojson = valid_shp[0] 
+
+        # Upload the zip and a geojson to SFTP
+        sftp_client.connect()
+
+        sftp_client.upload(
+            source_local_path=tmp_zip,
+            remote_path=f"{affiliation}/{fire_event_name}/user_uploaded_{file.filename}"
+        )
+
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+            tmp_geojson = tmp.name
+            with open(tmp_geojson, "w") as f:
+                f.write(json.dumps(geojson))
+            sftp_client.upload(
+                source_local_path=tmp_geojson,
+                remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson"
+            )
+
+        sftp_client.disconnect()
+
+        remote_geojson_path = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/boundary.geojson"
+
+        return JSONResponse(status_code=200, content={"s3_geojson_url": remote_geojson_path})
+
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})

@@ -5,8 +5,7 @@ import rioxarray as rxr
 import os
 import tempfile
 
-
-def ingest_BARC_zip_file(zip_file_path):
+def ingest_esri_zip_file(zip_file_path):
     valid_shapefiles = []
     valid_tifs = []
 
@@ -22,9 +21,26 @@ def ingest_BARC_zip_file(zip_file_path):
 
                     print("Found shapefile: {}".format(file_name))
 
-                    # Read the shapefile from the temporary directory
-                    valid_shapefile = gpd.read_file(os.path.join(tmp_dir, file_name))
-                    valid_shapefiles.append(valid_shapefile)
+                    # Check if all required files exist
+                    if all(os.path.exists(os.path.join(tmp_dir, shp_base + ext)) for ext in [".shp", ".shx", ".prj"]):
+                        # Read the shapefile from the temporary directory
+                        valid_shapefile = (
+                            os.path.join(tmp_dir, shp_base + ".shp"),
+                            os.path.join(tmp_dir, shp_base + ".shx"),
+                            os.path.join(tmp_dir, shp_base + ".prj")
+                        )
+
+                        # If .dbf file exists, add it to the tuple
+                        if os.path.exists(os.path.join(tmp_dir, shp_base + ".dbf")):
+                            valid_shapefile += (os.path.join(tmp_dir, shp_base + ".dbf"),)
+
+                        # TODO: This prob should be elsewhere but need to refactor tempdir structure to persist
+                        shp_geojson = shp_to_geojson(valid_shapefile[0])
+
+                        valid_shapefiles.append((valid_shapefile, shp_geojson))
+                        
+                    else:
+                        print("Shapefile {} is missing required files (shp, shx, and proj).".format(file_name))
 
             if file_name.endswith(".tif"):
                 print("Found tif file: {}".format(file_name))
@@ -40,3 +56,7 @@ def ingest_BARC_zip_file(zip_file_path):
                     valid_tifs.append(valid_tif)
 
     return valid_shapefiles, valid_tifs
+
+def shp_to_geojson(shp_file_path):
+    gdf = gpd.read_file(shp_file_path).to_crs("EPSG:4326")
+    return gdf.to_json()
