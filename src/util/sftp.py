@@ -8,7 +8,7 @@ import json
 import datetime
 import rasterio
 from rasterio.enums import Resampling
-
+import geopandas as gpd
 from google.cloud import logging as cloud_logging
 
 class SFTPClient:
@@ -148,6 +148,17 @@ class SFTPClient:
                     source_local_path=local_cog_path,
                     remote_path=f"{affiliation}/{fire_event_name}/{band_name}.tif",
                 )
+            
+            # Upload the difference between dNBR and RBR
+            local_cog_path = os.path.join(tmpdir, f"pct_change_dnbr_rbr.tif")
+            pct_change = (metrics_stack.sel(burn_metric="rbr") - metrics_stack.sel(burn_metric="dnbr")) / \
+                metrics_stack.sel(burn_metric="dnbr") * 100
+            pct_change.rio.to_raster(local_cog_path, driver="GTiff")
+            self.upload(
+                source_local_path=local_cog_path,
+                remote_path=f"{affiliation}/{fire_event_name}/pct_change_dnbr_rbr.tif",
+            )
+
 
     def update_manifest(self, fire_event_name, bounds, prefire_date_range, postfire_date_range, affiliation):
         with tempfile.TemporaryDirectory() as tmpdir:
