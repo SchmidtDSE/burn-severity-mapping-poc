@@ -1,11 +1,12 @@
 import requests
+from requests import ConnectionError
 import geopandas as gpd
 import json
 from shapely.geometry import shape
 from shapely.ops import transform
 import xml.etree.ElementTree as ET
 import tempfile
-from osgeo import ogr
+from shapely.ops import transform
 
 SDM_ENDPOINT_TABULAR = "https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest"
 SDM_ENDPOINT_SPATIAL = "https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs"
@@ -92,32 +93,20 @@ def sdm_get_esa_mapunitid_poly(geojson):
                 tmp.write(response.content)
                 tmp.seek(0)
 
-                # gdf = gpd.read_file(tmp.name)
-                # # GML is in lon/lat, so we need to transform to lat/lon
-                # gdf['geometry'] = gdf['geometry'].apply(lambda geom: transform(lambda x, y: (y, x), geom))
+                gdf = gpd.read_file(tmp.name)
+                gdf.set_crs(epsg=4326, inplace=True)
 
-                gdf = gml_to_gpd(tmp.name)
+                gdf.geometry = gdf.geometry.map(lambda polygon: transform(lambda x, y: (y, x), polygon))
 
                 mapunitpoly_geojson = gdf.to_json()
                 return mapunitpoly_geojson
+
         elif response.status_code == 400:
             print("Error:", response.status_code)
             return None
-
+    except ConnectionError as e:
+        print("SMD Refused Traffic:", str(e))
+        return None
     except Exception as e:
         print("Error:", str(e))
         return None
-
-def gml_to_gpd(gml_file):
-    gml = ogr.Open(gml_file)
-    layer = gml.GetLayer(0)
-
-    # Get the features and create a list to put geometries
-    features=[]
-    for i in range(0,layer.GetFeatureCount()):
-        feature = layer.GetFeature(i)
-        geom = feature.GetGeometryRef()
-        features.append(wkt.loads(geom.ExportToWkt()))
-
-    # convert this list into a geopandas dataframe  
-    gdf = gpd.GeoDataFrame(geometry=features)
