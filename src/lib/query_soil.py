@@ -110,3 +110,40 @@ def sdm_get_esa_mapunitid_poly(geojson):
     except Exception as e:
         print("Error:", str(e))
         return None
+
+def get_mrla_from_mu_info(nationalmusym_list):
+    # this function takes the globally unique mapunit symbol (nationalmusym) and returns some useful AOI information we can use with EDIT database
+    SQL_QUERY = """
+        SELECT 
+            lao.areasymbol AS MLRA,
+            lao.areaname AS MLRA_Name,
+            ecoclassid,
+            ecoclassname,
+            muname,
+            mu.mukey,
+            musym,
+            nationalmusym,
+            legend.areasymbol,
+            legend.areaname
+        FROM legend
+        INNER JOIN laoverlap AS lao ON legend.lkey = lao.lkey
+        INNER JOIN muaoverlap AS mua ON mua.lareaovkey = lao.lareaovkey
+        INNER JOIN mapunit AS mu ON mu.mukey = mua.mukey AND nationalmusym IN ('{}')    -- change here
+        INNER JOIN component c ON c.mukey = mu.mukey AND compkind = 'series'
+        INNER JOIN coecoclass ON c.cokey = coecoclass.cokey AND coecoclass.ecoclassref = 'Ecological Site Description Database'
+        GROUP BY lao.areasymbol, lao.areaname, ecoclassid, ecoclassname, muname, mu.mukey, musym, nationalmusym, legend.areasymbol, legend.areaname
+        ORDER BY lao.areasymbol ASC, ecoclassid
+    """
+    nationalmusym_list_fmt = "','".join(nationalmusym_list)
+    query = SQL_QUERY.format(nationalmusym_list_fmt)
+    data = {
+        "SERVICE": "QUERY",
+        "REQUEST": "RUNQUERY",
+        "QUERY": query
+    }
+    response = requests.post(SDM_ENDPOINT_TABULAR, data=data)
+    if response.status_code == 200:
+        return response.content
+    else:
+        print("Error:", response.status_code)
+        return None

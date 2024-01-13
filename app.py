@@ -170,20 +170,6 @@ class QuerySoilPOSTBody(BaseModel):
     geojson: dict
     fire_event_name: str
 
-# @app.post("/api/query-soil/create-aoi")
-# def create_aoi(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
-#     # geojson = json.loads(body.geojson)
-#     geojson = body.geojson
-#     fire_event_name = body.fire_event_name
-#     aoi_response = sdm_create_aoi(geojson)
-#     aoi_smd_id = aoi_response.json()['id']
-#     return JSONResponse(status_code=200, content={"aoi_smd_id": aoi_smd_id})
-
-# @app.get("/api/query-soil/get-available-interpretations")
-# def get_sdm_interpretations(aoi_smd_id: str):
-#     available_interpretations = sdm_get_available_interpretations(aoi_smd_id)
-#     return JSONResponse(status_code=200, content={"available_interpretations": available_interpretations})
-
 @app.post('/api/query-soil/get-esa-mapunitid-poly')
 def get_esa_mapunitid_poly(body: QuerySoilPOSTBody):
     geojson = body.geojson
@@ -191,6 +177,8 @@ def get_esa_mapunitid_poly(body: QuerySoilPOSTBody):
     mapunitpoly_geojson = sdm_get_esa_mapunitid_poly(geojson)
     return JSONResponse(status_code=200, content={"mapunitpoly_geojson": json.loads(mapunitpoly_geojson)})
     # return polygon_response
+
+
 
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = Form(...), file: UploadFile = File(...), sftp_client: SFTPClient = Depends(get_sftp_client)):
@@ -243,6 +231,8 @@ def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliat
     tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
     # tileserver_endpoint = 'http://localhost:5050'
     cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
+    burn_boundary_geojson_url =  f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/boundary.geojson"
+
     cog_tileserver_url_prefix = tileserver_endpoint + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
 
     fire_metadata = manifest[fire_event_name]
@@ -258,7 +248,8 @@ def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliat
         "burn_metric": burn_metric,
         "burn_metric_text": burn_metric_text,
         "fire_metadata_json": fire_metadata_json,
-        "cog_tileserver_url_prefix": cog_tileserver_url_prefix
+        "cog_tileserver_url_prefix": cog_tileserver_url_prefix,
+        "burn_boundary_geojson_url": burn_boundary_geojson_url
     })
 
 @app.get("/upload", response_class=HTMLResponse)

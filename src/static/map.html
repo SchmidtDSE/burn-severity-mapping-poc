@@ -151,7 +151,7 @@
     <div id="ui-elements-top-right">
         <!-- Opacity -->
         <label for="opacity-slider">Burn Severity Layer Opacity</label>
-        <input type="range" min="0" max="1" step="0.1" value=".7" id="opacity-slider">
+        <input type="range" min="0" max="1" step="0.1" value="1" id="opacity-slider">
     </div>
 
     <!-- Bottom right ui elements -->
@@ -210,17 +210,34 @@
         pane: 'basemaps'
     })
 
+    // Get burn boundary
+    fetch('{{ burn_boundary_geojson_url | safe }}')
+    .then(response => response.json())
+    .then(data => {
+        boundaryLayer = L.geoJSON(data, {pane: 'burn-boundary'});
+        boundaryLayer.setStyle({
+            color: 'rgb(0, 0, 0)',
+            weight: 4,
+            opacity: 1,
+            fillOpacity: 0,
+        });
+    });
+
     // Create map
     var map = L.map('burn-map', {
-        layers: [openTopoLayer, classifiedTileLayer],
+        layers: [openTopoLayer, classifiedTileLayer, boundaryLayer],
     });
 
 
     // Create panes to properly order basemaps and metrics
     map.createPane('basemaps');
-    map.getPane('basemaps').style.zIndex = 200;
+    map.getPane('basemaps').style.zIndex = 2;
+
     map.createPane('metrics');
-    map.getPane('metrics').style.zIndex = 500;
+    map.getPane('metrics').style.zIndex = 5;
+
+    map.createPane('burn-boundary');
+    map.getPane('burn-boundary').style.zIndex = 8;
 
     // Add layer controls - one for basemap, one for metrics
     var baseLayers = {
@@ -234,24 +251,31 @@
         "Classifications": classifiedTileLayer
     };
 
+    var polyLayers = {
+        "Burn Boundary": boundaryLayer
+    }
+
     for (var key in baseLayers) {
-        baseLayers[key].setZIndex(1);
+        baseLayers[key].setZIndex(2);
     }
     for (var key in metricsLayers) {
-        metricsLayers[key].setZIndex(2);
+        metricsLayers[key].setZIndex(5);
+    }
+    for (var key in polyLayers) {
+        polyLayers[key].setZIndex(8);
     }
 
     var groupedOverlays = {
         // "Basemaps": baseLayers,
-        "Metrics": metricsLayers
+        "Metrics": metricsLayers,
+        "Polygons": polyLayers
     };
 
-    var layercontrol = L.control.groupedLayers(baseLayers, groupedOverlays, {
+    var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {
         exclusiveGroups: ["Metrics"],
         position: 'topleft',
         collapsed: false
     }).addTo(map);
-    layercontrol._container.id = "layercontrol";
 
     var opacitySlider = document.getElementById('opacity-slider');
 

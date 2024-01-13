@@ -102,7 +102,25 @@ resource "aws_transfer_server" "tf-sftp-burn-severity" {
 
 # Then, the s3 bucket for the server
 resource "aws_s3_bucket" "burn-severity-backend" {
-  bucket = "burn-severity-backend" # replace with your bucket name
+  bucket = "burn-severity-backend" 
+}
+
+resource "aws_s3_bucket_versioning" "burn-severity-backend" {
+  bucket = aws_s3_bucket.burn-severity-backend.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_cors_configuration" "burn_severity_backend_cors" {
+  bucket = aws_s3_bucket.burn-severity-backend.bucket
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET"]
+    allowed_origins = ["*"]
+    max_age_seconds = 3000
+  }
 }
 
 data "aws_iam_policy_document" "burn-severity-backend-policy" {
