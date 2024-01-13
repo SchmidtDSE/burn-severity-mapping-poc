@@ -27,20 +27,33 @@
 
 </head>
 <style>
-    /* CSS to style the colored areas of the treshold slider to match map */
-    .noUi-connects .noUi-connect:nth-child(4) {
+    /* CSS to style the colored areas of the categorical slider to match map */
+    #categorical-slider .noUi-connects .noUi-connect:nth-child(4) {
         background: rgb(255,25,25);
     }
-    .noUi-connects .noUi-connect:nth-child(3) {
+    #categorical-slider .noUi-connects .noUi-connect:nth-child(3) {
         background: rgb(255,100,100);
     }
-    .noUi-connects .noUi-connect:nth-child(2) {
+    #categorical-slider .noUi-connects .noUi-connect:nth-child(2) {
         background: rgb(255,175,175);
     }
-    .noUi-connects .noUi-connect:nth-child(1) {
+    #categorical-slider .noUi-connects .noUi-connect:nth-child(1) {
         background: rgb(255,250,250);
     }
 
+    /* CSS to style the colored areas of the continious slider to match map */
+    #continuous-slider .noUi-connects .noUi-connect:nth-child(3) {
+        background: rgb(255,25,25);
+    }
+    /* #continuous-slider .noUi-connects .noUi-connect:nth-child(2) {
+        background: 
+    } */
+    #continuous-slider .noUi-connects .noUi-connect:nth-child(2) {
+        background: linear-gradient(to top, rgb(255,250,250),rgb(255,25,25));
+    }
+    #continuous-slider .noUi-connects .noUi-connect:nth-child(1) {
+        background: rgb(255,250,250);
+    }
 
     /* Style for the map */
     #burn-map {
