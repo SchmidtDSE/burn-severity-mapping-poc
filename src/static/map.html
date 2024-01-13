@@ -13,8 +13,8 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <!-- Include Leaflet GroupedLayerControl JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-groupedlayercontrol@latest/dist/leaflet.groupedlayercontrol.min.css" />
-    <script src="https://unpkg.com/leaflet-groupedlayercontrol@latest/dist/leaflet.groupedlayercontrol.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-groupedlayercontrol@0.4.0/dist/leaflet.groupedlayercontrol.min.css" />
+    <script src="https://unpkg.com/leaflet-groupedlayercontrol@0.4.0"></script>
 
     <!-- Include MathJax -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -216,7 +216,7 @@
         "Satellite": satelliteLayer
     };
 
-    var overlayLayers = {
+    var metricsLayers = {
         "Continuous": continiousTileLayer,
         "Classifications": classifiedTileLayer
     };
@@ -224,38 +224,22 @@
     for (var key in baseLayers) {
         baseLayers[key].setZIndex(1);
     }
-    for (var key in overlayLayers) {
-        overlayLayers[key].setZIndex(2);
+    for (var key in metricsLayers) {
+        metricsLayers[key].setZIndex(2);
     }
 
     var groupedOverlays = {
-        "Basemaps": baseLayers,
-        "Metrics": overlayLayers
+        // "Basemaps": baseLayers,
+        "Metrics": metricsLayers
     };
 
-    var options = {
-        exclusiveGroups: ["Basemaps", "Metrics"],
+    var layercontrol = L.control.groupedLayers(baseLayers, groupedOverlays, {
+        exclusiveGroups: ["Metrics"],
         position: 'topleft',
-        expanded: 'true'
-    };
+        collapsed: false
+    }).addTo(map);
+    layercontrol._container.id = "layercontrol";
 
-    L.control.groupedLayers(
-        baseLayers,
-        groupedOverlays,
-        options
-    ).addTo(map);
-
-// L.control.layers(baseLayers, null, {
-    //     collapsed: false,
-    //     position: 'topleft'
-    // }).addTo(map);
-
-    // L.control.layers(null, overlayLayers, {
-    //     collapsed: false,
-    //     position: 'topleft'
-    // }).addTo(map);
-
-    // Add opacity slider for metric layers
     var opacitySlider = document.getElementById('opacity-slider');
     opacitySlider.addEventListener('input', function(e) {
         classifiedTileLayer.setOpacity(e.target.value);
@@ -401,19 +385,12 @@
             categoricalSlider.style.display = 'block';
             continuousSlider.style.display = 'none';
         }
-        for (var key in overlayLayers) {
+        for (var key in metricsLayers) {
             if (key !== e.name) {
-                map.removeLayer(overlayLayers[key]);
+                map.removeLayer(metricsLayers[key]);
             }
         }
     });
-    // map.on('overlayremove', function(e) {
-    //     if (e.name === 'Continuous') {
-    //         // If the Continuous layer is removed, show the categorical slider and hide the continuous slider
-    //         categoricalSlider.style.display = 'block';
-    //         continuousSlider.style.display = 'none';
-    //     }
-    // });
 
     // Center map on fire, based on `bounds` metadata
     map.fitBounds(fireBounds);
