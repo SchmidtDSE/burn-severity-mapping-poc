@@ -35,7 +35,7 @@ from src.util.sftp import SFTPClient
 from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
 from src.util.ingest_burn_zip import ingest_esri_zip_file, shp_to_geojson
 from src.lib.titiler_algorithms import algorithms
-from src.lib.query_soil import sdm_get_ecoclassid_from_mu_info, sdm_get_esa_mapunitid_poly
+from src.lib.query_soil import sdm_get_ecoclassid_from_mu_info, sdm_get_esa_mapunitid_poly, edit_get_ecoclass_info
 # app = Flask(__name__)
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
@@ -191,6 +191,11 @@ def get_ecoclassid_from_mu_info(body: QueryEcoclassidPOSTBody):
     mu_pair_tuples = body.mu_pair_tuples
     mrla = sdm_get_ecoclassid_from_mu_info(mu_pair_tuples)
     return JSONResponse(status_code=200, content={"mrla": json.loads(mrla)})
+
+@app.get("/api/query-soil/get-ecoclass-info")
+def get_ecoclass_info(ecoclassid: str = Query(...)):
+    ecoclass_info = edit_get_ecoclass_info(ecoclassid)
+    return JSONResponse(status_code=200, content={"ecoclass_info": json.loads(ecoclass_info)})
 
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = Form(...), file: UploadFile = File(...), sftp_client: SFTPClient = Depends(get_sftp_client)):

@@ -11,6 +11,7 @@ from shapely.ops import transform
 
 SDM_ENDPOINT_TABULAR = "https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest"
 SDM_ENDPOINT_SPATIAL = "https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs"
+EDIT_ECOCLASS_ENDPOINT = "https://edit.jornada.nmsu.edu/services/descriptions"
 
 def sdm_create_aoi(geojson):
     try:
@@ -151,3 +152,23 @@ def sdm_get_ecoclassid_from_mu_info(mu_info_list):
         return None
     
 def edit_get_ecoclass_info(ecoclass_id):
+    try:
+        geoUnit = ecoclass_id[1:5]
+        edit_endpoint_fmt = EDIT_ECOCLASS_ENDPOINT + f"/esd/{geoUnit}/{ecoclass_id}.json"
+
+        response = requests.get(
+            edit_endpoint_fmt
+        )
+
+        if response.status_code == 200:
+            return response.content
+        if response.status_code == 404:
+            print(f"EcoClass ID not found within EDIT database:, {ecoclass_id}")
+            return None
+        else:
+            print("Error:", response.status_code)
+            return None
+
+    except Exception as e:
+        print("Error:", str(e))
+        return None
