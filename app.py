@@ -5,6 +5,8 @@ import uvicorn
 from pydantic import BaseModel
 from google.cloud import logging
 import tempfile
+from typing import Tuple, List
+from pydantic import BaseModel
 
 # For network debugging
 import socket
@@ -33,7 +35,7 @@ from src.util.sftp import SFTPClient
 from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
 from src.util.ingest_burn_zip import ingest_esri_zip_file, shp_to_geojson
 from src.lib.titiler_algorithms import algorithms
-from src.lib.query_soil import get_mrla_from_mu_info, sdm_get_available_interpretations, sdm_get_esa_mapunitid_poly
+from src.lib.query_soil import sdm_get_ecoclassid_from_mu_info, sdm_get_esa_mapunitid_poly
 # app = Flask(__name__)
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
@@ -166,7 +168,6 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
 
-
 class QuerySoilPOSTBody(BaseModel):
     geojson: dict
     fire_event_name: str
@@ -179,10 +180,16 @@ def get_esa_mapunitid_poly(body: QuerySoilPOSTBody):
     return JSONResponse(status_code=200, content={"mapunitpoly_geojson": json.loads(mapunitpoly_geojson)})
     # return polygon_response
 
-@app.get('/api/query-soil/get-mrla-from-nationalmusym')
-def get_mrla_from_nationalmusym(nationalmusym: str = Query(None)):
-    nationalmusym_list = nationalmusym.split(',')
-    mrla = get_mrla_from_mu_info(nationalmusym_list)
+class MUPair(BaseModel):
+    mu_pair: Tuple[str, str]
+
+class QueryEcoclassidPOSTBody(BaseModel):
+    mu_pair_tuples: List[MUPair]
+
+@app.post('/api/query-soil/get-ecoclassid-from-mu-info')
+def get_ecoclassid_from_mu_info(body: QueryEcoclassidPOSTBody):
+    mu_pair_tuples = body.mu_pair_tuples
+    mrla = sdm_get_ecoclassid_from_mu_info(mu_pair_tuples)
     return JSONResponse(status_code=200, content={"mrla": json.loads(mrla)})
 
 @app.post("/api/upload-shapefile-zip")

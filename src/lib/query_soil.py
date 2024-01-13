@@ -112,10 +112,9 @@ def sdm_get_esa_mapunitid_poly(geojson):
         print("Error:", str(e))
         return None
 
-def get_mrla_from_mu_info(nationalmusym_list):
-    # this function takes the globally unique mapunit symbol (nationalmusym) and returns some useful AOI information we can use with EDIT database
+def sdm_get_ecoclassid_from_mu_info(mu_info_list):
     SQL_QUERY = """
-        SELECT
+        SELECT DISTINCT
             lao.areasymbol AS MLRA,
             lao.areaname AS MLRA_Name,
             ecoclassid,
@@ -123,20 +122,21 @@ def get_mrla_from_mu_info(nationalmusym_list):
             muname,
             mu.mukey,
             musym,
-            nationalmusym,
-            legend.areasymbol,
-            legend.areaname
+            nationalmusym
         FROM legend
         INNER JOIN laoverlap AS lao ON legend.lkey = lao.lkey AND lao.areasymbol = '10'
         INNER JOIN muaoverlap AS mua ON mua.lareaovkey = lao.lareaovkey
-        INNER JOIN mapunit AS mu ON mu.mukey = mua.mukey AND nationalmusym IN ('{}')
+        INNER JOIN mapunit AS mu ON mu.mukey = mua.mukey AND ({})
         INNER JOIN component c ON c.mukey = mu.mukey AND compkind = 'series'
         INNER JOIN coecoclass ON c.cokey = coecoclass.cokey AND coecoclass.ecoclassref = 'Ecological Site Description Database'
         GROUP BY lao.areasymbol, lao.areaname, ecoclassid, ecoclassname, muname, mu.mukey, musym, nationalmusym, legend.areasymbol, legend.areaname
         ORDER BY lao.areasymbol ASC, ecoclassid
     """
-    nationalmusym_list_fmt = "','".join(nationalmusym_list)
-    query = SQL_QUERY.format(nationalmusym_list_fmt)
+    mu_pairs = [mu_info.mu_pair for mu_info in mu_info_list]
+
+    # TODO: Hacky SQL 98 solution to lack of tuples (should revist)
+    conditions = ' OR '.join("(nationalmusym = '{}' AND musym = '{}')".format(nationalmusym, musym) for nationalmusym, musym in mu_pairs)
+    query = SQL_QUERY.format(conditions)
     query = ' '.join(query.split())  # remove newlines and extra spaces
     query = urllib.parse.quote_plus(query)
 
@@ -149,3 +149,5 @@ def get_mrla_from_mu_info(nationalmusym_list):
     else:
         print("Error:", response.status_code)
         return None
+    
+def edit_get_ecoclass_info(ecoclass_id):
