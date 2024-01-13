@@ -12,6 +12,10 @@
     <!-- Include Leaflet JS -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+    <!-- Include Leaflet GroupedLayerControl JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-groupedlayercontrol@latest/dist/leaflet.groupedlayercontrol.min.css" />
+    <script src="https://unpkg.com/leaflet-groupedlayercontrol@latest/dist/leaflet.groupedlayercontrol.min.js"></script>
+
     <!-- Include MathJax -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -108,7 +112,7 @@
         background-color: #ffe875;
     }
 
-    #threshold-slider {
+    #categorical-slider, #continuous-slider {
         height: 90%;
         float: left;
         display: flex;
@@ -140,7 +144,8 @@
     <!-- Bottom right ui elements -->
     <div id="ui-elements-bottom-right">
         <!-- Thresholds -->
-        <div id="threshold-slider"></div>
+        <div id="categorical-slider"></div>
+        <div id="continuous-slider"></div>
     </div>
 
     <!-- Bottom left ui elements -->
@@ -171,7 +176,7 @@
     })
 
     // Add COG tile layer for continious metric, no classification
-    var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&rescale=-.8,.8&colormap_name=reds', {
+    var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"}}', {
         maxZoom: 20,
         pane: 'metrics'
     })
@@ -223,19 +228,36 @@
         overlayLayers[key].setZIndex(2);
     }
 
-    L.control.layers(baseLayers, null, {
-        collapsed: false,
-        position: 'topleft'
-    }).addTo(map);
+    var groupedOverlays = {
+        "Basemaps": baseLayers,
+        "Metrics": overlayLayers
+    };
 
-    L.control.layers(null, overlayLayers, {
-        collapsed: false,
-        position: 'topleft'
-    }).addTo(map);
+    var options = {
+        exclusiveGroups: ["Basemaps", "Metrics"],
+        position: 'topleft',
+        expanded: 'true'
+    };
+
+    L.control.groupedLayers(
+        baseLayers,
+        groupedOverlays,
+        options
+    ).addTo(map);
+
+// L.control.layers(baseLayers, null, {
+    //     collapsed: false,
+    //     position: 'topleft'
+    // }).addTo(map);
+
+    // L.control.layers(null, overlayLayers, {
+    //     collapsed: false,
+    //     position: 'topleft'
+    // }).addTo(map);
 
     // Add opacity slider for metric layers
-    var slider = document.getElementById('opacity-slider');
-    slider.addEventListener('input', function(e) {
+    var opacitySlider = document.getElementById('opacity-slider');
+    opacitySlider.addEventListener('input', function(e) {
         classifiedTileLayer.setOpacity(e.target.value);
         continiousTileLayer.setOpacity(e.target.value);
     });
@@ -266,8 +288,8 @@
     }
 
     // Add threshold sliders w/ noUiSlider
-    var slider = document.getElementById('threshold-slider');
-    noUiSlider.create(slider, {
+    var categoricalSlider = document.getElementById('categorical-slider');
+    noUiSlider.create(categoricalSlider, {
         start: [-.8, 0.05, 0.225, 0.8],
         connect: [true, true, true, true, true],
         range: {
@@ -299,8 +321,44 @@
         }),
     });
 
-    // Add event listener
-    slider.noUiSlider.on('update', function(values, handle) {
+    // Add continious slider w/ noUiSlider
+    var continuousSlider = document.getElementById('continuous-slider');
+    noUiSlider.create(continuousSlider, {
+        start: [-.4, .4],
+        connect: [true, true, true],
+        range: {
+            'min': -.8,
+            'max': .8
+        },
+        step: .025,
+        direction: 'rtl',
+        orientation: 'vertical',
+        pips: {
+            mode: 'steps',
+            stepped: true,
+            density: 16,
+            format: wNumb({
+                decimals: 2,
+                to: function(value) {
+                    // Convert to percentage from float
+                    return (value * 100).toFixed(0) + '%';
+                }
+            }),
+            filter: function(value, type) {
+                return value % (4 * 0.025) === 0 ? 1 : -1;
+            }
+        },
+        behaviour: 'tap-drag',
+        tooltips: true,
+        format: wNumb({
+            decimals: 3
+        }),
+    });
+    // Initially hide the continuous slider
+    continuousSlider.style.display = 'none';
+
+    // Add event listener for categorical slider
+    categoricalSlider.noUiSlider.on('update', function(values, handle) {
         map.removeLayer(classifiedTileLayer); // remove the old layer before creating a new one
         var thresholds = {
             [values[0]]: 250,
@@ -308,7 +366,7 @@
             [values[2]]: 100,
             [values[3]]: 25
         };
-        var opacity = slider.value; // get current opacity slider value
+        var opacity = opacitySlider.value; // get current opacity slider value
         classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}), {
             maxZoom: 20,
             pane: 'metrics', // specify the pane
@@ -316,6 +374,46 @@
         });
         classifiedTileLayer.addTo(map);
     });
+
+    // Add event listener for continious slider
+    continuousSlider.noUiSlider.on('update', function(values, handle) {
+        map.removeLayer(continiousTileLayer); // remove the old layer before creating a new one
+        var thresholds = {
+            min: values[0],
+            max: values[1]
+        };
+        var opacity = opacitySlider.value; // get current opacity slider value
+        continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params=' + JSON.stringify({thresholds: thresholds}), {
+            maxZoom: 20,
+            pane: 'metrics', // specify the pane
+            opacity: opacity // set opacity
+        });
+        continiousTileLayer.addTo(map);
+    });
+
+    // Add event listeners to swich between categorical and continious sliders
+    map.on('overlayadd', function(e) {
+        if (e.name === 'Continuous') {
+            // If the Continuous layer is added, hide the categorical slider and show the continuous slider
+            categoricalSlider.style.display = 'none';
+            continuousSlider.style.display = 'block';
+        } else {
+            categoricalSlider.style.display = 'block';
+            continuousSlider.style.display = 'none';
+        }
+        for (var key in overlayLayers) {
+            if (key !== e.name) {
+                map.removeLayer(overlayLayers[key]);
+            }
+        }
+    });
+    // map.on('overlayremove', function(e) {
+    //     if (e.name === 'Continuous') {
+    //         // If the Continuous layer is removed, show the categorical slider and hide the continuous slider
+    //         categoricalSlider.style.display = 'block';
+    //         continuousSlider.style.display = 'none';
+    //     }
+    // });
 
     // Center map on fire, based on `bounds` metadata
     map.fitBounds(fireBounds);

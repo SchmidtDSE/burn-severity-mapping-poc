@@ -240,8 +240,8 @@ async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = 
 def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliation: str, manifest: dict = Depends(get_manifest)):
     mapbox_token = get_mapbox_secret()
 
-    tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
-    # tileserver_endpoint = 'http://localhost:5050'
+    # tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
+    tileserver_endpoint = 'http://localhost:5050'
     cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
     cog_tileserver_url_prefix = tileserver_endpoint + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
 
