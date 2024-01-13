@@ -241,10 +241,16 @@
     layercontrol._container.id = "layercontrol";
 
     var opacitySlider = document.getElementById('opacity-slider');
-    opacitySlider.addEventListener('input', function(e) {
+
+    var updateOpacityClassified = function(e) {
         classifiedTileLayer.setOpacity(e.target.value);
+    };
+    var updateOpacityContinious = function(e) {
         continiousTileLayer.setOpacity(e.target.value);
-    });
+    };
+
+    opacitySlider.addEventListener('input', updateOpacityClassified);
+    opacitySlider.addEventListener('input', updateOpacityContinious);
 
     // Iterate over each metric
     burnMetricInfo = document.getElementById('burn-metric-info');
@@ -341,38 +347,22 @@
     // Initially hide the continuous slider
     continuousSlider.style.display = 'none';
 
-    // Add event listener for categorical slider
     categoricalSlider.noUiSlider.on('update', function(values, handle) {
-        map.removeLayer(classifiedTileLayer); // remove the old layer before creating a new one
         var thresholds = {
             [values[0]]: 250,
             [values[1]]: 175,
             [values[2]]: 100,
             [values[3]]: 25
         };
-        var opacity = opacitySlider.value; // get current opacity slider value
-        classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}), {
-            maxZoom: 20,
-            pane: 'metrics', // specify the pane
-            opacity: opacity // set opacity
-        });
-        classifiedTileLayer.addTo(map);
+        classifiedTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
     });
 
-    // Add event listener for continious slider
     continuousSlider.noUiSlider.on('update', function(values, handle) {
-        map.removeLayer(continiousTileLayer); // remove the old layer before creating a new one
         var thresholds = {
             min: values[0],
             max: values[1]
         };
-        var opacity = opacitySlider.value; // get current opacity slider value
-        continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params=' + JSON.stringify({thresholds: thresholds}), {
-            maxZoom: 20,
-            pane: 'metrics', // specify the pane
-            opacity: opacity // set opacity
-        });
-        continiousTileLayer.addTo(map);
+        continiousTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
     });
 
     // Add event listeners to swich between categorical and continious sliders
