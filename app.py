@@ -18,7 +18,8 @@ from fastapi import (
     Request,
     UploadFile,
     File,
-    Form
+    Form,
+    Query
 )
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -32,7 +33,7 @@ from src.util.sftp import SFTPClient
 from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
 from src.util.ingest_burn_zip import ingest_esri_zip_file, shp_to_geojson
 from src.lib.titiler_algorithms import algorithms
-from src.lib.query_soil import sdm_create_aoi, sdm_get_available_interpretations, sdm_get_esa_mapunitid_poly
+from src.lib.query_soil import get_mrla_from_mu_info, sdm_get_available_interpretations, sdm_get_esa_mapunitid_poly
 # app = Flask(__name__)
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
@@ -178,7 +179,11 @@ def get_esa_mapunitid_poly(body: QuerySoilPOSTBody):
     return JSONResponse(status_code=200, content={"mapunitpoly_geojson": json.loads(mapunitpoly_geojson)})
     # return polygon_response
 
-
+@app.get('/api/query-soil/get-mrla-from-nationalmusym')
+def get_mrla_from_nationalmusym(nationalmusym: str = Query(None)):
+    nationalmusym_list = nationalmusym.split(',')
+    mrla = get_mrla_from_mu_info(nationalmusym_list)
+    return JSONResponse(status_code=200, content={"mrla": json.loads(mrla)})
 
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = Form(...), file: UploadFile = File(...), sftp_client: SFTPClient = Depends(get_sftp_client)):

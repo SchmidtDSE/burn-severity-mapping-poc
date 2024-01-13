@@ -6,6 +6,7 @@ from shapely.geometry import shape
 from shapely.ops import transform
 import xml.etree.ElementTree as ET
 import tempfile
+import urllib
 from shapely.ops import transform
 
 SDM_ENDPOINT_TABULAR = "https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest"
@@ -114,7 +115,7 @@ def sdm_get_esa_mapunitid_poly(geojson):
 def get_mrla_from_mu_info(nationalmusym_list):
     # this function takes the globally unique mapunit symbol (nationalmusym) and returns some useful AOI information we can use with EDIT database
     SQL_QUERY = """
-        SELECT 
+        SELECT
             lao.areasymbol AS MLRA,
             lao.areaname AS MLRA_Name,
             ecoclassid,
@@ -126,9 +127,9 @@ def get_mrla_from_mu_info(nationalmusym_list):
             legend.areasymbol,
             legend.areaname
         FROM legend
-        INNER JOIN laoverlap AS lao ON legend.lkey = lao.lkey
+        INNER JOIN laoverlap AS lao ON legend.lkey = lao.lkey AND lao.areasymbol = '10'
         INNER JOIN muaoverlap AS mua ON mua.lareaovkey = lao.lareaovkey
-        INNER JOIN mapunit AS mu ON mu.mukey = mua.mukey AND nationalmusym IN ('{}')    -- change here
+        INNER JOIN mapunit AS mu ON mu.mukey = mua.mukey AND nationalmusym IN ('{}')
         INNER JOIN component c ON c.mukey = mu.mukey AND compkind = 'series'
         INNER JOIN coecoclass ON c.cokey = coecoclass.cokey AND coecoclass.ecoclassref = 'Ecological Site Description Database'
         GROUP BY lao.areasymbol, lao.areaname, ecoclassid, ecoclassname, muname, mu.mukey, musym, nationalmusym, legend.areasymbol, legend.areaname
@@ -136,12 +137,13 @@ def get_mrla_from_mu_info(nationalmusym_list):
     """
     nationalmusym_list_fmt = "','".join(nationalmusym_list)
     query = SQL_QUERY.format(nationalmusym_list_fmt)
-    data = {
-        "SERVICE": "QUERY",
-        "REQUEST": "RUNQUERY",
-        "QUERY": query
-    }
+    query = ' '.join(query.split())  # remove newlines and extra spaces
+    query = urllib.parse.quote_plus(query)
+
+    data = f"QUERY={query}&FORMAT=json%2Bcolumnname"
+
     response = requests.post(SDM_ENDPOINT_TABULAR, data=data)
+
     if response.status_code == 200:
         return response.content
     else:
