@@ -194,8 +194,8 @@ def get_ecoclassid_from_mu_info(body: QueryEcoclassidPOSTBody):
 
 @app.get("/api/query-soil/get-ecoclass-info")
 def get_ecoclass_info(ecoclassid: str = Query(...)):
-    ecoclass_info = edit_get_ecoclass_info(ecoclassid)
-    return JSONResponse(status_code=200, content={"ecoclass_info": json.loads(ecoclass_info)})
+    status_code, ecoclass_info = edit_get_ecoclass_info(ecoclassid)
+    return JSONResponse(status_code=status_code, content={"ecoclass_info": ecoclass_info})
 
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = Form(...), file: UploadFile = File(...), sftp_client: SFTPClient = Depends(get_sftp_client)):

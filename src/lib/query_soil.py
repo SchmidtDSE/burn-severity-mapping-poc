@@ -161,13 +161,13 @@ def edit_get_ecoclass_info(ecoclass_id):
         )
 
         if response.status_code == 200:
-            return response.content
+            return 200, json.loads(response.content)
         if response.status_code == 404:
             print(f"EcoClass ID not found within EDIT database:, {ecoclass_id}")
-            return None
+            return 404, {"error": f"EcoClass ID not found within EDIT database: {ecoclass_id}"}
         else:
             print("Error:", response.status_code)
-            return None
+            return response.status_code, {"error": f"Error: {response.status_code}"}
 
     except Exception as e:
         print("Error:", str(e))
