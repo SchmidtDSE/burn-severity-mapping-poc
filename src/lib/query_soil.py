@@ -102,6 +102,10 @@ def sdm_get_esa_mapunitid_poly(geojson):
                 # Swap x and y coordinates, as GML2 is lon, lat and everything else is lat, lon
                 mapunit_gdf.geometry = mapunit_gdf.geometry.map(lambda polygon: transform(lambda x, y: (y, x), polygon))
 
+                # Set composite key
+                mapunit_gdf['musym'] = mapunit_gdf['musym'].astype(str)
+                mapunit_gdf.set_index(['musym', 'nationalmusym', 'mukey'], inplace=True)
+
                 return mapunit_gdf
 
         elif response.status_code == 400:
@@ -136,10 +140,10 @@ def sdm_get_ecoclassid_from_mu_info(mu_info_list):
         GROUP BY lao.areasymbol, lao.areaname, ecoclassid, ecoclassname, muname, mu.mukey, musym, nationalmusym, legend.areasymbol, legend.areaname
         ORDER BY lao.areasymbol ASC, ecoclassid
     """
-    mu_pairs = [mu_info.mu_pair for mu_info in mu_info_list]
+    # mu_pairs = [mu_info.mu_pair for mu_info in mu_info_list]
 
     # TODO: Hacky SQL 98 solution to lack of tuples (should revist)
-    conditions = ' OR '.join("(nationalmusym = '{}' AND musym = '{}')".format(nationalmusym, musym) for nationalmusym, musym in mu_pairs)
+    conditions = ' OR '.join("(musym = '{}' AND nationalmusym = '{}')".format(nationalmusym, musym) for nationalmusym, musym in mu_info_list)
     query = SQL_QUERY.format(conditions)
     query = ' '.join(query.split())  # remove newlines and extra spaces
     query = urllib.parse.quote_plus(query)
@@ -154,7 +158,8 @@ def sdm_get_ecoclassid_from_mu_info(mu_info_list):
         mu_info_df.columns = mu_info_df.iloc[0]
         mu_info_df = mu_info_df[1:]
         mu_info_df = mu_info_df.reset_index(drop=True)
-        
+        mu_info_df.set_index(['musym', 'nationalmusym', 'mukey'], inplace=True)
+
         return mu_info_df
     else:
         raise Exception(f"Error in SDM: {response.status_code}, {response.content}")

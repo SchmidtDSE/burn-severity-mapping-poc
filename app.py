@@ -172,6 +172,7 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
 class QuerySoilPOSTBody(BaseModel):
     geojson: dict
     fire_event_name: str
+    affiliation: str
 
 @app.post('/api/query-soil/get-esa-mapunitid-poly')
 def get_esa_mapunitid_poly(body: QuerySoilPOSTBody):
@@ -200,15 +201,18 @@ def get_ecoclass_info(ecoclassid: str = Query(...)):
 
 # TODO: refactor out the low level endpoints and rename others (this isn't really an `analysis` but it does compose a lot of logic like `analyze-burn`)
 @app.post("/api/query-soil/analyze-ecoclass") 
-def analyze_ecoclass(body: QuerySoilPOSTBody):
+def analyze_ecoclass(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
     fire_event_name = body.fire_event_name
     geojson = body.geojson
+    affiliation = body.affiliation
 
     try:
         mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
 
+        mu_pair_tuples = [(musynm, nationalmusym) for musynm, nationalmusym, __mukey in mapunit_gdf.index.to_list()]
+
         # TODO: gross type conversion - preserving the pydantic model for now in case lower level calls are useful, but will want to decide later
-        mu_pair_tuples = [MUPair(mu_pair=(str(row['nationalmusym']), str(row['musym']))) for _, row in mapunit_gdf.iterrows()]
+        # mu_pair_tuples = [MUPair(mu_pair=(str(row['nationalmusym']), str(row['musym']))) for _, row in mapunit_gdf.iterrows()]
 
         mrla_df = sdm_get_ecoclassid_from_mu_info(mu_pair_tuples)
 
@@ -222,10 +226,30 @@ def analyze_ecoclass(body: QuerySoilPOSTBody):
                 edit_ecoclass_df_row_dicts.append(edit_ecoclass_df_row_dict)
             else:
                 logger.log_text(f"Missing: {edit_ecoclass_json} doesn't exist within EDIT backend")
-        edit_ecoclass_df = pd.DataFrame(edit_ecoclass_df_row_dicts)
+        edit_ecoclass_df = pd.DataFrame(edit_ecoclass_df_row_dicts).set_index('ecoclassid')
 
-        return 200
-    
+        # join mapunitids with link table for ecoclassids
+        mapunit_with_ecoclassid_df = mapunit_gdf.join(mrla_df).set_index('ecoclassid')
+        mapunit_with_ecoclassid_df.drop(['spatialversion', 'AoiPartName', 'MLRA', 'MLRA_Name'], axis = 'columns', inplace = True)
+
+        # join ecoclassids with edit ecoclass info, to get spatial ecoclass info
+        edit_ecoclass_geojson = mapunit_with_ecoclassid_df.join(edit_ecoclass_df, how='left').to_json()
+
+        # save the ecoclass_geojson to the FTP server
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+            tmp_geojson_path = tmp.name
+            with open(tmp_geojson_path, "w") as f:
+                f.write(edit_ecoclass_geojson)
+            sftp_client.connect()
+            sftp_client.upload(
+                source_local_path=tmp_geojson_path,
+                remote_path=f"{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson"
+            )
+            sftp_client.disconnect()
+
+        logger.log_text(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
+        return f"Ecoclass GeoJSON uploaded for {fire_event_name}", 200
+
     except Exception as e:
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
