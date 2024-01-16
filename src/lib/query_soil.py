@@ -1,6 +1,7 @@
 import requests
 from requests import ConnectionError
 import geopandas as gpd
+import pandas as pd
 import json
 from shapely.geometry import shape
 from shapely.ops import transform
@@ -95,18 +96,20 @@ def sdm_get_esa_mapunitid_poly(geojson):
                 tmp.write(response.content)
                 tmp.seek(0)
 
-                gdf = gpd.read_file(tmp.name)
-                gdf.set_crs(epsg=4326, inplace=True)
+                mapunit_gdf = gpd.read_file(tmp.name)
+                mapunit_gdf.set_crs(epsg=4326, inplace=True)
 
-                gdf.geometry = gdf.geometry.map(lambda polygon: transform(lambda x, y: (y, x), polygon))
+                # Swap x and y coordinates, as GML2 is lon, lat and everything else is lat, lon
+                mapunit_gdf.geometry = mapunit_gdf.geometry.map(lambda polygon: transform(lambda x, y: (y, x), polygon))
 
-                mapunitpoly_geojson = gdf.to_json()
-                return mapunitpoly_geojson
+                return mapunit_gdf
 
         elif response.status_code == 400:
             print("Error:", response.status_code)
             return None
     except ConnectionError as e:
+        # TODO: Need to implement some backoff here. Cloud tasks does this intelligently by default,
+        # so perhaps we can wait til we decide on how to async the `analyze` endpoints
         print("SMD Refused Traffic:", str(e))
         return None
     except Exception as e:
@@ -146,28 +149,36 @@ def sdm_get_ecoclassid_from_mu_info(mu_info_list):
     response = requests.post(SDM_ENDPOINT_TABULAR, data=data)
 
     if response.status_code == 200:
-        return response.content
+        mu_info_json = json.loads(response.content)['Table']
+        mu_info_df = pd.DataFrame(mu_info_json)
+        mu_info_df.columns = mu_info_df.iloc[0]
+        mu_info_df = mu_info_df[1:]
+        mu_info_df = mu_info_df.reset_index(drop=True)
+        
+        return mu_info_df
     else:
-        print("Error:", response.status_code)
-        return None
+        raise Exception(f"Error in SDM: {response.status_code}, {response.content}")
     
 def edit_get_ecoclass_info(ecoclass_id):
     try:
         geoUnit = ecoclass_id[1:5]
         edit_endpoint_fmt = EDIT_ECOCLASS_ENDPOINT + f"/esd/{geoUnit}/{ecoclass_id}.json"
 
-        response = requests.get(
-            edit_endpoint_fmt
-        )
+        response = requests.get(edit_endpoint_fmt)
 
         if response.status_code == 200:
-            return 200, json.loads(response.content)
-        if response.status_code == 404:
+            edit_json = json.loads(response.content)
+
+            # Add hyperlink to EDIT human readable page
+            edit_json['hyperlink'] = f"https://edit.jornada.nmsu.edu/catalogs/esd/{geoUnit}/{ecoclass_id}"
+
+            return True, edit_json
+        elif response.status_code == 404:
             print(f"EcoClass ID not found within EDIT database:, {ecoclass_id}")
-            return 404, {"error": f"EcoClass ID not found within EDIT database: {ecoclass_id}"}
+            return False, {"error": f"EcoClass ID not found within EDIT database: {ecoclass_id}"}
         else:
             print("Error:", response.status_code)
-            return response.status_code, {"error": f"Error: {response.status_code}"}
+            raise Exception(f"Error in EDIT: {response.status_code}, {response.content}")
 
     except Exception as e:
         print("Error:", str(e))

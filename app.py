@@ -7,6 +7,7 @@ from google.cloud import logging
 import tempfile
 from typing import Tuple, List
 from pydantic import BaseModel
+import pandas as pd
 
 # For network debugging
 import socket
@@ -197,6 +198,38 @@ def get_ecoclass_info(ecoclassid: str = Query(...)):
     status_code, ecoclass_info = edit_get_ecoclass_info(ecoclassid)
     return JSONResponse(status_code=status_code, content={"ecoclass_info": ecoclass_info})
 
+# TODO: refactor out the low level endpoints and rename others (this isn't really an `analysis` but it does compose a lot of logic like `analyze-burn`)
+@app.post("/api/query-soil/analyze-ecoclass") 
+def analyze_ecoclass(body: QuerySoilPOSTBody):
+    fire_event_name = body.fire_event_name
+    geojson = body.geojson
+
+    try:
+        mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
+
+        # TODO: gross type conversion - preserving the pydantic model for now in case lower level calls are useful, but will want to decide later
+        mu_pair_tuples = [MUPair(mu_pair=(str(row['nationalmusym']), str(row['musym']))) for _, row in mapunit_gdf.iterrows()]
+
+        mrla_df = sdm_get_ecoclassid_from_mu_info(mu_pair_tuples)
+
+        edit_ecoclass_df_row_dicts = []
+        for ecoclass_id in mrla_df['ecoclassid'].unique():
+            edit_success, edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
+            if edit_success:
+                logger.log_text(f"Success: {ecoclass_id} exists within EDIT backend")
+                edit_ecoclass_df_row_dict = edit_ecoclass_json['generalInformation']['dominantSpecies']
+                edit_ecoclass_df_row_dict['ecoclassid'] = ecoclass_id
+                edit_ecoclass_df_row_dicts.append(edit_ecoclass_df_row_dict)
+            else:
+                logger.log_text(f"Missing: {edit_ecoclass_json} doesn't exist within EDIT backend")
+        edit_ecoclass_df = pd.DataFrame(edit_ecoclass_df_row_dicts)
+
+        return 200
+    
+    except Exception as e:
+        logger.log_text(f"Error: {e}")
+        return f"Error: {e}", 400
+
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = Form(...), file: UploadFile = File(...), sftp_client: SFTPClient = Depends(get_sftp_client)):
     try:
@@ -208,7 +241,7 @@ async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = 
             tmp.write(zip_content)
             tmp_zip = tmp.name
 
-        valid_shp, valid_tiff = ingest_esri_zip_file(tmp_zip)
+        valid_shp, __valid_tiff = ingest_esri_zip_file(tmp_zip)
 
         # For now assert that there is only one shapefile
         assert len(valid_shp) == 1, "Zip must contain exactly one shapefile (with associated files: .shx, .prj and optionally, .dbf)" 

@@ -221,13 +221,12 @@
             opacity: 1,
             fillOpacity: 0,
         });
-    });
+        // Create map
+        var map = L.map('burn-map', {
+            layers: [openTopoLayer, classifiedTileLayer, boundaryLayer],
+        });
 
-    // Create map
-    var map = L.map('burn-map', {
-        layers: [openTopoLayer, classifiedTileLayer, boundaryLayer],
     });
-
 
     // Create panes to properly order basemaps and metrics
     map.createPane('basemaps');
@@ -255,14 +254,46 @@
         "Burn Boundary": boundaryLayer
     }
 
+    // Loading indicator
+    var loadingDiv = L.DomUtil.create('div', 'loading');
+    loadingDiv.innerHTML = 'Loading...';
+    document.body.appendChild(loadingDiv);
+
+    // Add event listeners to each layer
     for (var key in baseLayers) {
         baseLayers[key].setZIndex(2);
+        baseLayers[key].on({
+            'loading': function() {
+                loadingDiv.style.display = 'block';
+            },
+            'load': function() {
+                loadingDiv.style.display = 'none';
+            }
+        });
     }
+
     for (var key in metricsLayers) {
         metricsLayers[key].setZIndex(5);
+        metricsLayers[key].on({
+            'loading': function() {
+                loadingDiv.style.display = 'block';
+            },
+            'load': function() {
+                loadingDiv.style.display = 'none';
+            }
+        });
     }
+
     for (var key in polyLayers) {
         polyLayers[key].setZIndex(8);
+        polyLayers[key].on({
+            'loading': function() {
+                loadingDiv.style.display = 'block';
+            },
+            'load': function() {
+                loadingDiv.style.display = 'none';
+            }
+        });
     }
 
     var groupedOverlays = {
@@ -422,6 +453,34 @@
     // Center map on fire, based on `bounds` metadata
     map.fitBounds(fireBounds);
 
+    // Define what happens on each feature
+    // function onEachFeature(feature, layer) {
+    //     layer.on({
+    //         mouseover: function(e) {
+    //             var layer = e.target;
+
+    //             // Access the feature properties here
+    //             console.log(layer.feature.properties);
+
+    //             // You can also highlight the feature or display a popup
+    //             layer.setStyle({
+    //                 weight: 5,
+    //                 color: '#666',
+    //                 dashArray: '',
+    //                 fillOpacity: 0.7
+    //             });
+    //         },
+    //         mouseout: function(e) {
+    //             // Reset the style or hide the popup
+    //             geojson.resetStyle(e.target);
+    //         }
+    //     });
+    // }
+
+    // // Add the GeoJSON layer
+    // var geojson = L.geoJson(data, {
+    //     onEachFeature: onEachFeature
+    // }).addTo(map);
 </script>
 
 </body>
