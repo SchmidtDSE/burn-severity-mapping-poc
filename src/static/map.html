@@ -193,63 +193,83 @@
 
     }
 
-    var popup = L.popup({
-        closeButton: false,
-        autoClose: false
-    });
+    // var popup = L.popup({
+    //     closeButton: false,
+    //     autoClose: false
+    // });
 
-    function onEachEcoclass(feature, layer) {
-        layer.on({
-            mouseover: function(e) {
-                var layer = e.target;
-
-                console.log(layer.feature.properties);
-
-                // Highlight the feature
-                layer.setStyle({
-                    weight: 5,
-                    color: '#666',
-                    dashArray: '',
-                    fillOpacity: 0.7
-                });
-
-                // Bring the layer to the front, if it's not already
-                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-                    layer.bringToFront();
-                }
-
-                // Bind a popup to the layer with information from the feature properties
-            popup.setContent(
-                "<strong>Map Unit Name:</strong> <br> - " +
-                (layer.feature.properties.muname ? layer.feature.properties.muname : 'N/A') +
-                "<br><strong>Ecoclass Name:</strong> <br> - " +
-                (layer.feature.properties.ecoclassname ? layer.feature.properties.ecoclassname : 'N/A')
-            );
-                popup.setLatLng(e.latlng); // Set the popup position to the mouse position
-                popup.openOn(layer._map);
-            },
-
-            mousemove: function(e) {
-                // Update the popup position to the mouse position
-                popup.setLatLng(e.latlng);
-            },
-
-            mouseout: function(e) {
-                // Reset the style or hide the popup
-                var layer = e.target;
-                layer.setStyle({
-                    color: "#03420f",
-                    weight: 1,
-                    opacity: 1,
-                    fillOpacity: 0
-                });
-
-                layer._map.closePopup();
-            }
-
-        });
-
-    }
+    // function onEachEcoclass(feature, layer) {
+    // layer.on({
+    //         mouseover: function(e) {
+    //             var layers = e.target._map._layers;
+    //             var mousePos = e.latlng;
+    //             var ecoclassNames = [];
+    //             var muname = 'N/A'; // Initialize muname here
+    //             for (var i in layers) {
+    //                 if (layers[i] instanceof L.Polygon) {
+    //                     if (layers[i].getBounds().contains(mousePos)) {
+    //                         if (layers[i].feature) {
+    //                             // Perform operations on layers[i]
+    //                             console.log(layers[i].feature.properties);
+    //                             layers[i].setStyle({
+    //                                 weight: 5,
+    //                                 color: '#666',
+    //                                 dashArray: '',
+    //                                 fillOpacity: 0.7
+    //                             });
+    //                             if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+    //                                 layers[i].bringToFront();
+    //                             }
+    //                             var ecoclassName = layers[i].feature.properties.ecoclassname ? layers[i].feature.properties.ecoclassname : 'N/A';
+    //                             if (!ecoclassNames.includes(ecoclassName)) {
+    //                                 ecoclassNames.push(ecoclassName);
+    //                             }
+    //                             muname = layers[i].feature.properties.muname ? layers[i].feature.properties.muname : 'N/A'; // Update muname here
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //             popup.setContent(
+    //                 "<strong>Map Unit Name:</strong> <br> - " +
+    //                 muname + // Use muname here
+    //                 "<br><strong>Ecoclass Names:</strong> <br> - " +
+    //                 ecoclassNames.join(', ')
+    //             );
+    //             popup.setLatLng(mousePos);
+    //             popup.openOn(e.target._map);
+    //         },
+    //         mousemove: function(e) {
+    //             var layers = e.target._map._layers;
+    //             var mousePos = e.latlng;
+    //             for (var i in layers) {
+    //                 if (layers[i] instanceof L.Polygon) {
+    //                     if (layers[i].getBounds().contains(mousePos)) {
+    //                         if (layers[i].feature) {
+    //                         // Perform operations on layers[i]
+    //                             popup.setLatLng(mousePos);
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         },
+    //         mouseout: function(e) {
+    //             var layers = e.target._map._layers;
+    //             for (var i in layers) {
+    //                 if (layers[i] instanceof L.Polygon) {
+    //                     if (layers[i].feature) {
+    //                         layers[i].setStyle({
+    //                             color: "#03420f",
+    //                             weight: 1,
+    //                             opacity: 1,
+    //                             fillOpacity: 0
+    //                         });
+    //                         e.target._map.closePopup();
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }
 
     fetchData().then(({ boundaryGeojson, ecoclassGeojson }) => {
 
@@ -262,7 +282,7 @@
                     fillOpacity: 0
                 };
             },
-            onEachFeature: onEachEcoclass,
+            // onEachFeature: onEachEcoclass,
             pane: 'ecoclass'
         });
 
