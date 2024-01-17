@@ -417,7 +417,7 @@
         });
 
         // Add COG tile layer for classifications
-        var classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"0.045":175,"0.222":100,"0.8":25}}', {
+        var classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}}', {
             maxZoom: 20,
             pane: 'metrics'
         })
@@ -583,10 +583,10 @@
         // Add threshold sliders w/ noUiSlider
         var categoricalSlider = document.getElementById('categorical-slider');
         noUiSlider.create(categoricalSlider, {
-            start: [-.8, 0.05, 0.225, 0.8],
-            connect: [true, true, true, true, true],
+            start: [-.025, .125, 0.250, 0.8],
+            connect: [true, true, true, true, false],
             range: {
-                'min': -.8,
+                'min': -.4,
                 'max': .8
             },
             step: .025,
@@ -617,10 +617,10 @@
         // Add continious slider w/ noUiSlider
         var continuousSlider = document.getElementById('continuous-slider');
         noUiSlider.create(continuousSlider, {
-            start: [-.4, .4],
+            start: [-.025, .4],
             connect: [true, true, true],
             range: {
-                'min': -.8,
+                'min': -.4,
                 'max': .8
             },
             step: .025,
