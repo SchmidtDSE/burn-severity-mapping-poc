@@ -181,306 +181,358 @@
     // Content for the webpage, defined as JSON
     var burnMetricText = JSON.parse('{{ burn_metric_text | tojson | safe }}');
 
+    async function fetchData() {
 
-    // Add COG tile layer for classifications
-    var classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"0.045":175,"0.222":100,"0.8":25}}', {
-        maxZoom: 20,
-        pane: 'metrics'
-    })
+        const boundaryResponse = await fetch('{{ burn_boundary_geojson_url | safe }}');
+        const boundaryGeojson = await boundaryResponse.json();
 
-    // Add COG tile layer for continious metric, no classification
-    var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"}}', {
-        maxZoom: 20,
-        pane: 'metrics'
-    })
+        const ecoclassResponse = await fetch('{{ ecoclass_geojson_url | safe }}');
+        const ecoclassGeojson= await ecoclassResponse.json();
 
-    // Easy peasy Mapbox tileservers for the NAIP and Satellite layers
-    var naipLayer = L.tileLayer(mapboxNaipUrl, {
-        maxZoom: 20,
-        pane: 'basemaps'
-    });
-    var satelliteLayer = L.tileLayer(mapboxSatelliteUrl, {
-        maxZoom: 20,
-        pane: 'basemaps'
-    });
+        return { boundaryGeojson, ecoclassGeojson }; // Return the layers
 
-    // Add OSM Topo
-    var openTopoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        pane: 'basemaps'
-    })
+    }
 
-    // Get burn boundary
-    fetch('{{ burn_boundary_geojson_url | safe }}')
-    .then(response => response.json())
-    .then(data => {
-        boundaryLayer = L.geoJSON(data, {pane: 'burn-boundary'});
-        boundaryLayer.setStyle({
-            color: 'rgb(0, 0, 0)',
-            weight: 4,
-            opacity: 1,
-            fillOpacity: 0,
+
+    function onEachEcoclass(feature, layer) {
+        layer.on({
+            mouseover: function(e) {
+                var layer = e.target;
+
+                // Access the feature properties here
+                console.log(layer.feature.properties);
+
+                // You can also highlight the feature or display a popup
+                layer.setStyle({
+                    weight: 5,
+                    color: '#666',
+                    dashArray: '',
+                    fillOpacity: 0.7
+                });
+            },
+            mouseout: function(e) {
+                // Reset the style or hide the popup
+                var layer = e.target;
+                layer.setStyle({
+                    color: "#048c1b",
+                    weight: 2,
+                    opacity: .7,
+                    fillOpacity: 0
+                });
+            }
         });
+    }
+
+    fetchData().then(({ boundaryGeojson, ecoclassGeojson }) => {
+
+        // Add GeoJSON layer for ecoclass
+        var ecoclassLayer = L.geoJSON(ecoclassGeojson, {
+            style: function(feature) {
+                return {
+                    color: "#048c1b",
+                    weight: 2,
+                    opacity: .7,
+                    fillOpacity: 0
+                };
+            },
+            onEachFeature: onEachEcoclass,
+            pane: 'ecoclass'
+        });
+
+        // Add GeoJSON layer for burn boundary
+        var boundaryLayer = L.geoJSON(boundaryGeojson, {
+            style: function(feature) {
+                return {
+                    color: "#000000",
+                    weight: 6,
+                    opacity: 1,
+                    fillOpacity: 0
+                };
+            },
+            pane: 'burn-boundary'
+        });
+
+        // Add COG tile layer for classifications
+        var classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"0.045":175,"0.222":100,"0.8":25}}', {
+            maxZoom: 20,
+            pane: 'metrics'
+        })
+
+        // Add COG tile layer for continious metric, no classification
+        var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"}}', {
+            maxZoom: 20,
+            pane: 'metrics'
+        })
+
+        // Easy peasy Mapbox tileservers for the NAIP and Satellite layers
+        var naipLayer = L.tileLayer(mapboxNaipUrl, {
+            maxZoom: 20,
+            pane: 'basemaps'
+        });
+        var satelliteLayer = L.tileLayer(mapboxSatelliteUrl, {
+            maxZoom: 20,
+            pane: 'basemaps'
+        });
+
+        // Add OSM Topo
+        var openTopoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            pane: 'basemaps'
+        })
+
+
         // Create map
         var map = L.map('burn-map', {
-            layers: [openTopoLayer, classifiedTileLayer, boundaryLayer],
+            layers: [openTopoLayer, classifiedTileLayer, ecoclassLayer, ],
         });
 
-    });
+        // Create panes to properly order basemaps and metrics
+        map.createPane('basemaps');
+        map.getPane('basemaps').style.zIndex = 2;
 
-    // Create panes to properly order basemaps and metrics
-    map.createPane('basemaps');
-    map.getPane('basemaps').style.zIndex = 2;
+        map.createPane('metrics');
+        map.getPane('metrics').style.zIndex = 5;
 
-    map.createPane('metrics');
-    map.getPane('metrics').style.zIndex = 5;
+        map.createPane('ecoclass');
+        map.getPane('ecoclass').style.zIndex = 9;
 
-    map.createPane('burn-boundary');
-    map.getPane('burn-boundary').style.zIndex = 8;
+        map.createPane('burn-boundary');
+        map.getPane('burn-boundary').style.zIndex = 7;
 
-    // Add layer controls - one for basemap, one for metrics
-    var baseLayers = {
-        "OpenTopoMap": openTopoLayer,
-        "NAIP": naipLayer,
-        "Satellite": satelliteLayer
-    };
 
-    var metricsLayers = {
-        "Continuous": continiousTileLayer,
-        "Classifications": classifiedTileLayer
-    };
+        // Add layer controls - one for basemap, one for metrics
+        var baseLayers = {
+            "None": L.tileLayer('', {pane: 'basemaps'}), // Empty layer to remove all basemaps
+            "OpenTopoMap": openTopoLayer,
+            "NAIP": naipLayer,
+            "Satellite": satelliteLayer
+        };
 
-    var polyLayers = {
-        "Burn Boundary": boundaryLayer
-    }
+        var metricsLayers = {
+            "Continuous": continiousTileLayer,
+            "Classifications": classifiedTileLayer
+        };
 
-    // Loading indicator
-    var loadingDiv = L.DomUtil.create('div', 'loading');
-    loadingDiv.innerHTML = 'Loading...';
-    document.body.appendChild(loadingDiv);
-
-    // Add event listeners to each layer
-    for (var key in baseLayers) {
-        baseLayers[key].setZIndex(2);
-        baseLayers[key].on({
-            'loading': function() {
-                loadingDiv.style.display = 'block';
-            },
-            'load': function() {
-                loadingDiv.style.display = 'none';
-            }
-        });
-    }
-
-    for (var key in metricsLayers) {
-        metricsLayers[key].setZIndex(5);
-        metricsLayers[key].on({
-            'loading': function() {
-                loadingDiv.style.display = 'block';
-            },
-            'load': function() {
-                loadingDiv.style.display = 'none';
-            }
-        });
-    }
-
-    for (var key in polyLayers) {
-        polyLayers[key].setZIndex(8);
-        polyLayers[key].on({
-            'loading': function() {
-                loadingDiv.style.display = 'block';
-            },
-            'load': function() {
-                loadingDiv.style.display = 'none';
-            }
-        });
-    }
-
-    var groupedOverlays = {
-        // "Basemaps": baseLayers,
-        "Metrics": metricsLayers,
-        "Polygons": polyLayers
-    };
-
-    var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {
-        exclusiveGroups: ["Metrics"],
-        position: 'topleft',
-        collapsed: false
-    }).addTo(map);
-
-    var opacitySlider = document.getElementById('opacity-slider');
-
-    var updateOpacityClassified = function(e) {
-        classifiedTileLayer.setOpacity(e.target.value);
-    };
-    var updateOpacityContinious = function(e) {
-        continiousTileLayer.setOpacity(e.target.value);
-    };
-
-    opacitySlider.addEventListener('input', updateOpacityClassified);
-    opacitySlider.addEventListener('input', updateOpacityContinious);
-
-    // Iterate over each metric
-    burnMetricInfo = document.getElementById('burn-metric-info');
-    for (var key in burnMetricText) {
-        // Create a div for the metric
-        var div = document.createElement('div');
-
-        // Add the metric name and formula
-        div.innerHTML = '<strong>' + burnMetricText[key].metric_name + '</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="math">\\(' + burnMetricText[key].formula + '\\)</span>';
-
-        // Add padding between divs
-        div.style.padding = '10px';
-        div.style.zIndex = 1000;
-
-        // Highlight the current metric
-        if (key.toLowerCase() === burnMetric.toLowerCase()) {
-            div.style.backgroundColor = '#ffe875';
+        var polyLayers = {
+            "Burn Boundary": boundaryLayer,
+            "Dominant Cover Spp": ecoclassLayer
         }
 
-        // Append the div to the container
-        burnMetricInfo.appendChild(div);
+        // Loading indicator
+        var loadingDiv = L.DomUtil.create('div', 'loading');
+        loadingDiv.innerHTML = 'Loading...';
+        document.body.appendChild(loadingDiv);
 
-        // Ask MathJax to typeset the new div
-        MathJax.typeset([div]);
-    }
-
-    // Add threshold sliders w/ noUiSlider
-    var categoricalSlider = document.getElementById('categorical-slider');
-    noUiSlider.create(categoricalSlider, {
-        start: [-.8, 0.05, 0.225, 0.8],
-        connect: [true, true, true, true, true],
-        range: {
-            'min': -.8,
-            'max': .8
-        },
-        step: .025,
-        direction: 'rtl',
-        orientation: 'vertical',
-        pips: {
-            mode: 'steps',
-            stepped: true,
-            density: 16,
-            format: wNumb({
-                decimals: 2,
-                to: function(value) {
-                    // Convert to percentage from float
-                    return (value * 100).toFixed(0) + '%';
-                }
-            }),
-            filter: function(value, type) {
-                return value % (4 * 0.025) === 0 ? 1 : -1;
+        // Add event listeners to each layer
+        for (var key in baseLayers) {
+            if (key === 'None') {
+                continue;
             }
-        },
-        behaviour: 'tap-drag',
-        tooltips: true,
-        format: wNumb({
-            decimals: 3
-        }),
-    });
-
-    // Add continious slider w/ noUiSlider
-    var continuousSlider = document.getElementById('continuous-slider');
-    noUiSlider.create(continuousSlider, {
-        start: [-.4, .4],
-        connect: [true, true, true],
-        range: {
-            'min': -.8,
-            'max': .8
-        },
-        step: .025,
-        direction: 'rtl',
-        orientation: 'vertical',
-        pips: {
-            mode: 'steps',
-            stepped: true,
-            density: 16,
-            format: wNumb({
-                decimals: 2,
-                to: function(value) {
-                    // Convert to percentage from float
-                    return (value * 100).toFixed(0) + '%';
+            baseLayers[key].setZIndex(2);
+            baseLayers[key].on({
+                'loading': function() {
+                    loadingDiv.style.display = 'block';
+                },
+                'load': function() {
+                    loadingDiv.style.display = 'none';
                 }
-            }),
-            filter: function(value, type) {
-                return value % (4 * 0.025) === 0 ? 1 : -1;
-            }
-        },
-        behaviour: 'tap-drag',
-        tooltips: true,
-        format: wNumb({
-            decimals: 3
-        }),
-    });
-    // Initially hide the continuous slider
-    continuousSlider.style.display = 'none';
-
-    categoricalSlider.noUiSlider.on('update', function(values, handle) {
-        var thresholds = {
-            [values[0]]: 250,
-            [values[1]]: 175,
-            [values[2]]: 100,
-            [values[3]]: 25
-        };
-        classifiedTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
-    });
-
-    continuousSlider.noUiSlider.on('update', function(values, handle) {
-        var thresholds = {
-            min: values[0],
-            max: values[1]
-        };
-        continiousTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
-    });
-
-    // Add event listeners to swich between categorical and continious sliders
-    map.on('overlayadd', function(e) {
-        if (e.name === 'Continuous') {
-            // If the Continuous layer is added, hide the categorical slider and show the continuous slider
-            categoricalSlider.style.display = 'none';
-            continuousSlider.style.display = 'block';
-        } else {
-            categoricalSlider.style.display = 'block';
-            continuousSlider.style.display = 'none';
+            });
         }
+
         for (var key in metricsLayers) {
-            if (key !== e.name) {
-                map.removeLayer(metricsLayers[key]);
-            }
+            metricsLayers[key].setZIndex(5);
+            metricsLayers[key].on({
+                'loading': function() {
+                    loadingDiv.style.display = 'block';
+                },
+                'load': function() {
+                    loadingDiv.style.display = 'none';
+                }
+            });
         }
-    });
 
-    // Center map on fire, based on `bounds` metadata
-    map.fitBounds(fireBounds);
+        for (var key in polyLayers) {
+            polyLayers[key].setZIndex(8);
+            polyLayers[key].on({
+                'loading': function() {
+                    loadingDiv.style.display = 'block';
+                },
+                'load': function() {
+                    loadingDiv.style.display = 'none';
+                }
+            });
+        }
 
-    // Define what happens on each feature
-    // function onEachFeature(feature, layer) {
-    //     layer.on({
-    //         mouseover: function(e) {
-    //             var layer = e.target;
+        var groupedOverlays = {
+            // "Basemaps": baseLayers,
+            "Metrics": metricsLayers,
+            "Polygons": polyLayers
+        };
 
-    //             // Access the feature properties here
-    //             console.log(layer.feature.properties);
+        var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {
+            exclusiveGroups: ["Metrics"],
+            position: 'topleft',
+            collapsed: false
+        }).addTo(map);
 
-    //             // You can also highlight the feature or display a popup
-    //             layer.setStyle({
-    //                 weight: 5,
-    //                 color: '#666',
-    //                 dashArray: '',
-    //                 fillOpacity: 0.7
-    //             });
-    //         },
-    //         mouseout: function(e) {
-    //             // Reset the style or hide the popup
-    //             geojson.resetStyle(e.target);
-    //         }
-    //     });
-    // }
+        // // Add event listener to the layer control - if none, just remove all other baseLayers
+        // layerControl.on('baselayerchange', function(e) {
+        //     if (e.name === 'None') {
+        //         // If "None" is selected, remove all other baseLayers
+        //         for (var key in baseLayers) {
+        //             if (key !== 'None' && map.hasLayer(baseLayers[key])) {
+        //                 map.removeLayer(baseLayers[key]);
+        //             }
+        //         }
+        //     }
+        // });
 
-    // // Add the GeoJSON layer
-    // var geojson = L.geoJson(data, {
-    //     onEachFeature: onEachFeature
-    // }).addTo(map);
+        var opacitySlider = document.getElementById('opacity-slider');
+
+        var updateOpacityClassified = function(e) {
+            classifiedTileLayer.setOpacity(e.target.value);
+        };
+        var updateOpacityContinious = function(e) {
+            continiousTileLayer.setOpacity(e.target.value);
+        };
+
+        opacitySlider.addEventListener('input', updateOpacityClassified);
+        opacitySlider.addEventListener('input', updateOpacityContinious);
+
+        // Iterate over each metric
+        burnMetricInfo = document.getElementById('burn-metric-info');
+        for (var key in burnMetricText) {
+            // Create a div for the metric
+            var div = document.createElement('div');
+
+            // Add the metric name and formula
+            div.innerHTML = '<strong>' + burnMetricText[key].metric_name + '</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="math">\\(' + burnMetricText[key].formula + '\\)</span>';
+
+            // Add padding between divs
+            div.style.padding = '10px';
+            div.style.zIndex = 1000;
+
+            // Highlight the current metric
+            if (key.toLowerCase() === burnMetric.toLowerCase()) {
+                div.style.backgroundColor = '#ffe875';
+            }
+
+            // Append the div to the container
+            burnMetricInfo.appendChild(div);
+
+            // Ask MathJax to typeset the new div
+            MathJax.typeset([div]);
+        }
+
+        // Add threshold sliders w/ noUiSlider
+        var categoricalSlider = document.getElementById('categorical-slider');
+        noUiSlider.create(categoricalSlider, {
+            start: [-.8, 0.05, 0.225, 0.8],
+            connect: [true, true, true, true, true],
+            range: {
+                'min': -.8,
+                'max': .8
+            },
+            step: .025,
+            direction: 'rtl',
+            orientation: 'vertical',
+            pips: {
+                mode: 'steps',
+                stepped: true,
+                density: 16,
+                format: wNumb({
+                    decimals: 2,
+                    to: function(value) {
+                        // Convert to percentage from float
+                        return (value * 100).toFixed(0) + '%';
+                    }
+                }),
+                filter: function(value, type) {
+                    return value % (4 * 0.025) === 0 ? 1 : -1;
+                }
+            },
+            behaviour: 'tap-drag',
+            tooltips: true,
+            format: wNumb({
+                decimals: 3
+            }),
+        });
+
+        // Add continious slider w/ noUiSlider
+        var continuousSlider = document.getElementById('continuous-slider');
+        noUiSlider.create(continuousSlider, {
+            start: [-.4, .4],
+            connect: [true, true, true],
+            range: {
+                'min': -.8,
+                'max': .8
+            },
+            step: .025,
+            direction: 'rtl',
+            orientation: 'vertical',
+            pips: {
+                mode: 'steps',
+                stepped: true,
+                density: 16,
+                format: wNumb({
+                    decimals: 2,
+                    to: function(value) {
+                        // Convert to percentage from float
+                        return (value * 100).toFixed(0) + '%';
+                    }
+                }),
+                filter: function(value, type) {
+                    return value % (4 * 0.025) === 0 ? 1 : -1;
+                }
+            },
+            behaviour: 'tap-drag',
+            tooltips: true,
+            format: wNumb({
+                decimals: 3
+            }),
+        });
+        // Initially hide the continuous slider
+        continuousSlider.style.display = 'none';
+
+        categoricalSlider.noUiSlider.on('update', function(values, handle) {
+            var thresholds = {
+                [values[0]]: 250,
+                [values[1]]: 175,
+                [values[2]]: 100,
+                [values[3]]: 25
+            };
+            classifiedTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
+        });
+
+        continuousSlider.noUiSlider.on('update', function(values, handle) {
+            var thresholds = {
+                min: values[0],
+                max: values[1]
+            };
+            continiousTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
+        });
+
+        // Add event listeners to swich between categorical and continious sliders
+        map.on('overlayadd', function(e) {
+            if (e.name === 'Continuous') {
+                // If the Continuous layer is added, hide the categorical slider and show the continuous slider
+                categoricalSlider.style.display = 'none';
+                continuousSlider.style.display = 'block';
+            } else {
+                categoricalSlider.style.display = 'block';
+                continuousSlider.style.display = 'none';
+            }
+            for (var key in metricsLayers) {
+                if (key !== e.name) {
+                    map.removeLayer(metricsLayers[key]);
+                }
+            }
+        });
+
+        // Center map on fire, based on `bounds` metadata
+        map.fitBounds(fireBounds);
+
+    }).catch(error => console.error(error));
 </script>
 
 </body>
