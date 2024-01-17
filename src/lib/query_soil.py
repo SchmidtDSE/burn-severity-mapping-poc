@@ -3,6 +3,7 @@ from requests import ConnectionError
 import geopandas as gpd
 import pandas as pd
 import json
+import time
 from shapely.geometry import shape
 from shapely.ops import transform
 import xml.etree.ElementTree as ET
@@ -106,7 +107,8 @@ def sdm_get_esa_mapunitid_poly(geojson, backoff_max = 200, backoff_value = 0, ba
                 mapunit_gdf['musym'] = mapunit_gdf['musym'].astype(str)
                 mapunit_gdf['nationalmusym'] = mapunit_gdf['nationalmusym'].astype(str)
                 mapunit_gdf['mukey'] = mapunit_gdf['mukey'].astype(str)
-                mapunit_gdf.set_index(['musym', 'nationalmusym', 'mukey'], inplace=True)
+                mapunit_gdf['mupolygonkey'] = mapunit_gdf['mupolygonkey'].astype(str)
+                mapunit_gdf.set_index(['musym', 'nationalmusym', 'mukey', 'mupolygonkey'], inplace=True)
 
                 return mapunit_gdf
 
@@ -119,6 +121,7 @@ def sdm_get_esa_mapunitid_poly(geojson, backoff_max = 200, backoff_value = 0, ba
         print(f"Backoff: {backoff_value}")
         if backoff_value < backoff_max:
             backoff_value += backoff_increment
+            time.sleep(backoff_value)
             return sdm_get_esa_mapunitid_poly(geojson, backoff_value=backoff_value)
         else:
             raise Exception("SDM Refused Traffic. Backoff max reached.")
@@ -145,11 +148,6 @@ def sdm_get_ecoclassid_from_mu_info(mu_polygon_keys):
         INNER JOIN coecoclass ON c.cokey = coecoclass.cokey AND coecoclass.ecoclassref = 'Ecological Site Description Database'
         GROUP BY ecoclassid, ecoclassname, muname, mu.mukey, mup.mupolygonkey, mu.musym, mu.nationalmusym, legend.areasymbol, legend.areaname
     """
-    # mu_pairs = [mu_info.mu_pair for mu_info in mu_info_list]
-
-    # TODO: Hacky SQL 98 solution to lack of tuples (should revist)
-    # conditions = ' OR '.join("(musym = {} AND nationalmusym = '{}')".format(nationalmusym, musym) for nationalmusym, musym in mu_info_list)
-    # query = SQL_QUERY.format(conditions)
     in_mu_polygon_keys_list = ','.join([str(key) for key in mu_polygon_keys])
     query = SQL_QUERY.format(in_mu_polygon_keys_list)
     query = ' '.join(query.split())  # remove newlines and extra spaces
@@ -169,7 +167,8 @@ def sdm_get_ecoclassid_from_mu_info(mu_polygon_keys):
         mu_info_df['mukey'] = mu_info_df['mukey'].astype(str)
         mu_info_df['musym'] = mu_info_df['musym'].astype(str)
         mu_info_df['nationalmusym'] = mu_info_df['nationalmusym'].astype(str)
-        mu_info_df.set_index(['musym', 'nationalmusym', 'mukey'], inplace=True)
+        mu_info_df['mupolygonkey'] = mu_info_df['mupolygonkey'].astype(str)
+        mu_info_df.set_index(['musym', 'nationalmusym', 'mukey', 'mupolygonkey'], inplace=True)
 
         return mu_info_df
     else:
@@ -183,6 +182,8 @@ def edit_get_ecoclass_info(ecoclass_id):
         response = requests.get(edit_endpoint_fmt)
 
         if response.status_code == 200:
+            print(f"Successfully obtained from EDIT database: {ecoclass_id}")
+
             edit_json = json.loads(response.content)
 
             # Add hyperlink to EDIT human readable page
@@ -190,7 +191,7 @@ def edit_get_ecoclass_info(ecoclass_id):
 
             return True, edit_json
         elif response.status_code == 404:
-            print(f"EcoClass ID not found within EDIT database:, {ecoclass_id}")
+            print(f"EcoClass ID not found within EDIT database: {ecoclass_id}")
             return False, {"error": f"EcoClass ID not found within EDIT database: {ecoclass_id}"}
         else:
             print("Error:", response.status_code)

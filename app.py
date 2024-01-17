@@ -5,7 +5,7 @@ import uvicorn
 from pydantic import BaseModel
 from google.cloud import logging
 import tempfile
-from typing import Tuple, List
+from typing import Tuple, List, Any
 from pydantic import BaseModel
 import pandas as pd
 
@@ -104,7 +104,7 @@ def get_manifest(sfpt_client: SFTPClient = Depends(get_sftp_client)):
 
 ### API ENDPOINTS ###
 
-@app.get("/api/available-cogs")
+@app.get("/api/query-satellite/available-cogs")
 def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
     try:
         sftp_client.update_available_cogs()
@@ -120,15 +120,14 @@ def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
         return f"Error: {e}", 400
 
 class AnaylzeBurnPOSTBody(BaseModel):
-    geojson: dict
+    geojson: Any
     date_ranges: dict
     fire_event_name: str
     affiliation: str
 
-@app.post("/api/analyze-burn")
+@app.post("/api/query-satellite/analyze-burn")
 def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
-    # geojson = json.loads(body.geojson)
-    geojson = body.geojson
+    geojson = json.loads(body.geojson)
 
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
@@ -170,7 +169,7 @@ def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(ge
         return f"Error: {e}", 400
 
 class QuerySoilPOSTBody(BaseModel):
-    geojson: dict
+    geojson: Any
     fire_event_name: str
     affiliation: str
 
@@ -203,30 +202,43 @@ def get_ecoclass_info(ecoclassid: str = Query(...)):
 @app.post("/api/query-soil/analyze-ecoclass") 
 def analyze_ecoclass(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
     fire_event_name = body.fire_event_name
-    geojson = body.geojson
+    geojson = json.loads(body.geojson)
     affiliation = body.affiliation
 
     try:
         mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
-        # mu_pair_tuples = [(musynm, nationalmusym) for musynm, nationalmusym, __mukey in mapunit_gdf.index.to_list()]
-        mu_polygon_keys = mapunit_gdf.mupolygonkey.to_list()
+        mu_polygon_keys = [mupolygonkey for __musym, __nationalmusym, __mukey, mupolygonkey in  mapunit_gdf.index]
         mrla_df = sdm_get_ecoclassid_from_mu_info(mu_polygon_keys)
 
+        # join mapunitids with link table for ecoclassids
+        mapunit_with_ecoclassid_df = mapunit_gdf.join(mrla_df).set_index('ecoclassid')
+
         edit_ecoclass_df_row_dicts = []
-        for ecoclass_id in mrla_df['ecoclassid'].unique():
+        ecoclass_ids = mrla_df['ecoclassid'].unique()
+
+        n_ecoclasses = len(ecoclass_ids)
+        n_within_edit = 0
+
+        for ecoclass_id in ecoclass_ids:
             edit_success, edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
             if edit_success:
+                n_within_edit += 1
                 logger.log_text(f"Success: {ecoclass_id} exists within EDIT backend")
                 edit_ecoclass_df_row_dict = edit_ecoclass_json['generalInformation']['dominantSpecies']
                 edit_ecoclass_df_row_dict['ecoclassid'] = ecoclass_id
                 edit_ecoclass_df_row_dicts.append(edit_ecoclass_df_row_dict)
             else:
                 logger.log_text(f"Missing: {edit_ecoclass_json} doesn't exist within EDIT backend")
-        edit_ecoclass_df = pd.DataFrame(edit_ecoclass_df_row_dicts).set_index('ecoclassid')
 
-        # join mapunitids with link table for ecoclassids
-        mapunit_with_ecoclassid_df = mapunit_gdf.join(mrla_df).set_index('ecoclassid')
-        mapunit_with_ecoclassid_df.drop(['spatialversion', 'MLRA', 'MLRA_Name'], axis = 'columns', inplace = True)
+        logger.log_text(f"Found {n_within_edit} of {n_ecoclasses} ecoclasses ({100*round(n_within_edit/n_ecoclasses, 2)}%) within EDIT backend")
+
+        if n_within_edit > 0:
+            edit_ecoclass_df = pd.DataFrame(edit_ecoclass_df_row_dicts).set_index('ecoclassid')
+        else:
+            # Populate with empty dataframe, for consistency's sake (so that the frontend doesn't have to handle this case)
+            edit_ecoclass_df = pd.DataFrame([], columns=
+                ['dominantTree1', 'dominantShrub1', 'dominantHerb1', 'dominantTree2','dominantShrub2', 'dominantHerb2']
+            )
 
         # join ecoclassids with edit ecoclass info, to get spatial ecoclass info
         edit_ecoclass_geojson = mapunit_with_ecoclassid_df.join(edit_ecoclass_df, how='left').to_json()

@@ -41,12 +41,13 @@
 
     <div id="ecoclass-analysis-loading" style="display: none;">
         <img src="/static/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes." />
-    <script>
+    </div>
 
     <div id="ecoclass-analysis-success" style="display: none;">
         <img src="/static/checkmark.png" alt="EDIT Ecoclass Analysis Success!" />
     </div>
 
+    <script>
     $("#fire-analysis-form").on("submit", function(event) {
         event.preventDefault();
 
@@ -74,7 +75,7 @@
 
             // Make a request to analyze the burn
             $.ajax({
-                url: '/api/analyze-burn',
+                url: '/api/query-satellite/analyze-burn',
                 type: 'post',
                 dataType: 'json',
                 contentType: 'application/json',
@@ -97,7 +98,7 @@
 
             // Make a request to analyze the ecoclassification
             $.ajax({
-                url: '/api/analyze-ecoclass',
+                url: '/api/query-soil/analyze-ecoclass',
                 type: 'post',
                 dataType: 'json',
                 contentType: 'application/json',
