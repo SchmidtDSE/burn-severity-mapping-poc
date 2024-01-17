@@ -3,6 +3,12 @@
 <head>
     <title>Fire Analysis Form</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        .indicator-img {
+            width: 50px; /* Adjust as needed */
+            height: 50px; /* Adjust as needed */
+        }
+    </style>
 </head>
 <body>
     <form id="fire-analysis-form">
@@ -24,27 +30,33 @@
     </form>
 
     <div id="upload-loading" style="display: none;">
-        <img src="/static/spinner.gif" alt="Uploading shapefile... this may take a few moments." />
+        <img class="indicator-img" src="/static/spinner.gif" alt="Uploading shapefile... this may take a few moments." />
+        <p>Uploading shapefile... this may take a few moments.</p>
     </div>
 
     <div id="upload-success" style="display: none;">
-        <img src="/static/checkmark.png" alt="Upload Success!" />
+        <img class="indicator-img" src="/static/checkmark.png" alt="Upload Success!" />
+        <p>Upload Success!</p>
     </div>
 
     <div id="burn-analysis-loading" style="display: none;">
-        <img src="/static/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes." />
+        <img class="indicator-img" src="/static/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes." />
+        <p>Analyzing burn area... depending on AOI size, this may take several minutes.</p>
     </div>
 
     <div id="burn-analysis-success" style="display: none;">
-        <img src="/static/checkmark.png" alt="Burn Metric Analysis Success!" />
+        <img class="indicator-img" src="/static/checkmark.png" alt="Burn Metric Analysis Success!" />
+        <p>Burn Metric Analysis Success!</p>
     </div>
 
     <div id="ecoclass-analysis-loading" style="display: none;">
-        <img src="/static/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes." />
+        <img class="indicator-img" src="/static/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes." />
+        <p>Analyzing ecoclassification... depending on AOI size, this may take several minutes.</p>
     </div>
 
     <div id="ecoclass-analysis-success" style="display: none;">
-        <img src="/static/checkmark.png" alt="EDIT Ecoclass Analysis Success!" />
+        <img class="indicator-img" src="/static/checkmark.png" alt="EDIT Ecoclass Analysis Success!" />
+        <p>EDIT Ecoclass Analysis Success!</p>
     </div>
 
     <script>
@@ -53,7 +65,8 @@
 
         // Show the upload loading spinner
         $("#upload-loading").show();
-        $("#analysis-loading").show();
+        $("#burn-analysis-loading").show();
+        $("#ecoclass-analysis-loading").show();
 
         var formData = new FormData();
         formData.append('file', $('#shp_zip')[0].files[0]);
@@ -66,7 +79,15 @@
             type: 'post',
             processData: false,
             contentType: false,
-            data: formData
+            data: formData,
+            success: function() {
+                $("#upload-loading").hide();
+                $("#upload-success").show();
+            },
+            error: function() {
+                $("#upload-loading").hide();
+                alert("Upload failed");
+            }
         });
 
         $.when(upload).done(function(uploadResponse) {
@@ -89,10 +110,13 @@
                     }
                 }),
                 success: function (analysisResponse) {
-                    console.log(analysisResponse);
+                    $("#burn-analysis-loading").hide();
+                    $("#burn-analysis-success").show();
                 },
                 error: function (error) {
                     console.error(error);
+                    $("#burn-analysis-loading").hide();
+                    alert("Burn analysis failed")
                 }
             });
 
@@ -107,11 +131,14 @@
                     fire_event_name: $("#fire_event_name").val(),
                     affiliation: $("#affiliation").val(),
                 }),
-                success: function (analysisResponse) {
-                    console.log(analysisResponse);
+                success: function () {
+                    $("#ecoclass-analysis-loading").hide();
+                    $("#ecoclass-analysis-success").show();
                 },
-                error: function (error) {
+                error: function () {
                     console.error(error);
+                    $("#ecoclass-analysis-loading").hide();
+                    alert("Ecoclass analysis failed");
                 }
             });
         }).fail(function(error) {
