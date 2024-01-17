@@ -31,15 +31,22 @@
         <img src="/static/checkmark.png" alt="Upload Success!" />
     </div>
 
-    <div id="analysis-loading" style="display: none;">
+    <div id="burn-analysis-loading" style="display: none;">
         <img src="/static/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes." />
     </div>
 
-    <div id="analysis-success" style="display: none;">
-        <img src="/static/checkmark.png" alt="Analysis Success!" />
+    <div id="burn-analysis-success" style="display: none;">
+        <img src="/static/checkmark.png" alt="Burn Metric Analysis Success!" />
     </div>
 
+    <div id="ecoclass-analysis-loading" style="display: none;">
+        <img src="/static/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes." />
     <script>
+
+    <div id="ecoclass-analysis-success" style="display: none;">
+        <img src="/static/checkmark.png" alt="EDIT Ecoclass Analysis Success!" />
+    </div>
+
     $("#fire-analysis-form").on("submit", function(event) {
         event.preventDefault();
 
@@ -79,6 +86,25 @@
                         prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
                         postfire: [$("#postfire-start").val(), $("#postfire-end").val()]
                     }
+                }),
+                success: function (analysisResponse) {
+                    console.log(analysisResponse);
+                },
+                error: function (error) {
+                    console.error(error);
+                }
+            });
+
+            // Make a request to analyze the ecoclassification
+            $.ajax({
+                url: '/api/analyze-ecoclass',
+                type: 'post',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    geojson: uploadResponse.geojson,
+                    fire_event_name: $("#fire_event_name").val(),
+                    affiliation: $("#affiliation").val(),
                 }),
                 success: function (analysisResponse) {
                     console.log(analysisResponse);

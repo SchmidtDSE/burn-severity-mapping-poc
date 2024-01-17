@@ -120,15 +120,15 @@ def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
         return f"Error: {e}", 400
 
 class AnaylzeBurnPOSTBody(BaseModel):
-    geojson: str
+    geojson: dict
     date_ranges: dict
     fire_event_name: str
     affiliation: str
 
 @app.post("/api/analyze-burn")
 def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
-    geojson = json.loads(body.geojson)
-    # geojson = body.geojson
+    # geojson = json.loads(body.geojson)
+    geojson = body.geojson
 
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
@@ -208,10 +208,9 @@ def analyze_ecoclass(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(
 
     try:
         mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
-
-        mu_pair_tuples = [(musynm, nationalmusym) for musynm, nationalmusym, __mukey in mapunit_gdf.index.to_list()]
-
-        mrla_df = sdm_get_ecoclassid_from_mu_info(mu_pair_tuples)
+        # mu_pair_tuples = [(musynm, nationalmusym) for musynm, nationalmusym, __mukey in mapunit_gdf.index.to_list()]
+        mu_polygon_keys = mapunit_gdf.mupolygonkey.to_list()
+        mrla_df = sdm_get_ecoclassid_from_mu_info(mu_polygon_keys)
 
         edit_ecoclass_df_row_dicts = []
         for ecoclass_id in mrla_df['ecoclassid'].unique():

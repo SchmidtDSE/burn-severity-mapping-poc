@@ -57,7 +57,7 @@ def sdm_get_available_interpretations(aoi_smd_id):
         return None
 
 # def sdm_get_esa_mapunitid_poly(aoi_smd_id):
-def sdm_get_esa_mapunitid_poly(geojson):
+def sdm_get_esa_mapunitid_poly(geojson, backoff_max = 200, backoff_value = 0, backoff_increment = 25):
 
     geometry = geojson['features'][0]['geometry']
     shapely_geom = shape(geometry)
@@ -114,39 +114,44 @@ def sdm_get_esa_mapunitid_poly(geojson):
             print("Error:", response.status_code)
             return None
     except ConnectionError as e:
-        # TODO: Need to implement some backoff here. Cloud tasks does this intelligently by default,
-        # so perhaps we can wait til we decide on how to async the `analyze` endpoints
+        # TODO: Remove this if we end up using cloud tasks' backoff
         print("SMD Refused Traffic:", str(e))
-        return None
+        print(f"Backoff: {backoff_value}")
+        if backoff_value < backoff_max:
+            backoff_value += backoff_increment
+            return sdm_get_esa_mapunitid_poly(geojson, backoff_value=backoff_value)
+        else:
+            raise Exception("SDM Refused Traffic. Backoff max reached.")
     except Exception as e:
         print("Error:", str(e))
         return None
 
-def sdm_get_ecoclassid_from_mu_info(mu_info_list):
+def sdm_get_ecoclassid_from_mu_info(mu_polygon_keys):
     SQL_QUERY = """
         SELECT DISTINCT
-            lao.areasymbol AS MLRA,
-            lao.areaname AS MLRA_Name,
             ecoclassid,
             ecoclassname,
             muname,
             mu.mukey,
-            musym,
-            nationalmusym
+            mup.mupolygonkey,
+            mu.musym,
+            mu.nationalmusym
         FROM legend
-        INNER JOIN laoverlap AS lao ON legend.lkey = lao.lkey AND lao.areasymbol = '10'
+        INNER JOIN laoverlap AS lao ON legend.lkey = lao.lkey
         INNER JOIN muaoverlap AS mua ON mua.lareaovkey = lao.lareaovkey
-        INNER JOIN mapunit AS mu ON mu.mukey = mua.mukey AND ({})
+        INNER JOIN mapunit AS mu ON mu.mukey = mua.mukey
+        INNER JOIN mupolygon AS mup ON mu.mukey = mup.mukey AND mup.mupolygonkey IN ({})
         INNER JOIN component c ON c.mukey = mu.mukey AND compkind = 'series'
         INNER JOIN coecoclass ON c.cokey = coecoclass.cokey AND coecoclass.ecoclassref = 'Ecological Site Description Database'
-        GROUP BY lao.areasymbol, lao.areaname, ecoclassid, ecoclassname, muname, mu.mukey, musym, nationalmusym, legend.areasymbol, legend.areaname
-        ORDER BY lao.areasymbol ASC, ecoclassid
+        GROUP BY ecoclassid, ecoclassname, muname, mu.mukey, mup.mupolygonkey, mu.musym, mu.nationalmusym, legend.areasymbol, legend.areaname
     """
     # mu_pairs = [mu_info.mu_pair for mu_info in mu_info_list]
 
     # TODO: Hacky SQL 98 solution to lack of tuples (should revist)
-    conditions = ' OR '.join("(musym = '{}' AND nationalmusym = '{}')".format(nationalmusym, musym) for nationalmusym, musym in mu_info_list)
-    query = SQL_QUERY.format(conditions)
+    # conditions = ' OR '.join("(musym = {} AND nationalmusym = '{}')".format(nationalmusym, musym) for nationalmusym, musym in mu_info_list)
+    # query = SQL_QUERY.format(conditions)
+    in_mu_polygon_keys_list = ','.join([str(key) for key in mu_polygon_keys])
+    query = SQL_QUERY.format(in_mu_polygon_keys_list)
     query = ' '.join(query.split())  # remove newlines and extra spaces
     query = urllib.parse.quote_plus(query)
 
