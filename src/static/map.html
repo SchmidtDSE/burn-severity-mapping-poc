@@ -193,23 +193,42 @@
 
     }
 
+    var popup = L.popup({
+        closeButton: false,
+        autoClose: false
+    });
 
     function onEachEcoclass(feature, layer) {
         layer.on({
             mouseover: function(e) {
                 var layer = e.target;
 
-                // Access the feature properties here
                 console.log(layer.feature.properties);
 
-                // You can also highlight the feature or display a popup
+                // Highlight the feature
                 layer.setStyle({
                     weight: 5,
                     color: '#666',
                     dashArray: '',
                     fillOpacity: 0.7
                 });
+
+                // Bring the layer to the front, if it's not already
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                    layer.bringToFront();
+                }
+
+                // Bind a popup to the layer with information from the feature properties
+                popup.setContent("MU Name: " + layer.feature.properties.muname);
+                popup.setLatLng(e.latlng); // Set the popup position to the mouse position
+                popup.openOn(layer._map);
             },
+
+            mousemove: function(e) {
+                // Update the popup position to the mouse position
+                popup.setLatLng(e.latlng);
+            },
+
             mouseout: function(e) {
                 // Reset the style or hide the popup
                 var layer = e.target;
@@ -219,8 +238,12 @@
                     opacity: .7,
                     fillOpacity: 0
                 });
+
+                layer._map.closePopup();
             }
+
         });
+
     }
 
     fetchData().then(({ boundaryGeojson, ecoclassGeojson }) => {
