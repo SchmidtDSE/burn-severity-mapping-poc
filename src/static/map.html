@@ -219,7 +219,12 @@
                 }
 
                 // Bind a popup to the layer with information from the feature properties
-                popup.setContent("MU Name: " + layer.feature.properties.muname);
+            popup.setContent(
+                "<strong>Map Unit Name:</strong> <br> - " +
+                (layer.feature.properties.muname ? layer.feature.properties.muname : 'N/A') +
+                "<br><strong>Ecoclass Name:</strong> <br> - " +
+                (layer.feature.properties.ecoclassname ? layer.feature.properties.ecoclassname : 'N/A')
+            );
                 popup.setLatLng(e.latlng); // Set the popup position to the mouse position
                 popup.openOn(layer._map);
             },
@@ -233,10 +238,10 @@
                 // Reset the style or hide the popup
                 var layer = e.target;
                 layer.setStyle({
-                    color: "#048c1b",
-                    weight: 2,
-                    opacity: .7,
-                    fillOpacity: 0.5
+                    color: "#03420f",
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0
                 });
 
                 layer._map.closePopup();
@@ -257,6 +262,7 @@
                     fillOpacity: 0
                 };
             },
+            onEachFeature: onEachEcoclass,
             pane: 'ecoclass'
         });
 
@@ -651,11 +657,6 @@
             } else {
                 categoricalSlider.style.display = 'block';
                 continuousSlider.style.display = 'none';
-            }
-            for (var key in metricsLayers) {
-                if (key !== e.name) {
-                    map.removeLayer(metricsLayers[key]);
-                }
             }
         });
 
