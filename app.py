@@ -211,9 +211,6 @@ def analyze_ecoclass(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(
 
         mu_pair_tuples = [(musynm, nationalmusym) for musynm, nationalmusym, __mukey in mapunit_gdf.index.to_list()]
 
-        # TODO: gross type conversion - preserving the pydantic model for now in case lower level calls are useful, but will want to decide later
-        # mu_pair_tuples = [MUPair(mu_pair=(str(row['nationalmusym']), str(row['musym']))) for _, row in mapunit_gdf.iterrows()]
-
         mrla_df = sdm_get_ecoclassid_from_mu_info(mu_pair_tuples)
 
         edit_ecoclass_df_row_dicts = []
@@ -230,7 +227,7 @@ def analyze_ecoclass(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(
 
         # join mapunitids with link table for ecoclassids
         mapunit_with_ecoclassid_df = mapunit_gdf.join(mrla_df).set_index('ecoclassid')
-        mapunit_with_ecoclassid_df.drop(['spatialversion', 'AoiPartName', 'MLRA', 'MLRA_Name'], axis = 'columns', inplace = True)
+        mapunit_with_ecoclassid_df.drop(['spatialversion', 'MLRA', 'MLRA_Name'], axis = 'columns', inplace = True)
 
         # join ecoclassids with edit ecoclass info, to get spatial ecoclass info
         edit_ecoclass_geojson = mapunit_with_ecoclassid_df.join(edit_ecoclass_df, how='left').to_json()

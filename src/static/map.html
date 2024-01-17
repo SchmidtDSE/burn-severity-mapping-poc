@@ -236,7 +236,7 @@
                     color: "#048c1b",
                     weight: 2,
                     opacity: .7,
-                    fillOpacity: 0
+                    fillOpacity: 0.5
                 });
 
                 layer._map.closePopup();
@@ -248,18 +248,50 @@
 
     fetchData().then(({ boundaryGeojson, ecoclassGeojson }) => {
 
-        // Add GeoJSON layer for ecoclass
         var ecoclassLayer = L.geoJSON(ecoclassGeojson, {
             style: function(feature) {
                 return {
                     color: "#048c1b",
                     weight: 2,
                     opacity: .7,
-                    fillOpacity: 0
+                    fillOpacity: .5
                 };
             },
             onEachFeature: onEachEcoclass,
             pane: 'ecoclass'
+        });
+
+        var uniqueDominantTrees = [...new Set(ecoclassGeojson.features.map(feature => feature.properties.dominantTree1))];
+
+        // Create a layer for each tree
+        var treeLayers = {};
+        uniqueDominantTrees.forEach(tree => {
+
+            // Skip if the tree is null or empty
+            if (tree === null || tree === '') {
+                return;
+            }
+
+            // Filter the ecoclassGeojson to only include the current tree
+            var treeGeojson = {
+                type: "FeatureCollection",
+                features: ecoclassGeojson.features.filter(feature => feature.properties.dominantTree1 === tree)
+            };
+
+            var treeLayer = L.geoJSON(treeGeojson, {
+                style: function(feature) {
+                    return {
+                        color: "#048c1b",
+                        weight: 2,
+                        opacity: .7,
+                        fillOpacity: .5
+                    };
+                },
+                pane: 'ecoclass'
+            });
+
+            // Add the layer to the object using the tree name as the key
+            treeLayers[tree] = treeLayer;
         });
 
         // Add GeoJSON layer for burn boundary
@@ -306,7 +338,7 @@
 
         // Create map
         var map = L.map('burn-map', {
-            layers: [openTopoLayer, classifiedTileLayer, ecoclassLayer, ],
+            layers: [openTopoLayer, classifiedTileLayer, boundaryLayer],
         });
 
         // Create panes to properly order basemaps and metrics
@@ -338,7 +370,7 @@
 
         var polyLayers = {
             "Burn Boundary": boundaryLayer,
-            "Dominant Cover Spp": ecoclassLayer
+            "EDIT Ecological Classification": ecoclassLayer
         }
 
         // Loading indicator
@@ -389,26 +421,15 @@
         var groupedOverlays = {
             // "Basemaps": baseLayers,
             "Metrics": metricsLayers,
-            "Polygons": polyLayers
+            "Polygons": polyLayers,
+            "Dominant Tree Cover": treeLayers
         };
 
         var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {
-            exclusiveGroups: ["Metrics"],
+            exclusiveGroups: ["Metrics", "Dominant Tree Cover"],
             position: 'topleft',
             collapsed: false
         }).addTo(map);
-
-        // // Add event listener to the layer control - if none, just remove all other baseLayers
-        // layerControl.on('baselayerchange', function(e) {
-        //     if (e.name === 'None') {
-        //         // If "None" is selected, remove all other baseLayers
-        //         for (var key in baseLayers) {
-        //             if (key !== 'None' && map.hasLayer(baseLayers[key])) {
-        //                 map.removeLayer(baseLayers[key]);
-        //             }
-        //         }
-        //     }
-        // });
 
         var opacitySlider = document.getElementById('opacity-slider');
 

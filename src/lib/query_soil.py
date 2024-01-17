@@ -104,6 +104,8 @@ def sdm_get_esa_mapunitid_poly(geojson):
 
                 # Set composite key
                 mapunit_gdf['musym'] = mapunit_gdf['musym'].astype(str)
+                mapunit_gdf['nationalmusym'] = mapunit_gdf['nationalmusym'].astype(str)
+                mapunit_gdf['mukey'] = mapunit_gdf['mukey'].astype(str)
                 mapunit_gdf.set_index(['musym', 'nationalmusym', 'mukey'], inplace=True)
 
                 return mapunit_gdf
@@ -158,6 +160,10 @@ def sdm_get_ecoclassid_from_mu_info(mu_info_list):
         mu_info_df.columns = mu_info_df.iloc[0]
         mu_info_df = mu_info_df[1:]
         mu_info_df = mu_info_df.reset_index(drop=True)
+
+        mu_info_df['mukey'] = mu_info_df['mukey'].astype(str)
+        mu_info_df['musym'] = mu_info_df['musym'].astype(str)
+        mu_info_df['nationalmusym'] = mu_info_df['nationalmusym'].astype(str)
         mu_info_df.set_index(['musym', 'nationalmusym', 'mukey'], inplace=True)
 
         return mu_info_df
