@@ -251,32 +251,37 @@
         var ecoclassLayer = L.geoJSON(ecoclassGeojson, {
             style: function(feature) {
                 return {
-                    color: "#048c1b",
-                    weight: 2,
-                    opacity: .7,
-                    fillOpacity: .5
+                    color: "#03420f",
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0
                 };
             },
-            onEachFeature: onEachEcoclass,
             pane: 'ecoclass'
         });
 
-        var uniqueDominantTrees = [...new Set(ecoclassGeojson.features.map(feature => feature.properties.dominantTree1))];
-
-        // Create a layer for each tree
+        // Create a layer for each combo of dominant trees
+        var uniqueTreeCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantTree1, feature.properties.dominantTree2].join(', ')))];
         var treeLayers = {};
-        uniqueDominantTrees.forEach(tree => {
+        uniqueTreeCombinations.forEach(treeCombination => {
 
-            // Skip if the tree is null or empty
-            if (tree === null || tree === '') {
+            var [tree1, tree2] = treeCombination.split(', ');
+
+            // Skip if both are null or empty
+            if ((tree1 === 'null' || tree1 === '') && (tree2 === 'null' || tree2 === '')) {
                 return;
             }
 
-            // Filter the ecoclassGeojson to only include the current tree
+            // Filter the ecoclassGeojson to only include the current tree combination
             var treeGeojson = {
                 type: "FeatureCollection",
-                features: ecoclassGeojson.features.filter(feature => feature.properties.dominantTree1 === tree)
+                features: ecoclassGeojson.features.filter(feature => feature.properties.dominantTree1 === tree1 && feature.properties.dominantTree2 === tree2)
             };
+
+            // if tree1 is not null, but tree2 is null or blank, set tree2 to (none)
+            if ((tree1 !== 'null' && tree1 !== '') && (tree2 === 'null' || tree2 === '')) {
+                tree2 = '(none)';
+            }
 
             var treeLayer = L.geoJSON(treeGeojson, {
                 style: function(feature) {
@@ -290,8 +295,86 @@
                 pane: 'ecoclass'
             });
 
-            // Add the layer to the object using the tree name as the key
-            treeLayers[tree] = treeLayer;
+            // Add the layer to the object using the tree combination as the key
+            treeLayers[treeCombination] = treeLayer;
+        });
+
+        // Create a layer for each combo of dominant shrubs
+        var uniqueShrubCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantShrub1, feature.properties.dominantShrub2].join(', ')))];
+        var shrubLayers = {};
+        uniqueShrubCombinations.forEach(shrubCombination => {
+
+            var [shrub1, shrub2] = shrubCombination.split(', ');
+
+            // Skip if both are null or empty
+            if ((shrub1 === 'null' || shrub1 === '') && (shrub2 === 'null' || shrub2 === '')) {
+                return;
+            }
+
+            // Filter the ecoclassGeojson to only include the current shrub combination
+            var shrubGeojson = {
+                type: "FeatureCollection",
+                features: ecoclassGeojson.features.filter(feature => feature.properties.dominantShrub1 === shrub1 && feature.properties.dominantShrub2 === shrub2)
+            };
+
+            // if shrub1 is not null, but shrub2 is null or blank, set shrub2 to (none)
+            if ((shrub1 !== 'null' && shrub1 !== '') && (shrub2 === 'null' || shrub2 === '')) {
+                shrub2 = '(none)';
+            }
+
+            var shrubLayer = L.geoJSON(shrubGeojson, {
+                style: function(feature) {
+                    return {
+                        color: "#f5b618",
+                        weight: 2,
+                        opacity: .7,
+                        fillOpacity: .5
+                    };
+                },
+                pane: 'ecoclass'
+            });
+
+            // Add the layer to the object using the shrub combination as the key
+            shrubLayers[shrubCombination] = shrubLayer;
+        });
+
+        // Create a layer for each combo of dominant herb
+        var uniqueHerbCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantHerb1, feature.properties.dominantHerb2].join(', ')))];
+        var herbLayers = {};
+        uniqueHerbCombinations.forEach(herbCombination => {
+
+            var [herb1, herb2] = herbCombination.split(', ');
+
+            // Skip if both are null or empty
+            if ((herb1 === 'null' || herb1 === '') && (herb2 === 'null' || herb2 === '')) {
+                return;
+            }
+
+            // Filter the ecoclassGeojson to only include the current herb combination
+            var herbGeojson = {
+                type: "FeatureCollection",
+                features: ecoclassGeojson.features.filter(feature => feature.properties.dominantHerb1 === herb1 && feature.properties.dominantHerb2 === herb2)
+            };
+
+            // if herb1 is not null, but herb2 is null or blank, set herb2 to (none)
+            if ((herb1 !== 'null' && herb1 !== '') && (herb2 === 'null' || herb2 === '')) {
+                herb2 = '(none)';
+            }
+
+            var herbLayer = L.geoJSON(herbGeojson, {
+                style: function(feature) {
+                    return {
+                        color: "#b339fa",
+                        weight: 2,
+                        opacity: .7,
+                        fillOpacity: .5
+                    };
+                },
+                pane: 'ecoclass'
+            });
+
+            // Add the layer to the object using the herb combination as the key
+            herbLayers[herbCombination] = herbLayer;
         });
 
         // Add GeoJSON layer for burn boundary
@@ -338,7 +421,9 @@
 
         // Create map
         var map = L.map('burn-map', {
-            layers: [openTopoLayer, classifiedTileLayer, boundaryLayer],
+            layers: [openTopoLayer, boundaryLayer],
+        }).whenReady(function(){
+            classifiedTileLayer.addTo(this);
         });
 
         // Create panes to properly order basemaps and metrics
@@ -419,14 +504,15 @@
         }
 
         var groupedOverlays = {
-            // "Basemaps": baseLayers,
-            "Metrics": metricsLayers,
+            "Burn Metrics": metricsLayers,
             "Polygons": polyLayers,
-            "Dominant Tree Cover": treeLayers
+            "Tree Cover": treeLayers,
+            "Shrub Cover": shrubLayers,
+            "Herb Cover": herbLayers
         };
 
         var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {
-            exclusiveGroups: ["Metrics", "Dominant Tree Cover"],
+            exclusiveGroups: ["Burn Metrics"],
             position: 'topleft',
             collapsed: false
         }).addTo(map);
