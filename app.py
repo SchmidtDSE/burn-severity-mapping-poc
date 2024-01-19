@@ -308,30 +308,30 @@ async def upload_shapefile(fire_event_name: str = Form(...), affiliation: str = 
 
 @app.get("/map/{affiliation}/{fire_event_name}/{burn_metric}", response_class=HTMLResponse)
 def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliation: str, manifest: dict = Depends(get_manifest)):
-    mapbox_token = get_mapbox_secret()
+    # mapbox_token = get_mapbox_secret()
 
-    tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
+    # tileserver_endpoint = 'https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app'
     # tileserver_endpoint = 'http://localhost:5050'
-    cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
+    # cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
     burn_boundary_geojson_url =  f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/boundary.geojson"
     ecoclass_geojson_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson"
 
-    cog_tileserver_url_prefix = tileserver_endpoint + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
+    # cog_tileserver_url_prefix = tileserver_endpoint + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
 
     fire_metadata = manifest[fire_event_name]
     fire_metadata_json = json.dumps(fire_metadata)
 
-    with open('src/static/burn_metric_text.json') as json_file:
-        burn_metric_text = json.load(json_file)
+    # with open('src/static/burn_metric_text.json') as json_file:
+    #     burn_metric_text = json.load(json_file)
 
     return templates.TemplateResponse("map.html", {
         "request": request,
-        "mapbox_token": mapbox_token, # for NAIP and Satetllite in V0
-        "fire_event_name": fire_event_name,
+        # "mapbox_token": mapbox_token, # for NAIP and Satetllite in V0
+        # "fire_event_name": fire_event_name,
         "burn_metric": burn_metric,
-        "burn_metric_text": burn_metric_text,
+        # "burn_metric_text": burn_metric_text,
         "fire_metadata_json": fire_metadata_json,
-        "cog_tileserver_url_prefix": cog_tileserver_url_prefix,
+        # "cog_tileserver_url_prefix": cog_tileserver_url_prefix,
         "burn_boundary_geojson_url": burn_boundary_geojson_url,
         "ecoclass_geojson_url": ecoclass_geojson_url
     })
