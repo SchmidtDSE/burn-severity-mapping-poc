@@ -40,10 +40,16 @@
     var g = svg.append('g'); // Append 'g' element to svg
 
     // Create new tile layer
-    var tile = d3.tile()
-      .size([width, height]);
+    var tileLayer = d3.tile()
+        .size([width, height]);
 
-    // Define the zoom behavior
+    const tiler = d3.tile()
+        .size([width, height]);
+
+    const tileGroup = svg.append("g")
+        .attr("pointer-events", "none");
+
+        // Define the zoom behavior
     var zoom = d3.zoom()
       .scaleExtent([1, 8]) // This controls how far you can zoom in and out
       .on('zoom', function() {
@@ -51,31 +57,26 @@
         drawTiles(d3.event.transform); // Update tiles on zoom
       });
 
+    let tile = tileGroup.selectAll("g");
+
     svg.call(zoom);
 
     function drawTiles(transform) {
-    var tiles = tile
-        .scale(transform.k)
-        .translate([transform.x, transform.y])
-        ();
+        const tiles = tiler(transform);
 
-    var image = g
-        .selectAll(".tile")
-        .data(tiles, function(d) { return d; });
+        tileGroup.attr("transform", `
+            scale(${tiles.scale})
+            translate(${tiles.translate.join(",")})
+        `);
 
-    image.exit().remove();
-
-    image.enter().append("image")
-        .attr("class", "tile")
-        .attr("xlink:href", function(d) {
-        var z = Math.round(Math.log(transform.k) / Math.LN2);
-        var s = ['a', 'b', 'c'][Math.floor(Math.random() * 3)];
-        return "https://" + s + ".tile.opentopomap.org/" + z + "/" + d[0] + "/" + d[1] + ".png";
-        })
-        .attr("x", function(d) { return (d[0] + tiles.translate[0]) * tiles.scale; })
-        .attr("y", function(d) { return (d[1] + tiles.translate[1]) * tiles.scale; })
-        .attr("width", tiles.scale)
-        .attr("height", tiles.scale);
+        tile = tile.data(tiles, d => d).join(
+            enter => enter.append("g")
+                .attr("transform", ([x, y]) => `translate(${x}, ${y}) scale(${1 / 256})`)
+                .call(g => g.append("image")
+                    .attr("xlink:href", d => `https://tile.openstreetmap.org/${d[2]}/${d[0]}/${d[1]}.png`)
+                    .attr("width", 256)
+                    .attr("height", 256))
+        );
     }
 
     var initialTransform = d3.zoomIdentity
