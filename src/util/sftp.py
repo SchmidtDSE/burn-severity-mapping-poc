@@ -11,6 +11,10 @@ from rasterio.enums import Resampling
 import geopandas as gpd
 from google.cloud import logging as cloud_logging
 
+
+# TODO: Convert to agnostic Boto client
+# Use the slick smart-open library to handle S3 connections. This maintains the agnostic nature
+# of sftp, not tied to any specific cloud provider, but is way more efficient than paramiko/sftp in terms of $$
 class SFTPClient:
     def __init__(self, hostname, username, private_key, port=22):
         """Constructor Method"""
