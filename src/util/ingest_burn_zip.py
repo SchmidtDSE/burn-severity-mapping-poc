@@ -34,7 +34,6 @@ def ingest_esri_zip_file(zip_file_path):
                         if os.path.exists(os.path.join(tmp_dir, shp_base + ".dbf")):
                             valid_shapefile += (os.path.join(tmp_dir, shp_base + ".dbf"),)
 
-                        # TODO: This prob should be elsewhere but need to refactor tempdir structure to persist
                         shp_geojson = shp_to_geojson(valid_shapefile[0])
 
                         valid_shapefiles.append((valid_shapefile, shp_geojson))

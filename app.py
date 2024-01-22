@@ -125,6 +125,9 @@ class AnaylzeBurnPOSTBody(BaseModel):
     fire_event_name: str
     affiliation: str
 
+# TODO: Decide on / implement cloud tasks or other async batch
+# This is a long running process, and users probably don't mind getting an email notification
+# or something similar when the process is complete. Esp if the frontend remanins static. 
 @app.post("/api/query-satellite/analyze-burn")
 def analyze_burn(body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
     geojson = json.loads(body.geojson)
@@ -198,7 +201,8 @@ def get_ecoclass_info(ecoclassid: str = Query(...)):
     status_code, ecoclass_info = edit_get_ecoclass_info(ecoclassid)
     return JSONResponse(status_code=status_code, content={"ecoclass_info": ecoclass_info})
 
-# TODO: refactor out the low level endpoints and rename others (this isn't really an `analysis` but it does compose a lot of logic like `analyze-burn`)
+# TODO: Restrucutre FastAPI endpoints to seperate user-facing endpoints from internal endpoints
+# refactor out the low level endpoints (/api) and rename others (this isn't really an `analysis` but it does compose a lot of logic like `analyze-burn`)
 @app.post("/api/query-soil/analyze-ecoclass") 
 def analyze_ecoclass(body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)):
     fire_event_name = body.fire_event_name

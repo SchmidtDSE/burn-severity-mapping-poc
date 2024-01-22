@@ -116,7 +116,6 @@ def sdm_get_esa_mapunitid_poly(geojson, backoff_max = 200, backoff_value = 0, ba
             print("Error:", response.status_code)
             return None
     except ConnectionError as e:
-        # TODO: Remove this if we end up using cloud tasks' backoff
         print("SMD Refused Traffic:", str(e))
         print(f"Backoff: {backoff_value}")
         if backoff_value < backoff_max:
