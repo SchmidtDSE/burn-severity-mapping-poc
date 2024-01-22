@@ -37,7 +37,7 @@ class Sentinel2Client:
         self.buffer = buffer
 
         geojson_bounds = gpd.GeoDataFrame.from_features(geojson_bounds)
-        # TODO: Generalize Sentinel2Client to accept any CRS 
+        # TODO [$65aeac7d58a56800081ec5a6]: Generalize Sentinel2Client to accept any CRS 
         # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
         if not geojson_bounds.crs:
             geojson_bounds = geojson_bounds.set_crs("EPSG:4326")
