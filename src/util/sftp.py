@@ -12,7 +12,11 @@ import geopandas as gpd
 from google.cloud import logging as cloud_logging
 
 
+<<<<<<< HEAD
 # TODO: Convert to agnostic Boto client
+=======
+# TODO [$65aeaf6b5159da0008241be0]: Convert to agnostic Boto client 
+>>>>>>> c003877bbc264e4d7587c47004afda935bc32987
 # Use the slick smart-open library to handle S3 connections. This maintains the agnostic nature
 # of sftp, not tied to any specific cloud provider, but is way more efficient than paramiko/sftp in terms of $$
 class SFTPClient:
