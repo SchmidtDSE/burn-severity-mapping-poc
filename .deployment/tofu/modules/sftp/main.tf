@@ -312,7 +312,7 @@ resource "aws_transfer_ssh_key" "sftp_ssh_key_public" {
 }
 
 
-## TODO [$65aeac7d58a56800081ec5a3]: This is OIDC stuff, which is not yet working
+## TODO [#4]: This is OIDC stuff, which is not yet working
 # Set up STS to allow the GCP server to assume a role for AWS secrets
 
 # data "aws_iam_policy_document" "assume_role_policy" {
