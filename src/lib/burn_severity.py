@@ -1,26 +1,6 @@
-import os
-from osgeo import osr
-from osgeo import ogr
-from osgeo import gdal
 import numpy as np
-import boto3
-from botocore.exceptions import NoCredentialsError
-from botocore.handlers import disable_signing
-import requests
-import matplotlib
-import matplotlib.pyplot as plt
-import rasterio
-from rasterio.merge import merge
-import glob
-from rasterio.mask import mask
-from shapely.geometry import mapping
-import geopandas as gpd
-import math
 import xarray as xr
-import rioxarray as rxr
 import pandas as pd
-
-os.environ["AWS_NO_SIGN_REQUEST"] = "YES" # to avoid signing requests, avoid AWS auth
 
 def calc_nbr(band_nir, band_swir):
     """
@@ -104,25 +84,3 @@ def classify_burn(array, thresholds):
         reclass = xr.where((array < threshold) & (reclass.isnull()), value, reclass)
     
     return reclass
-
-def is_s3_url_valid(url):
-    """
-    This function checks if an S3 URL is valid
-    """
-    s3 = boto3.client('s3')
-    s3.meta.events.register('choose-signer.s3.*', disable_signing)
-
-    bucket_name = url.split('/')[2]
-    key = '/'.join(url.split('/')[3:])
-    try:
-        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=key)
-        for obj in response.get('Contents', []):
-            if obj['Key'] == key:
-                return True
-        return False
-    except NoCredentialsError:
-        print("No AWS credentials found")
-        return False
-    except Exception as e:
-        print(f"Invalid S3 URL: {url}. Exception: {str(e)}")
-        return False

@@ -31,3 +31,4 @@ dependencies:
   - pip
   - pip:
     - titiler.core
+    - python-multipart

@@ -102,7 +102,25 @@ resource "aws_transfer_server" "tf-sftp-burn-severity" {
 
 # Then, the s3 bucket for the server
 resource "aws_s3_bucket" "burn-severity-backend" {
-  bucket = "burn-severity-backend" # replace with your bucket name
+  bucket = "burn-severity-backend" 
+}
+
+resource "aws_s3_bucket_versioning" "burn-severity-backend" {
+  bucket = aws_s3_bucket.burn-severity-backend.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_cors_configuration" "burn_severity_backend_cors" {
+  bucket = aws_s3_bucket.burn-severity-backend.bucket
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET"]
+    allowed_origins = ["*"]
+    max_age_seconds = 3000
+  }
 }
 
 data "aws_iam_policy_document" "burn-severity-backend-policy" {
@@ -294,7 +312,7 @@ resource "aws_transfer_ssh_key" "sftp_ssh_key_public" {
 }
 
 
-## TODO: This is OIDC stuff, which is not yet working
+## TODO [#4]: This is OIDC stuff, which is not yet working
 # Set up STS to allow the GCP server to assume a role for AWS secrets
 
 # data "aws_iam_policy_document" "assume_role_policy" {
