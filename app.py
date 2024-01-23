@@ -37,7 +37,7 @@ from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
 from src.util.ingest_burn_zip import ingest_esri_zip_file, shp_to_geojson
 from src.lib.titiler_algorithms import algorithms
 from src.lib.query_soil import sdm_get_ecoclassid_from_mu_info, sdm_get_esa_mapunitid_poly, edit_get_ecoclass_info
-# app = Flask(__name__)
+
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix='/cog', tags=["Cloud Optimized GeoTIFF"])
@@ -343,3 +343,7 @@ def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliat
 @app.get("/upload", response_class=HTMLResponse)
 def upload(request: Request):
     return templates.TemplateResponse("upload.html", {"request": request})
+
+@app.get("/sketch", response_class=HTMLResponse)
+def sketch(request: Request):
+    return templates.TemplateResponse("sketch.html", {"request": request})
