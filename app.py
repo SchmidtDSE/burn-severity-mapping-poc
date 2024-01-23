@@ -325,7 +325,7 @@ def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliat
     fire_metadata = manifest[fire_event_name]
     fire_metadata_json = json.dumps(fire_metadata)
 
-    with open('src/static/burn_metric_text.json') as json_file:
+    with open('src/static/map/burn_metric_text.json') as json_file:
         burn_metric_text = json.load(json_file)
 
     return templates.TemplateResponse("map.html", {
@@ -342,8 +342,8 @@ def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliat
 
 @app.get("/upload", response_class=HTMLResponse)
 def upload(request: Request):
-    return templates.TemplateResponse("upload.html", {"request": request})
+    return templates.TemplateResponse("upload/upload.html", {"request": request})
 
 @app.get("/sketch", response_class=HTMLResponse)
 def sketch(request: Request):
-    return templates.TemplateResponse("sketch.html", {"request": request})
+    return templates.TemplateResponse("sketch/sketch.html", {"request": request})
