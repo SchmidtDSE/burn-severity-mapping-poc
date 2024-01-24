@@ -328,7 +328,7 @@ def serve_map(request: Request, fire_event_name: str, burn_metric: str, affiliat
     with open('src/static/map/burn_metric_text.json') as json_file:
         burn_metric_text = json.load(json_file)
 
-    return templates.TemplateResponse("map.html", {
+    return templates.TemplateResponse("map/map.html", {
         "request": request,
         "mapbox_token": mapbox_token, # for NAIP and Satetllite in V0
         "fire_event_name": fire_event_name,

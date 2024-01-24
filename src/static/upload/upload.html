@@ -3,6 +3,11 @@
 <head>
     <title>Fire Analysis Form</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
     <style>
         .indicator-img {
             width: 50px; /* Adjust as needed */
@@ -28,6 +33,8 @@
         <input type="text" id="affiliation" name="affiliation"><br>
         <input type="submit" value="Submit">
     </form>
+
+    <div id="map" style="height: 600px;"></div>
 
     <div id="upload-loading" style="display: none;">
         <img class="indicator-img" src="/static/upload/spinner.gif" alt="Uploading shapefile... this may take a few moments." />
@@ -60,91 +67,160 @@
     </div>
 
     <script>
-    $("#fire-analysis-form").on("submit", function(event) {
-        event.preventDefault();
 
-        // Show the upload loading spinner
-        $("#upload-loading").show();
-        $("#burn-analysis-loading").show();
-        $("#ecoclass-analysis-loading").show();
+        // AOI Input Map
+        var map = L.map('map').setView([51.505, -0.09], 13);
 
-        var formData = new FormData();
-        formData.append('file', $('#shp_zip')[0].files[0]);
-        formData.append('fire_event_name', $("#fire_event_name").val());
-        formData.append('affiliation', $("#affiliation").val());
+        // Add a tile layer to the map
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
 
-        // Make a request to upload the shapefile
-        var upload = $.ajax({
-            url: `/api/upload-shapefile-zip`,
-            type: 'post',
-            processData: false,
-            contentType: false,
-            data: formData,
-            success: function() {
-                $("#upload-loading").hide();
-                $("#upload-success").show();
-            },
-            error: function() {
-                $("#upload-loading").hide();
-                alert("Upload failed");
+        // Initialize the FeatureGroup to store editable layers
+        var editableLayers = new L.FeatureGroup();
+        map.addLayer(editableLayers);
+
+        // Initialize the draw control and pass it the FeatureGroup of editable layers
+        var drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: editableLayers
+            }
+        });
+        map.addControl(drawControl);
+
+        // When a shape is drawn, disable the file input
+        map.on('draw:created', function (e) {
+            var type = e.layerType,
+                layer = e.layer;
+
+            // Add the drawn layer to the editable layers
+            editableLayers.addLayer(layer);
+
+            // Disable the file input
+            $('#shp_zip').prop('disabled', true);
+        });
+
+        // When a file is selected, disable the draw control
+        $('#shp_zip').change(function() {
+            if (this.files.length > 0) {
+                map.removeControl(drawControl);
             }
         });
 
-        $.when(upload).done(function(uploadResponse) {
-            // Log the data returned from the first AJAX call
-            console.log('upload success', uploadResponse);
+        $("#fire-analysis-form").on("submit", function(event) {
+            event.preventDefault();
 
-            // Make a request to analyze the burn
-            $.ajax({
-                url: '/api/query-satellite/analyze-burn',
-                type: 'post',
-                dataType: 'json',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    geojson: uploadResponse.geojson,
-                    fire_event_name: $("#fire_event_name").val(),
-                    affiliation: $("#affiliation").val(),
-                    date_ranges: {
-                        prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
-                        postfire: [$("#postfire-start").val(), $("#postfire-end").val()]
+            // Show the upload loading spinner
+            $("#upload-loading").show();
+            $("#burn-analysis-loading").show();
+            $("#ecoclass-analysis-loading").show();
+
+            var formData = new FormData();
+            formData.append('file', $('#shp_zip')[0].files[0]);
+            formData.append('fire_event_name', $("#fire_event_name").val());
+            formData.append('affiliation', $("#affiliation").val());
+
+
+            if ($('#shp_zip').prop('disabled')) {
+                // Get the drawn shape
+                var drawnGeojson = editableLayers.toGeoJSON();
+                formData.append('geojson', JSON.stringify(drawnGeojson));
+
+                // Make a request to upload the drawn shape
+                var upload = $.ajax({
+                    url: `/api/upload-drawn-aoi`,
+                    type: 'post',
+                    processData: false,
+                    contentType: false,
+                    data: formData,
+                    success: function() {
+                        $("#upload-loading").hide();
+                        $("#upload-success").show();
+                    },
+                    error: function() {
+                        $("#upload-loading").hide();
+                        alert("Upload failed");
                     }
-                }),
-                success: function (analysisResponse) {
-                    $("#burn-analysis-loading").hide();
-                    $("#burn-analysis-success").show();
-                },
-                error: function (error) {
-                    console.error(error);
-                    $("#burn-analysis-loading").hide();
-                    alert("Burn analysis failed")
-                }
-            });
+                });
 
-            // Make a request to analyze the ecoclassification
-            $.ajax({
-                url: '/api/query-soil/analyze-ecoclass',
-                type: 'post',
-                dataType: 'json',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    geojson: uploadResponse.geojson,
-                    fire_event_name: $("#fire_event_name").val(),
-                    affiliation: $("#affiliation").val(),
-                }),
-                success: function () {
-                    $("#ecoclass-analysis-loading").hide();
-                    $("#ecoclass-analysis-success").show();
-                },
-                error: function () {
-                    console.error(error);
-                    $("#ecoclass-analysis-loading").hide();
-                    alert("Ecoclass analysis failed");
-                }
+            } else if ($('#shp_zip')[0].files.length > 0) {
+
+                // Add the shapefile to the form data
+                formData.append('shapefile', $('#shp_zip')[0].files[0]);
+
+                // Make a request to upload the shapefile
+                var upload = $.ajax({
+                    url: `/api/upload-shapefile-zip`,
+                    type: 'post',
+                    processData: false,
+                    contentType: false,
+                    data: formData,
+                    success: function() {
+                        $("#upload-loading").hide();
+                        $("#upload-success").show();
+                    },
+                    error: function() {
+                        $("#upload-loading").hide();
+                        alert("Upload failed");
+                    }
+                });
+            } 
+
+            $.when(upload).done(function(uploadResponse) {
+                // Log the data returned from the first AJAX call
+                console.log('upload success', uploadResponse);
+
+                // Make a request to analyze the burn
+                $.ajax({
+                    url: '/api/query-satellite/analyze-burn',
+                    type: 'post',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        geojson: uploadResponse.geojson,
+                        fire_event_name: $("#fire_event_name").val(),
+                        affiliation: $("#affiliation").val(),
+                        date_ranges: {
+                            prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
+                            postfire: [$("#postfire-start").val(), $("#postfire-end").val()]
+                        }
+                    }),
+                    success: function (analysisResponse) {
+                        $("#burn-analysis-loading").hide();
+                        $("#burn-analysis-success").show();
+                    },
+                    error: function (error) {
+                        console.error(error);
+                        $("#burn-analysis-loading").hide();
+                        alert("Burn analysis failed")
+                    }
+                });
+
+                // Make a request to analyze the ecoclassification
+                $.ajax({
+                    url: '/api/query-soil/analyze-ecoclass',
+                    type: 'post',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        geojson: uploadResponse.geojson,
+                        fire_event_name: $("#fire_event_name").val(),
+                        affiliation: $("#affiliation").val(),
+                    }),
+                    success: function () {
+                        $("#ecoclass-analysis-loading").hide();
+                        $("#ecoclass-analysis-success").show();
+                    },
+                    error: function () {
+                        console.error(error);
+                        $("#ecoclass-analysis-loading").hide();
+                        alert("Ecoclass analysis failed");
+                    }
+                });
+            }).fail(function(error) {
+                console.error(error);
             });
-        }).fail(function(error) {
-            console.error(error);
         });
-    });
     </script>
 </body>
 </html>
