@@ -30,83 +30,107 @@
             flex: 0 0 70%;
             border: 1px solid #ccc;
             padding: 10px;
-            min-height: 500px; 
+            min-height: 700px; 
         }
 
         .form-area {
+            flex: 0 0 50%;
             border: 1px solid #ccc;
             padding: 10px;
             margin-top: 10px;
         }
+
+        .indicator-area {
+            flex: 0 0 50%;
+            display: flex;
+            justify-content: flex-end;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        #map {
+            height: 675px;
+            width: 100%;
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="upload-area">
-            <label for="shp_zip">Zipped Shapefile:</label><br>
-            <input type="file" id="shp_zip" name="shp_zip"><br>
+        <div class="container">
+            <div class="upload-area">
+                <label for="shp_zip">Zipped Shapefile:</label><br>
+                <input type="file" id="shp_zip" name="shp_zip"><br>
+            </div>
+            <div class="map-area">
+                <div class="location-search">
+                    <input type="text" id="location-input" placeholder="Enter a location">
+                    <button id="location-button">Go</button>
+                </div>
+                <div id="map"></div>
+            </div>
         </div>
-        <div id="map" class="map-area"></div>
-    </div>
 
-        <div class="form-area">
-        <form id="fire-analysis-form">
-            <label for="geojson">Zipped Shapefile:</label><br>
-            <input type="file" id="shp_zip" name="shp_zip"><br>
+        <div class="container">
+            <div class="form-area">
+            <form id="fire-analysis-form">
+                <label for="prefire">Prefire Date Range:</label><br>
+                <input type="date" id="prefire-start" name="prefire-start">
+                <input type="date" id="prefire-end" name="prefire-end"><br>
+                <label for="postfire">Postfire Date Range:</label><br>
+                <input type="date" id="postfire-start" name="postfire-start">
+                <input type="date" id="postfire-end" name="postfire-end"><br>
 
-            <label for="prefire">Prefire Date Range:</label><br>
-            <input type="date" id="prefire-start" name="prefire-start">
-            <input type="date" id="prefire-end" name="prefire-end"><br>
-            <label for="postfire">Postfire Date Range:</label><br>
-            <input type="date" id="postfire-start" name="postfire-start">
-            <input type="date" id="postfire-end" name="postfire-end"><br>
+                <label for="fire_event_name">Fire Event Name:</label><br>
+                <input type="text" id="fire_event_name" name="fire_event_name"><br>
+                <label for="affiliation">Affiliation:</label><br>
+                <input type="text" id="affiliation" name="affiliation"><br>
+                <input type="submit" value="Submit">
+            </form>
+            </div>
+            <div class="indicator-area">
+                <div id="upload-loading" style="display: none;">
+                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Uploading shapefile... this may take a few moments." />
+                    <p>Uploading shapefile... this may take a few moments.</p>
+                </div>
 
-            <label for="fire_event_name">Fire Event Name:</label><br>
-            <input type="text" id="fire_event_name" name="fire_event_name"><br>
-            <label for="affiliation">Affiliation:</label><br>
-            <input type="text" id="affiliation" name="affiliation"><br>
-            <input type="submit" value="Submit">
-        </form>
-    </div>
+                <div id="upload-success" style="display: none;">
+                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="Upload Success!" />
+                    <p>Upload Success!</p>
+                </div>
+
+                <div id="burn-analysis-loading" style="display: none;">
+                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes." />
+                    <p>Analyzing burn area... depending on AOI size, this may take several minutes.</p>
+                </div>
+
+                <div id="burn-analysis-success" style="display: none;">
+                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="Burn Metric Analysis Success!" />
+                    <p>Burn Metric Analysis Success!</p>
+                </div>
+
+                <div id="ecoclass-analysis-loading" style="display: none;">
+                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes." />
+                    <p>Analyzing ecoclassification... depending on AOI size, this may take several minutes.</p>
+                </div>
+
+                <div id="ecoclass-analysis-success" style="display: none;">
+                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="EDIT Ecoclass Analysis Success!" />
+                    <p>EDIT Ecoclass Analysis Success!</p>
+                </div>
+            </div>
+        </div>
     
-    <div id="upload-loading" style="display: none;">
-        <img class="indicator-img" src="/static/upload/spinner.gif" alt="Uploading shapefile... this may take a few moments." />
-        <p>Uploading shapefile... this may take a few moments.</p>
-    </div>
 
-    <div id="upload-success" style="display: none;">
-        <img class="indicator-img" src="/static/upload/checkmark.png" alt="Upload Success!" />
-        <p>Upload Success!</p>
-    </div>
-
-    <div id="burn-analysis-loading" style="display: none;">
-        <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes." />
-        <p>Analyzing burn area... depending on AOI size, this may take several minutes.</p>
-    </div>
-
-    <div id="burn-analysis-success" style="display: none;">
-        <img class="indicator-img" src="/static/upload/checkmark.png" alt="Burn Metric Analysis Success!" />
-        <p>Burn Metric Analysis Success!</p>
-    </div>
-
-    <div id="ecoclass-analysis-loading" style="display: none;">
-        <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes." />
-        <p>Analyzing ecoclassification... depending on AOI size, this may take several minutes.</p>
-    </div>
-
-    <div id="ecoclass-analysis-success" style="display: none;">
-        <img class="indicator-img" src="/static/upload/checkmark.png" alt="EDIT Ecoclass Analysis Success!" />
-        <p>EDIT Ecoclass Analysis Success!</p>
-    </div>
 
     <script>
 
         // AOI Input Map
-        var map = L.map('map').setView([51.505, -0.09], 13);
+        var map = L.map('map').setView([39.7749, -100.4194], 5);
 
         // Add a tile layer to the map
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(map);
 
@@ -121,6 +145,18 @@
             }
         });
         map.addControl(drawControl);
+        
+        // Pan to an input location for ease of AOI drawing
+        $("#location-button").click(function() {
+            var location = $("#location-input").val();
+            $.get(`https://nominatim.openstreetmap.org/search?format=json&q=${location}`, function(data) {
+                if (data.length > 0) {
+                    map.setView([data[0].lat, data[0].lon], 13);
+                } else {
+                    alert("Location not found");
+                }
+            });
+        });
 
         // When a shape is drawn, disable the file input
         map.on('draw:created', function (e) {
