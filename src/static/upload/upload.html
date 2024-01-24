@@ -10,32 +10,66 @@
 
     <style>
         .indicator-img {
-            width: 50px; /* Adjust as needed */
-            height: 50px; /* Adjust as needed */
+            width: 50px; 
+            height: 50px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .upload-area {
+            flex: 0 0 30%;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-right: 10px;
+        }
+
+        .map-area {
+            flex: 0 0 70%;
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 500px; 
+        }
+
+        .form-area {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <form id="fire-analysis-form">
-        <label for="geojson">Zipped Shapefile:</label><br>
-        <input type="file" id="shp_zip" name="shp_zip"><br>
 
-        <label for="prefire">Prefire Date Range:</label><br>
-        <input type="date" id="prefire-start" name="prefire-start">
-        <input type="date" id="prefire-end" name="prefire-end"><br>
-        <label for="postfire">Postfire Date Range:</label><br>
-        <input type="date" id="postfire-start" name="postfire-start">
-        <input type="date" id="postfire-end" name="postfire-end"><br>
+    <div class="container">
+        <div class="upload-area">
+            <label for="shp_zip">Zipped Shapefile:</label><br>
+            <input type="file" id="shp_zip" name="shp_zip"><br>
+        </div>
+        <div id="map" class="map-area"></div>
+    </div>
 
-        <label for="fire_event_name">Fire Event Name:</label><br>
-        <input type="text" id="fire_event_name" name="fire_event_name"><br>
-        <label for="affiliation">Affiliation:</label><br>
-        <input type="text" id="affiliation" name="affiliation"><br>
-        <input type="submit" value="Submit">
-    </form>
+        <div class="form-area">
+        <form id="fire-analysis-form">
+            <label for="geojson">Zipped Shapefile:</label><br>
+            <input type="file" id="shp_zip" name="shp_zip"><br>
 
-    <div id="map" style="height: 600px;"></div>
+            <label for="prefire">Prefire Date Range:</label><br>
+            <input type="date" id="prefire-start" name="prefire-start">
+            <input type="date" id="prefire-end" name="prefire-end"><br>
+            <label for="postfire">Postfire Date Range:</label><br>
+            <input type="date" id="postfire-start" name="postfire-start">
+            <input type="date" id="postfire-end" name="postfire-end"><br>
 
+            <label for="fire_event_name">Fire Event Name:</label><br>
+            <input type="text" id="fire_event_name" name="fire_event_name"><br>
+            <label for="affiliation">Affiliation:</label><br>
+            <input type="text" id="affiliation" name="affiliation"><br>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+    
     <div id="upload-loading" style="display: none;">
         <img class="indicator-img" src="/static/upload/spinner.gif" alt="Uploading shapefile... this may take a few moments." />
         <p>Uploading shapefile... this may take a few moments.</p>
