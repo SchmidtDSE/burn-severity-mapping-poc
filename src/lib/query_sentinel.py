@@ -62,9 +62,8 @@ class Sentinel2Client:
     def get_items(self, date_range, cloud_cover=100, from_bbox=True, max_items=None):
         date_range_fmt = "{}/{}".format(date_range[0], date_range[1])
 
-        # Note - we might want to mess around with cloud cover eventually, but since we are aiming for
-        # expediance in extreme events, we probably will want to make those determinations ourselves -
-        # for now lets' look at everything
+        # TODO: Cloud cover response to smoke
+        # Right now we don't give any mind to smoke occlusion, but we should considering we will have bias if smoke occludes our imagery
 
         query = {
             "collections": ["sentinel-2-l2a"],
