@@ -2,6 +2,7 @@ import numpy as np
 import xarray as xr
 import pandas as pd
 
+
 def calc_nbr(band_nir, band_swir):
     """
     This function takes an input the arrays of the bands from the read_band_image
@@ -13,6 +14,7 @@ def calc_nbr(band_nir, band_swir):
     nbr = (band_nir - band_swir) / (band_nir + band_swir)
     return nbr
 
+
 def calc_dnbr(nbr_prefire, nbr_postfire):
     """
     This function takes as input the pre- and post-fire NBR and returns the dNBR
@@ -22,6 +24,7 @@ def calc_dnbr(nbr_prefire, nbr_postfire):
     """
     dnbr = nbr_prefire - nbr_postfire
     return dnbr
+
 
 def calc_rdnbr(dnbr, nbr_prefire):
     """
@@ -33,6 +36,7 @@ def calc_rdnbr(dnbr, nbr_prefire):
     rdnbr = dnbr / np.abs(np.sqrt(nbr_prefire))
     return rdnbr
 
+
 def calc_rbr(dnbr, nbr_prefire):
     """
     This function takes as input the dNBR and prefire NBR, and returns the relative burn ratio
@@ -42,6 +46,7 @@ def calc_rbr(dnbr, nbr_prefire):
     """
     rbr = dnbr / (nbr_prefire + 1.001)
     return rbr
+
 
 def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
     """
@@ -66,10 +71,13 @@ def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
     # stack these arrays together, naming them by their source
     burn_stack = xr.concat(
         [nbr_prefire, nbr_postfire, dnbr, rdnbr, rbr],
-        pd.Index(['nbr_prefire', 'nbr_postfire', 'dnbr', 'rdnbr', 'rbr'], name='burn_metric')
+        pd.Index(
+            ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"], name="burn_metric"
+        ),
     )
 
     return burn_stack
+
 
 def classify_burn(array, thresholds):
     """
@@ -77,10 +85,10 @@ def classify_burn(array, thresholds):
     input:  array           xarray.DataArray    input array
     output: reclass         xarray.DataArray    reclassified array
     """
-    
+
     reclass = xr.full_like(array, np.nan)
 
     for threshold, value in sorted(thresholds.items()):
         reclass = xr.where((array < threshold) & (reclass.isnull()), value, reclass)
-    
+
     return reclass

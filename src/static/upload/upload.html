@@ -1,296 +1,340 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Fire Analysis Form</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
+    />
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
     <style>
-        .indicator-img {
-            width: 50px; 
-            height: 50px;
-        }
+      .indicator-img {
+        width: 50px;
+        height: 50px;
+      }
 
-        .container {
-            display: flex;
-            justify-content: space-between;
-        }
+      .container {
+        display: flex;
+        justify-content: space-between;
+      }
 
-        .upload-area {
-            flex: 0 0 30%;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-right: 10px;
-        }
+      .upload-area {
+        flex: 0 0 30%;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-right: 10px;
+      }
 
-        .map-area {
-            flex: 0 0 70%;
-            border: 1px solid #ccc;
-            padding: 10px;
-            min-height: 700px; 
-        }
+      .map-area {
+        flex: 0 0 70%;
+        border: 1px solid #ccc;
+        padding: 10px;
+        min-height: 700px;
+      }
 
-        .form-area {
-            flex: 0 0 50%;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-top: 10px;
-        }
+      .form-area {
+        flex: 0 0 50%;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 10px;
+      }
 
-        .indicator-area {
-            flex: 0 0 50%;
-            display: flex;
-            justify-content: flex-end;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-top: 10px;
-        }
+      .indicator-area {
+        flex: 0 0 50%;
+        display: flex;
+        justify-content: flex-end;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 10px;
+      }
 
-        #map {
-            height: 675px;
-            width: 100%;
-        }
-
+      #map {
+        height: 675px;
+        width: 100%;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div class="container">
+      <div class="upload-area">
+        <label for="shp_zip">Zipped Shapefile:</label><br />
+        <input type="file" id="shp_zip" name="shp_zip" /><br />
+      </div>
+      <div class="map-area">
+        <div class="location-search">
+          <input
+            type="text"
+            id="location-input"
+            placeholder="Enter a location"
+          />
+          <button id="location-button">Go</button>
+        </div>
+        <div id="map"></div>
+      </div>
+    </div>
 
-        <div class="container">
-            <div class="upload-area">
-                <label for="shp_zip">Zipped Shapefile:</label><br>
-                <input type="file" id="shp_zip" name="shp_zip"><br>
-            </div>
-            <div class="map-area">
-                <div class="location-search">
-                    <input type="text" id="location-input" placeholder="Enter a location">
-                    <button id="location-button">Go</button>
-                </div>
-                <div id="map"></div>
-            </div>
+    <div class="container">
+      <div class="form-area">
+        <form id="fire-analysis-form">
+          <label for="prefire">Prefire Date Range:</label><br />
+          <input type="date" id="prefire-start" name="prefire-start" />
+          <input type="date" id="prefire-end" name="prefire-end" /><br />
+          <label for="postfire">Postfire Date Range:</label><br />
+          <input type="date" id="postfire-start" name="postfire-start" />
+          <input type="date" id="postfire-end" name="postfire-end" /><br />
+
+          <label for="fire_event_name">Fire Event Name:</label><br />
+          <input
+            type="text"
+            id="fire_event_name"
+            name="fire_event_name"
+          /><br />
+          <label for="affiliation">Affiliation:</label><br />
+          <input type="text" id="affiliation" name="affiliation" /><br />
+          <input type="submit" value="Submit" />
+        </form>
+      </div>
+      <div class="indicator-area">
+        <div id="upload-loading" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/spinner.gif"
+            alt="Uploading shapefile... this may take a few moments."
+          />
+          <p>Uploading shapefile... this may take a few moments.</p>
         </div>
 
-        <div class="container">
-            <div class="form-area">
-            <form id="fire-analysis-form">
-                <label for="prefire">Prefire Date Range:</label><br>
-                <input type="date" id="prefire-start" name="prefire-start">
-                <input type="date" id="prefire-end" name="prefire-end"><br>
-                <label for="postfire">Postfire Date Range:</label><br>
-                <input type="date" id="postfire-start" name="postfire-start">
-                <input type="date" id="postfire-end" name="postfire-end"><br>
-
-                <label for="fire_event_name">Fire Event Name:</label><br>
-                <input type="text" id="fire_event_name" name="fire_event_name"><br>
-                <label for="affiliation">Affiliation:</label><br>
-                <input type="text" id="affiliation" name="affiliation"><br>
-                <input type="submit" value="Submit">
-            </form>
-            </div>
-            <div class="indicator-area">
-                <div id="upload-loading" style="display: none;">
-                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Uploading shapefile... this may take a few moments." />
-                    <p>Uploading shapefile... this may take a few moments.</p>
-                </div>
-
-                <div id="upload-success" style="display: none;">
-                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="Upload Success!" />
-                    <p>Upload Success!</p>
-                </div>
-
-                <div id="burn-analysis-loading" style="display: none;">
-                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes." />
-                    <p>Analyzing burn area... depending on AOI size, this may take several minutes.</p>
-                </div>
-
-                <div id="burn-analysis-success" style="display: none;">
-                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="Burn Metric Analysis Success!" />
-                    <p>Burn Metric Analysis Success!</p>
-                </div>
-
-                <div id="ecoclass-analysis-loading" style="display: none;">
-                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes." />
-                    <p>Analyzing ecoclassification... depending on AOI size, this may take several minutes.</p>
-                </div>
-
-                <div id="ecoclass-analysis-success" style="display: none;">
-                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="EDIT Ecoclass Analysis Success!" />
-                    <p>EDIT Ecoclass Analysis Success!</p>
-                </div>
-            </div>
+        <div id="upload-success" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/checkmark.png"
+            alt="Upload Success!"
+          />
+          <p>Upload Success!</p>
         </div>
-    
 
+        <div id="burn-analysis-loading" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/spinner.gif"
+            alt="Analyzing burn area... depending on AOI size, this may take several minutes."
+          />
+          <p>
+            Analyzing burn area... depending on AOI size, this may take several
+            minutes.
+          </p>
+        </div>
+
+        <div id="burn-analysis-success" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/checkmark.png"
+            alt="Burn Metric Analysis Success!"
+          />
+          <p>Burn Metric Analysis Success!</p>
+        </div>
+
+        <div id="ecoclass-analysis-loading" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/spinner.gif"
+            alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes."
+          />
+          <p>
+            Analyzing ecoclassification... depending on AOI size, this may take
+            several minutes.
+          </p>
+        </div>
+
+        <div id="ecoclass-analysis-success" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/checkmark.png"
+            alt="EDIT Ecoclass Analysis Success!"
+          />
+          <p>EDIT Ecoclass Analysis Success!</p>
+        </div>
+      </div>
+    </div>
 
     <script>
+      // AOI Input Map
+      var map = L.map("map").setView([39.7749, -100.4194], 5);
 
-        // AOI Input Map
-        var map = L.map('map').setView([39.7749, -100.4194], 5);
+      // Add a tile layer to the map
+      L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      }).addTo(map);
 
-        // Add a tile layer to the map
-        L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-        }).addTo(map);
+      // Initialize the FeatureGroup to store editable layers
+      var editableLayers = new L.FeatureGroup();
+      map.addLayer(editableLayers);
 
-        // Initialize the FeatureGroup to store editable layers
-        var editableLayers = new L.FeatureGroup();
-        map.addLayer(editableLayers);
+      // Initialize the draw control and pass it the FeatureGroup of editable layers
+      var drawControl = new L.Control.Draw({
+        edit: {
+          featureGroup: editableLayers,
+        },
+      });
+      map.addControl(drawControl);
 
-        // Initialize the draw control and pass it the FeatureGroup of editable layers
-        var drawControl = new L.Control.Draw({
-            edit: {
-                featureGroup: editableLayers
+      // Pan to an input location for ease of AOI drawing
+      $("#location-button").click(function () {
+        var location = $("#location-input").val();
+        $.get(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${location}`,
+          function (data) {
+            if (data.length > 0) {
+              map.setView([data[0].lat, data[0].lon], 13);
+            } else {
+              alert("Location not found");
             }
-        });
-        map.addControl(drawControl);
-        
-        // Pan to an input location for ease of AOI drawing
-        $("#location-button").click(function() {
-            var location = $("#location-input").val();
-            $.get(`https://nominatim.openstreetmap.org/search?format=json&q=${location}`, function(data) {
-                if (data.length > 0) {
-                    map.setView([data[0].lat, data[0].lon], 13);
-                } else {
-                    alert("Location not found");
-                }
-            });
-        });
+          }
+        );
+      });
 
-        // When a shape is drawn, disable the file input
-        map.on('draw:created', function (e) {
-            var type = e.layerType,
-                layer = e.layer;
+      // When a shape is drawn, disable the file input
+      map.on("draw:created", function (e) {
+        var type = e.layerType,
+          layer = e.layer;
 
-            // Add the drawn layer to the editable layers
-            editableLayers.addLayer(layer);
+        // Add the drawn layer to the editable layers
+        editableLayers.addLayer(layer);
 
-            // Disable the file input
-            $('#shp_zip').prop('disabled', true);
-        });
+        // Disable the file input
+        $("#shp_zip").prop("disabled", true);
+      });
 
-        // When a file is selected, disable the draw control
-        $('#shp_zip').change(function() {
-            if (this.files.length > 0) {
-                map.removeControl(drawControl);
-            }
-        });
+      // When a file is selected, disable the draw control
+      $("#shp_zip").change(function () {
+        if (this.files.length > 0) {
+          map.removeControl(drawControl);
+        }
+      });
 
-        $("#fire-analysis-form").on("submit", function(event) {
-            event.preventDefault();
+      $("#fire-analysis-form").on("submit", function (event) {
+        event.preventDefault();
 
-            // Show the upload loading spinner
-            $("#upload-loading").show();
-            $("#burn-analysis-loading").show();
-            $("#ecoclass-analysis-loading").show();
+        // Show the upload loading spinner
+        $("#upload-loading").show();
+        $("#burn-analysis-loading").show();
+        $("#ecoclass-analysis-loading").show();
 
-            var formData = new FormData();
-            formData.append('file', $('#shp_zip')[0].files[0]);
-            formData.append('fire_event_name', $("#fire_event_name").val());
-            formData.append('affiliation', $("#affiliation").val());
+        var formData = new FormData();
+        formData.append("file", $("#shp_zip")[0].files[0]);
+        formData.append("fire_event_name", $("#fire_event_name").val());
+        formData.append("affiliation", $("#affiliation").val());
 
+        if ($("#shp_zip").prop("disabled")) {
+          // Get the drawn shape
+          var drawnGeojson = editableLayers.toGeoJSON();
+          formData.append("geojson", JSON.stringify(drawnGeojson));
 
-            if ($('#shp_zip').prop('disabled')) {
-                // Get the drawn shape
-                var drawnGeojson = editableLayers.toGeoJSON();
-                formData.append('geojson', JSON.stringify(drawnGeojson));
+          // Make a request to upload the drawn shape
+          var upload = $.ajax({
+            url: `/api/upload-drawn-aoi`,
+            type: "post",
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function () {
+              $("#upload-loading").hide();
+              $("#upload-success").show();
+            },
+            error: function () {
+              $("#upload-loading").hide();
+              alert("Upload failed");
+            },
+          });
+        } else if ($("#shp_zip")[0].files.length > 0) {
+          // Add the shapefile to the form data
+          formData.append("shapefile", $("#shp_zip")[0].files[0]);
 
-                // Make a request to upload the drawn shape
-                var upload = $.ajax({
-                    url: `/api/upload-drawn-aoi`,
-                    type: 'post',
-                    processData: false,
-                    contentType: false,
-                    data: formData,
-                    success: function() {
-                        $("#upload-loading").hide();
-                        $("#upload-success").show();
-                    },
-                    error: function() {
-                        $("#upload-loading").hide();
-                        alert("Upload failed");
-                    }
-                });
+          // Make a request to upload the shapefile
+          var upload = $.ajax({
+            url: `/api/upload-shapefile-zip`,
+            type: "post",
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function () {
+              $("#upload-loading").hide();
+              $("#upload-success").show();
+            },
+            error: function () {
+              $("#upload-loading").hide();
+              alert("Upload failed");
+            },
+          });
+        }
 
-            } else if ($('#shp_zip')[0].files.length > 0) {
+        $.when(upload)
+          .done(function (uploadResponse) {
+            // Log the data returned from the first AJAX call
+            console.log("upload success", uploadResponse);
 
-                // Add the shapefile to the form data
-                formData.append('shapefile', $('#shp_zip')[0].files[0]);
-
-                // Make a request to upload the shapefile
-                var upload = $.ajax({
-                    url: `/api/upload-shapefile-zip`,
-                    type: 'post',
-                    processData: false,
-                    contentType: false,
-                    data: formData,
-                    success: function() {
-                        $("#upload-loading").hide();
-                        $("#upload-success").show();
-                    },
-                    error: function() {
-                        $("#upload-loading").hide();
-                        alert("Upload failed");
-                    }
-                });
-            } 
-
-            $.when(upload).done(function(uploadResponse) {
-                // Log the data returned from the first AJAX call
-                console.log('upload success', uploadResponse);
-
-                // Make a request to analyze the burn
-                $.ajax({
-                    url: '/api/query-satellite/analyze-burn',
-                    type: 'post',
-                    dataType: 'json',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        geojson: uploadResponse.geojson,
-                        fire_event_name: $("#fire_event_name").val(),
-                        affiliation: $("#affiliation").val(),
-                        date_ranges: {
-                            prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
-                            postfire: [$("#postfire-start").val(), $("#postfire-end").val()]
-                        }
-                    }),
-                    success: function (analysisResponse) {
-                        $("#burn-analysis-loading").hide();
-                        $("#burn-analysis-success").show();
-                    },
-                    error: function (error) {
-                        console.error(error);
-                        $("#burn-analysis-loading").hide();
-                        alert("Burn analysis failed")
-                    }
-                });
-
-                // Make a request to analyze the ecoclassification
-                $.ajax({
-                    url: '/api/query-soil/analyze-ecoclass',
-                    type: 'post',
-                    dataType: 'json',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        geojson: uploadResponse.geojson,
-                        fire_event_name: $("#fire_event_name").val(),
-                        affiliation: $("#affiliation").val(),
-                    }),
-                    success: function () {
-                        $("#ecoclass-analysis-loading").hide();
-                        $("#ecoclass-analysis-success").show();
-                    },
-                    error: function () {
-                        console.error(error);
-                        $("#ecoclass-analysis-loading").hide();
-                        alert("Ecoclass analysis failed");
-                    }
-                });
-            }).fail(function(error) {
+            // Make a request to analyze the burn
+            $.ajax({
+              url: "/api/query-satellite/analyze-burn",
+              type: "post",
+              dataType: "json",
+              contentType: "application/json",
+              data: JSON.stringify({
+                geojson: uploadResponse.geojson,
+                fire_event_name: $("#fire_event_name").val(),
+                affiliation: $("#affiliation").val(),
+                date_ranges: {
+                  prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
+                  postfire: [
+                    $("#postfire-start").val(),
+                    $("#postfire-end").val(),
+                  ],
+                },
+              }),
+              success: function (analysisResponse) {
+                $("#burn-analysis-loading").hide();
+                $("#burn-analysis-success").show();
+              },
+              error: function (error) {
                 console.error(error);
+                $("#burn-analysis-loading").hide();
+                alert("Burn analysis failed");
+              },
             });
-        });
+
+            // Make a request to analyze the ecoclassification
+            $.ajax({
+              url: "/api/query-soil/analyze-ecoclass",
+              type: "post",
+              dataType: "json",
+              contentType: "application/json",
+              data: JSON.stringify({
+                geojson: uploadResponse.geojson,
+                fire_event_name: $("#fire_event_name").val(),
+                affiliation: $("#affiliation").val(),
+              }),
+              success: function () {
+                $("#ecoclass-analysis-loading").hide();
+                $("#ecoclass-analysis-success").show();
+              },
+              error: function () {
+                console.error(error);
+                $("#ecoclass-analysis-loading").hide();
+                alert("Ecoclass analysis failed");
+              },
+            });
+          })
+          .fail(function (error) {
+            console.error(error);
+          });
+      });
     </script>
-</body>
+  </body>
 </html>

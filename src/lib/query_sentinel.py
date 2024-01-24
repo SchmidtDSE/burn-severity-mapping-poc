@@ -37,7 +37,7 @@ class Sentinel2Client:
         self.buffer = buffer
 
         geojson_bounds = gpd.GeoDataFrame.from_features(geojson_bounds)
-        # TODO [#7]: Generalize Sentinel2Client to accept any CRS 
+        # TODO [#7]: Generalize Sentinel2Client to accept any CRS
         # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
         if not geojson_bounds.crs:
             geojson_bounds = geojson_bounds.set_crs("EPSG:4326")
@@ -99,9 +99,8 @@ class Sentinel2Client:
         return barc_classifications
 
     def arrange_stack(self, items, resolution=20):
-
         # TODO: More appropriate error handling - seperate legit from expected
-        # Right now, many of the requests to STAC are wrapped in try/excepts at the top level, to 
+        # Right now, many of the requests to STAC are wrapped in try/excepts at the top level, to
         # ensure no problems with timeouts and whatnot, which was an artifact of early development,
         # but this is problematic now that we use form submission
 

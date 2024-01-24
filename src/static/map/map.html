@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Burn Severity Mapping Tool</title>
 
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <!-- Include Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
@@ -13,681 +13,696 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <!-- Include Leaflet GroupedLayerControl JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-groupedlayercontrol@0.4.0/dist/leaflet.groupedlayercontrol.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-groupedlayercontrol@0.4.0/dist/leaflet.groupedlayercontrol.min.css"
+    />
     <script src="https://unpkg.com/leaflet-groupedlayercontrol@0.4.0"></script>
 
     <!-- Include MathJax -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script
+      id="MathJax-script"
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
 
     <!-- Include noUiSlider JS -->
     <script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/wnumb@1.2.0/wNumb.min.js"></script>
-
-</head>
-<style>
+  </head>
+  <style>
     /* TODO [#8]: Figure out sourcing for FastAPI served html */
     /* html, css, js, should obviously be seperate for legibility instead of spaghetti */
 
     /* CSS to style the colored areas of the categorical slider to match map */
     #categorical-slider .noUi-connects .noUi-connect:nth-child(4) {
-        background: rgb(255,25,25);
+      background: rgb(255, 25, 25);
     }
     #categorical-slider .noUi-connects .noUi-connect:nth-child(3) {
-        background: rgb(255,100,100);
+      background: rgb(255, 100, 100);
     }
     #categorical-slider .noUi-connects .noUi-connect:nth-child(2) {
-        background: rgb(255,175,175);
+      background: rgb(255, 175, 175);
     }
     #categorical-slider .noUi-connects .noUi-connect:nth-child(1) {
-        background: rgb(255,250,250);
+      background: rgb(255, 250, 250);
     }
 
     /* CSS to style the colored areas of the continious slider to match map */
     #continuous-slider .noUi-connects .noUi-connect:nth-child(3) {
-        background: rgb(255,25,25);
+      background: rgb(255, 25, 25);
     }
     /* #continuous-slider .noUi-connects .noUi-connect:nth-child(2) {
         background: 
     } */
     #continuous-slider .noUi-connects .noUi-connect:nth-child(2) {
-        background: linear-gradient(to top, rgb(255,250,250),rgb(255,25,25));
+      background: linear-gradient(to top, rgb(255, 250, 250), rgb(255, 25, 25));
     }
     #continuous-slider .noUi-connects .noUi-connect:nth-child(1) {
-        background: rgb(255,250,250);
+      background: rgb(255, 250, 250);
     }
 
     /* Style for the map */
     #burn-map {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 100%;
-        z-index: 0;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      z-index: 0;
     }
 
     /* Style for the UI elements top right */
     #ui-elements-top-right {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 1000;
-        padding: 10px;
-        border-radius: 10px;
-        background-color: #f0f0f0;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      padding: 10px;
+      border-radius: 10px;
+      background-color: #f0f0f0;
     }
 
     /* Style for the UI elements bottom left */
     #ui-elements-bottom-left {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        z-index: 1000;
-        padding: 10px;
-        border-radius: 10px;
-        background-color: #f0f0f0;
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 1000;
+      padding: 10px;
+      border-radius: 10px;
+      background-color: #f0f0f0;
     }
 
     /* Style for the UI elements bottom right */
     #ui-elements-bottom-right {
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-        z-index: 1000;
-        padding: 10px;
-        height: 60%;
-        width: 15%;
-        border-radius: 10px;
-        background-color: #f0f0f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      z-index: 1000;
+      padding: 10px;
+      height: 60%;
+      width: 15%;
+      border-radius: 10px;
+      background-color: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Style for the tooltip container */
     #tooltip-container {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        z-index: 1000;
-        padding: 10px;
-        border-radius: 10px;
-        background-color: #f0f0f0;
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 1000;
+      padding: 10px;
+      border-radius: 10px;
+      background-color: #f0f0f0;
     }
 
     /* Style for the tooltip divs */
     #tooltip-container div {
-        padding: 10px;
+      padding: 10px;
     }
 
     /* Style for the highlighted metric */
     #tooltip-container div.highlighted {
-        background-color: #ffe875;
+      background-color: #ffe875;
     }
 
-    #categorical-slider, #continuous-slider {
-        height: 90%;
-        float: left;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    #categorical-slider,
+    #continuous-slider {
+      height: 90%;
+      float: left;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Style for the burn metric info div */
     .burn-metric-info {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        z-index: 1000;
-        padding: 10px;
-        border-radius: 10px;
-        background-color: #f0f0f0;
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 1000;
+      padding: 10px;
+      border-radius: 10px;
+      background-color: #f0f0f0;
     }
-</style>
-<body>
+  </style>
+  <body>
     <div id="burn-map"></div>
 
     <!-- Top right ui elements -->
     <div id="ui-elements-top-right">
-        <!-- Opacity -->
-        <label for="opacity-slider">Burn Severity Layer Opacity</label>
-        <input type="range" min="0" max="1" step="0.1" value="1" id="opacity-slider">
+      <!-- Opacity -->
+      <label for="opacity-slider">Burn Severity Layer Opacity</label>
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.1"
+        value="1"
+        id="opacity-slider"
+      />
     </div>
 
     <!-- Bottom right ui elements -->
     <div id="ui-elements-bottom-right">
-        <!-- Thresholds -->
-        <div id="categorical-slider"></div>
-        <div id="continuous-slider"></div>
+      <!-- Thresholds -->
+      <div id="categorical-slider"></div>
+      <div id="continuous-slider"></div>
     </div>
 
     <!-- Bottom left ui elements -->
     <div id="ui-elements-bottom-left">
-        <!-- Burn metric info -->
-        <div id="burn-metric-info"></div>
+      <!-- Burn metric info -->
+      <div id="burn-metric-info"></div>
     </div>
 
-<script>
-    // Data from Jinja2
-    var burnMetric = "{{ burn_metric }}";
-    var fireMetadata = JSON.parse({{fire_metadata_json | tojson | safe}});
-    var fireBounds = [[fireMetadata.bounds[1], fireMetadata.bounds[0]], [fireMetadata.bounds[3], fireMetadata.bounds[2]]]
-    var mapboxToken = "{{ mapbox_token }}"
-
-    // Define the URLs for the Mapbox NAIP and Satellite layers
-    var mapboxNaipUrl = 'https://api.mapbox.com/v4/mapbox.naip/{z}/{x}/{y}.png?access_token=' + mapboxToken;
-    var mapboxSatelliteUrl = 'https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.png?access_token=' + mapboxToken;
-
-    // Content for the webpage, defined as JSON
-    var burnMetricText = JSON.parse('{{ burn_metric_text | tojson | safe }}');
-
-    async function fetchData() {
-
-        const boundaryResponse = await fetch('{{ burn_boundary_geojson_url | safe }}');
-        const boundaryGeojson = await boundaryResponse.json();
-
-        const ecoclassResponse = await fetch('{{ ecoclass_geojson_url | safe }}');
-        const ecoclassGeojson= await ecoclassResponse.json();
-
-        return { boundaryGeojson, ecoclassGeojson }; // Return the layers
-
-    }
-
-    // var popup = L.popup({
-    //     closeButton: false,
-    //     autoClose: false
-    // });
-
-    // function onEachEcoclass(feature, layer) {
-    // layer.on({
-    //         mouseover: function(e) {
-    //             var layers = e.target._map._layers;
-    //             var mousePos = e.latlng;
-    //             var ecoclassNames = [];
-    //             var muname = 'N/A'; // Initialize muname here
-    //             for (var i in layers) {
-    //                 if (layers[i] instanceof L.Polygon) {
-    //                     if (layers[i].getBounds().contains(mousePos)) {
-    //                         if (layers[i].feature) {
-    //                             // Perform operations on layers[i]
-    //                             console.log(layers[i].feature.properties);
-    //                             layers[i].setStyle({
-    //                                 weight: 5,
-    //                                 color: '#666',
-    //                                 dashArray: '',
-    //                                 fillOpacity: 0.7
-    //                             });
-    //                             if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-    //                                 layers[i].bringToFront();
-    //                             }
-    //                             var ecoclassName = layers[i].feature.properties.ecoclassname ? layers[i].feature.properties.ecoclassname : 'N/A';
-    //                             if (!ecoclassNames.includes(ecoclassName)) {
-    //                                 ecoclassNames.push(ecoclassName);
-    //                             }
-    //                             muname = layers[i].feature.properties.muname ? layers[i].feature.properties.muname : 'N/A'; // Update muname here
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //             popup.setContent(
-    //                 "<strong>Map Unit Name:</strong> <br> - " +
-    //                 muname + // Use muname here
-    //                 "<br><strong>Ecoclass Names:</strong> <br> - " +
-    //                 ecoclassNames.join(', ')
-    //             );
-    //             popup.setLatLng(mousePos);
-    //             popup.openOn(e.target._map);
-    //         },
-    //         mousemove: function(e) {
-    //             var layers = e.target._map._layers;
-    //             var mousePos = e.latlng;
-    //             for (var i in layers) {
-    //                 if (layers[i] instanceof L.Polygon) {
-    //                     if (layers[i].getBounds().contains(mousePos)) {
-    //                         if (layers[i].feature) {
-    //                         // Perform operations on layers[i]
-    //                             popup.setLatLng(mousePos);
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         },
-    //         mouseout: function(e) {
-    //             var layers = e.target._map._layers;
-    //             for (var i in layers) {
-    //                 if (layers[i] instanceof L.Polygon) {
-    //                     if (layers[i].feature) {
-    //                         layers[i].setStyle({
-    //                             color: "#03420f",
-    //                             weight: 1,
-    //                             opacity: 1,
-    //                             fillOpacity: 0
-    //                         });
-    //                         e.target._map.closePopup();
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     });
-    // }
-
-    fetchData().then(({ boundaryGeojson, ecoclassGeojson }) => {
-
-        var ecoclassLayer = L.geoJSON(ecoclassGeojson, {
-            style: function(feature) {
-                return {
-                    color: "#03420f",
-                    weight: 1,
-                    opacity: 1,
-                    fillOpacity: 0
-                };
-            },
-            // onEachFeature: onEachEcoclass,
-            pane: 'ecoclass'
-        });
-
-        // Create a layer for each combo of dominant trees
-        var uniqueTreeCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantTree1, feature.properties.dominantTree2].join(', ')))];
-        var treeLayers = {};
-        uniqueTreeCombinations.forEach(treeCombination => {
-
-            var [tree1, tree2] = treeCombination.split(', ');
-
-            // Skip if both are null or empty
-            if ((tree1 === 'null' || tree1 === '') && (tree2 === 'null' || tree2 === '')) {
-                return;
-            }
-
-            // Filter the ecoclassGeojson to only include the current tree combination
-            var treeGeojson = {
-                type: "FeatureCollection",
-                features: ecoclassGeojson.features.filter(feature => feature.properties.dominantTree1 === tree1 && feature.properties.dominantTree2 === tree2)
-            };
-
-            // if tree1 is not null, but tree2 is null or blank, set tree2 to (none)
-            if ((tree1 !== 'null' && tree1 !== '') && (tree2 === 'null' || tree2 === '')) {
-                tree2 = '(none)';
-            }
-
-            var treeLayer = L.geoJSON(treeGeojson, {
-                style: function(feature) {
-                    return {
-                        color: "#048c1b",
-                        weight: 2,
-                        opacity: .7,
-                        fillOpacity: .5
-                    };
-                },
-                pane: 'ecoclass'
-            });
-
-            // Add the layer to the object using the tree combination as the key
-            treeLayers[treeCombination] = treeLayer;
-        });
-
-        // Create a layer for each combo of dominant shrubs
-        var uniqueShrubCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantShrub1, feature.properties.dominantShrub2].join(', ')))];
-        var shrubLayers = {};
-        uniqueShrubCombinations.forEach(shrubCombination => {
-
-            var [shrub1, shrub2] = shrubCombination.split(', ');
-
-            // Skip if both are null or empty
-            if ((shrub1 === 'null' || shrub1 === '') && (shrub2 === 'null' || shrub2 === '')) {
-                return;
-            }
-
-            // Filter the ecoclassGeojson to only include the current shrub combination
-            var shrubGeojson = {
-                type: "FeatureCollection",
-                features: ecoclassGeojson.features.filter(feature => feature.properties.dominantShrub1 === shrub1 && feature.properties.dominantShrub2 === shrub2)
-            };
-
-            // if shrub1 is not null, but shrub2 is null or blank, set shrub2 to (none)
-            if ((shrub1 !== 'null' && shrub1 !== '') && (shrub2 === 'null' || shrub2 === '')) {
-                shrub2 = '(none)';
-            }
-
-            var shrubLayer = L.geoJSON(shrubGeojson, {
-                style: function(feature) {
-                    return {
-                        color: "#f5b618",
-                        weight: 2,
-                        opacity: .7,
-                        fillOpacity: .5
-                    };
-                },
-                pane: 'ecoclass'
-            });
-
-            // Add the layer to the object using the shrub combination as the key
-            shrubLayers[shrubCombination] = shrubLayer;
-        });
-
-        // Create a layer for each combo of dominant herb
-        var uniqueHerbCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantHerb1, feature.properties.dominantHerb2].join(', ')))];
-        var herbLayers = {};
-        uniqueHerbCombinations.forEach(herbCombination => {
-
-            var [herb1, herb2] = herbCombination.split(', ');
-
-            // Skip if both are null or empty
-            if ((herb1 === 'null' || herb1 === '') && (herb2 === 'null' || herb2 === '')) {
-                return;
-            }
-
-            // Filter the ecoclassGeojson to only include the current herb combination
-            var herbGeojson = {
-                type: "FeatureCollection",
-                features: ecoclassGeojson.features.filter(feature => feature.properties.dominantHerb1 === herb1 && feature.properties.dominantHerb2 === herb2)
-            };
-
-            // if herb1 is not null, but herb2 is null or blank, set herb2 to (none)
-            if ((herb1 !== 'null' && herb1 !== '') && (herb2 === 'null' || herb2 === '')) {
-                herb2 = '(none)';
-            }
-
-            var herbLayer = L.geoJSON(herbGeojson, {
-                style: function(feature) {
-                    return {
-                        color: "#b339fa",
-                        weight: 2,
-                        opacity: .7,
-                        fillOpacity: .5
-                    };
-                },
-                pane: 'ecoclass'
-            });
-
-            // Add the layer to the object using the herb combination as the key
-            herbLayers[herbCombination] = herbLayer;
-        });
-
-        // Add GeoJSON layer for burn boundary
-        var boundaryLayer = L.geoJSON(boundaryGeojson, {
-            style: function(feature) {
-                return {
-                    color: "#000000",
-                    weight: 6,
-                    opacity: 1,
-                    fillOpacity: 0
-                };
-            },
-            pane: 'burn-boundary'
-        });
-
-        // Add COG tile layer for classifications
-        var classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}}', {
-            maxZoom: 20,
-            pane: 'metrics'
-        })
-
-        // Add COG tile layer for continious metric, no classification
-        var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"}}', {
-            maxZoom: 20,
-            pane: 'metrics'
-        })
-
-        // Easy peasy Mapbox tileservers for the NAIP and Satellite layers
-        var naipLayer = L.tileLayer(mapboxNaipUrl, {
-            maxZoom: 20,
-            pane: 'basemaps'
-        });
-        var satelliteLayer = L.tileLayer(mapboxSatelliteUrl, {
-            maxZoom: 20,
-            pane: 'basemaps'
-        });
-
-        // Add OSM Topo
-        var openTopoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            pane: 'basemaps'
-        })
-
-
-        // Create map
-        var map = L.map('burn-map', {
-            layers: [openTopoLayer, boundaryLayer],
-        }).whenReady(function(){
-            classifiedTileLayer.addTo(this);
-        });
-
-        // Create panes to properly order basemaps and metrics
-        map.createPane('basemaps');
-        map.getPane('basemaps').style.zIndex = 2;
-
-        map.createPane('metrics');
-        map.getPane('metrics').style.zIndex = 5;
-
-        map.createPane('ecoclass');
-        map.getPane('ecoclass').style.zIndex = 9;
-
-        map.createPane('burn-boundary');
-        map.getPane('burn-boundary').style.zIndex = 7;
-
-
-        // Add layer controls - one for basemap, one for metrics
-        var baseLayers = {
-            "None": L.tileLayer('', {pane: 'basemaps'}), // Empty layer to remove all basemaps
-            "OpenTopoMap": openTopoLayer,
-            "NAIP": naipLayer,
-            "Satellite": satelliteLayer
-        };
-
-        var metricsLayers = {
-            "Continuous": continiousTileLayer,
-            "Classifications": classifiedTileLayer
-        };
-
-        var polyLayers = {
-            "Burn Boundary": boundaryLayer,
-            "EDIT Ecological Classification": ecoclassLayer
-        }
-
-        // Loading indicator
-        var loadingDiv = L.DomUtil.create('div', 'loading');
-        loadingDiv.innerHTML = 'Loading...';
-        document.body.appendChild(loadingDiv);
-
-        // Add event listeners to each layer
-        for (var key in baseLayers) {
-            if (key === 'None') {
-                continue;
-            }
-            baseLayers[key].setZIndex(2);
-            baseLayers[key].on({
-                'loading': function() {
-                    loadingDiv.style.display = 'block';
-                },
-                'load': function() {
-                    loadingDiv.style.display = 'none';
-                }
-            });
-        }
-
-        for (var key in metricsLayers) {
-            metricsLayers[key].setZIndex(5);
-            metricsLayers[key].on({
-                'loading': function() {
-                    loadingDiv.style.display = 'block';
-                },
-                'load': function() {
-                    loadingDiv.style.display = 'none';
-                }
-            });
-        }
-
-        for (var key in polyLayers) {
-            polyLayers[key].setZIndex(8);
-            polyLayers[key].on({
-                'loading': function() {
-                    loadingDiv.style.display = 'block';
-                },
-                'load': function() {
-                    loadingDiv.style.display = 'none';
-                }
-            });
-        }
-
-        var groupedOverlays = {
-            "Burn Metrics": metricsLayers,
-            "Polygons": polyLayers,
-            "Tree Cover": treeLayers,
-            "Shrub Cover": shrubLayers,
-            "Herb Cover": herbLayers
-        };
-
-        var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {
-            exclusiveGroups: ["Burn Metrics"],
-            position: 'topleft',
-            collapsed: false
-        }).addTo(map);
-
-        var opacitySlider = document.getElementById('opacity-slider');
-
-        var updateOpacityClassified = function(e) {
-            classifiedTileLayer.setOpacity(e.target.value);
-        };
-        var updateOpacityContinious = function(e) {
-            continiousTileLayer.setOpacity(e.target.value);
-        };
-
-        opacitySlider.addEventListener('input', updateOpacityClassified);
-        opacitySlider.addEventListener('input', updateOpacityContinious);
-
-        // Iterate over each metric
-        burnMetricInfo = document.getElementById('burn-metric-info');
-        for (var key in burnMetricText) {
-            // Create a div for the metric
-            var div = document.createElement('div');
-
-            // Add the metric name and formula
-            div.innerHTML = '<strong>' + burnMetricText[key].metric_name + '</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="math">\\(' + burnMetricText[key].formula + '\\)</span>';
-
-            // Add padding between divs
-            div.style.padding = '10px';
-            div.style.zIndex = 1000;
-
-            // Highlight the current metric
-            if (key.toLowerCase() === burnMetric.toLowerCase()) {
-                div.style.backgroundColor = '#ffe875';
-            }
-
-            // Append the div to the container
-            burnMetricInfo.appendChild(div);
-
-            // Ask MathJax to typeset the new div
-            MathJax.typeset([div]);
-        }
-
-        // Add threshold sliders w/ noUiSlider
-        var categoricalSlider = document.getElementById('categorical-slider');
-        noUiSlider.create(categoricalSlider, {
-            start: [-.025, .125, 0.250, 0.8],
-            connect: [true, true, true, true, false],
-            range: {
-                'min': -.4,
-                'max': .8
-            },
-            step: .025,
-            direction: 'rtl',
-            orientation: 'vertical',
-            pips: {
-                mode: 'steps',
-                stepped: true,
-                density: 16,
-                format: wNumb({
-                    decimals: 2,
-                    to: function(value) {
-                        // Convert to percentage from float
-                        return (value * 100).toFixed(0) + '%';
-                    }
-                }),
-                filter: function(value, type) {
-                    return value % (4 * 0.025) === 0 ? 1 : -1;
-                }
-            },
-            behaviour: 'tap-drag',
-            tooltips: true,
-            format: wNumb({
-                decimals: 3
-            }),
-        });
-
-        // Add continious slider w/ noUiSlider
-        var continuousSlider = document.getElementById('continuous-slider');
-        noUiSlider.create(continuousSlider, {
-            start: [-.025, .4],
-            connect: [true, true, true],
-            range: {
-                'min': -.4,
-                'max': .8
-            },
-            step: .025,
-            direction: 'rtl',
-            orientation: 'vertical',
-            pips: {
-                mode: 'steps',
-                stepped: true,
-                density: 16,
-                format: wNumb({
-                    decimals: 2,
-                    to: function(value) {
-                        // Convert to percentage from float
-                        return (value * 100).toFixed(0) + '%';
-                    }
-                }),
-                filter: function(value, type) {
-                    return value % (4 * 0.025) === 0 ? 1 : -1;
-                }
-            },
-            behaviour: 'tap-drag',
-            tooltips: true,
-            format: wNumb({
-                decimals: 3
-            }),
-        });
-        // Initially hide the continuous slider
-        continuousSlider.style.display = 'none';
-
-        categoricalSlider.noUiSlider.on('update', function(values, handle) {
-            var thresholds = {
-                [values[0]]: 250,
-                [values[1]]: 175,
-                [values[2]]: 100,
-                [values[3]]: 25
-            };
-            classifiedTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
-        });
-
-        continuousSlider.noUiSlider.on('update', function(values, handle) {
-            var thresholds = {
-                min: values[0],
-                max: values[1]
-            };
-            continiousTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
-        });
-
-        // Add event listeners to swich between categorical and continious sliders
-        map.on('overlayadd', function(e) {
-            if (e.name === 'Continuous') {
-                // If the Continuous layer is added, hide the categorical slider and show the continuous slider
-                categoricalSlider.style.display = 'none';
-                continuousSlider.style.display = 'block';
-            } else {
-                categoricalSlider.style.display = 'block';
-                continuousSlider.style.display = 'none';
-            }
-        });
-
-        // Center map on fire, based on `bounds` metadata
-        map.fitBounds(fireBounds);
-
-    }).catch(error => console.error(error));
-</script>
-
-</body>
+    <script>
+      // Data from Jinja2
+      var burnMetric = "{{ burn_metric }}";
+      var fireMetadata = JSON.parse({{fire_metadata_json | tojson | safe}});
+      var fireBounds = [[fireMetadata.bounds[1], fireMetadata.bounds[0]], [fireMetadata.bounds[3], fireMetadata.bounds[2]]]
+      var mapboxToken = "{{ mapbox_token }}"
+
+      // Define the URLs for the Mapbox NAIP and Satellite layers
+      var mapboxNaipUrl = 'https://api.mapbox.com/v4/mapbox.naip/{z}/{x}/{y}.png?access_token=' + mapboxToken;
+      var mapboxSatelliteUrl = 'https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.png?access_token=' + mapboxToken;
+
+      // Content for the webpage, defined as JSON
+      var burnMetricText = JSON.parse('{{ burn_metric_text | tojson | safe }}');
+
+      async function fetchData() {
+
+          const boundaryResponse = await fetch('{{ burn_boundary_geojson_url | safe }}');
+          const boundaryGeojson = await boundaryResponse.json();
+
+          const ecoclassResponse = await fetch('{{ ecoclass_geojson_url | safe }}');
+          const ecoclassGeojson= await ecoclassResponse.json();
+
+          return { boundaryGeojson, ecoclassGeojson }; // Return the layers
+
+      }
+
+      // var popup = L.popup({
+      //     closeButton: false,
+      //     autoClose: false
+      // });
+
+      // function onEachEcoclass(feature, layer) {
+      // layer.on({
+      //         mouseover: function(e) {
+      //             var layers = e.target._map._layers;
+      //             var mousePos = e.latlng;
+      //             var ecoclassNames = [];
+      //             var muname = 'N/A'; // Initialize muname here
+      //             for (var i in layers) {
+      //                 if (layers[i] instanceof L.Polygon) {
+      //                     if (layers[i].getBounds().contains(mousePos)) {
+      //                         if (layers[i].feature) {
+      //                             // Perform operations on layers[i]
+      //                             console.log(layers[i].feature.properties);
+      //                             layers[i].setStyle({
+      //                                 weight: 5,
+      //                                 color: '#666',
+      //                                 dashArray: '',
+      //                                 fillOpacity: 0.7
+      //                             });
+      //                             if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+      //                                 layers[i].bringToFront();
+      //                             }
+      //                             var ecoclassName = layers[i].feature.properties.ecoclassname ? layers[i].feature.properties.ecoclassname : 'N/A';
+      //                             if (!ecoclassNames.includes(ecoclassName)) {
+      //                                 ecoclassNames.push(ecoclassName);
+      //                             }
+      //                             muname = layers[i].feature.properties.muname ? layers[i].feature.properties.muname : 'N/A'; // Update muname here
+      //                         }
+      //                     }
+      //                 }
+      //             }
+      //             popup.setContent(
+      //                 "<strong>Map Unit Name:</strong> <br> - " +
+      //                 muname + // Use muname here
+      //                 "<br><strong>Ecoclass Names:</strong> <br> - " +
+      //                 ecoclassNames.join(', ')
+      //             );
+      //             popup.setLatLng(mousePos);
+      //             popup.openOn(e.target._map);
+      //         },
+      //         mousemove: function(e) {
+      //             var layers = e.target._map._layers;
+      //             var mousePos = e.latlng;
+      //             for (var i in layers) {
+      //                 if (layers[i] instanceof L.Polygon) {
+      //                     if (layers[i].getBounds().contains(mousePos)) {
+      //                         if (layers[i].feature) {
+      //                         // Perform operations on layers[i]
+      //                             popup.setLatLng(mousePos);
+      //                         }
+      //                     }
+      //                 }
+      //             }
+      //         },
+      //         mouseout: function(e) {
+      //             var layers = e.target._map._layers;
+      //             for (var i in layers) {
+      //                 if (layers[i] instanceof L.Polygon) {
+      //                     if (layers[i].feature) {
+      //                         layers[i].setStyle({
+      //                             color: "#03420f",
+      //                             weight: 1,
+      //                             opacity: 1,
+      //                             fillOpacity: 0
+      //                         });
+      //                         e.target._map.closePopup();
+      //                     }
+      //                 }
+      //             }
+      //         }
+      //     });
+      // }
+
+      fetchData().then(({ boundaryGeojson, ecoclassGeojson }) => {
+
+          var ecoclassLayer = L.geoJSON(ecoclassGeojson, {
+              style: function(feature) {
+                  return {
+                      color: "#03420f",
+                      weight: 1,
+                      opacity: 1,
+                      fillOpacity: 0
+                  };
+              },
+              // onEachFeature: onEachEcoclass,
+              pane: 'ecoclass'
+          });
+
+          // Create a layer for each combo of dominant trees
+          var uniqueTreeCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantTree1, feature.properties.dominantTree2].join(', ')))];
+          var treeLayers = {};
+          uniqueTreeCombinations.forEach(treeCombination => {
+
+              var [tree1, tree2] = treeCombination.split(', ');
+
+              // Skip if both are null or empty
+              if ((tree1 === 'null' || tree1 === '') && (tree2 === 'null' || tree2 === '')) {
+                  return;
+              }
+
+              // Filter the ecoclassGeojson to only include the current tree combination
+              var treeGeojson = {
+                  type: "FeatureCollection",
+                  features: ecoclassGeojson.features.filter(feature => feature.properties.dominantTree1 === tree1 && feature.properties.dominantTree2 === tree2)
+              };
+
+              // if tree1 is not null, but tree2 is null or blank, set tree2 to (none)
+              if ((tree1 !== 'null' && tree1 !== '') && (tree2 === 'null' || tree2 === '')) {
+                  tree2 = '(none)';
+              }
+
+              var treeLayer = L.geoJSON(treeGeojson, {
+                  style: function(feature) {
+                      return {
+                          color: "#048c1b",
+                          weight: 2,
+                          opacity: .7,
+                          fillOpacity: .5
+                      };
+                  },
+                  pane: 'ecoclass'
+              });
+
+              // Add the layer to the object using the tree combination as the key
+              treeLayers[treeCombination] = treeLayer;
+          });
+
+          // Create a layer for each combo of dominant shrubs
+          var uniqueShrubCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantShrub1, feature.properties.dominantShrub2].join(', ')))];
+          var shrubLayers = {};
+          uniqueShrubCombinations.forEach(shrubCombination => {
+
+              var [shrub1, shrub2] = shrubCombination.split(', ');
+
+              // Skip if both are null or empty
+              if ((shrub1 === 'null' || shrub1 === '') && (shrub2 === 'null' || shrub2 === '')) {
+                  return;
+              }
+
+              // Filter the ecoclassGeojson to only include the current shrub combination
+              var shrubGeojson = {
+                  type: "FeatureCollection",
+                  features: ecoclassGeojson.features.filter(feature => feature.properties.dominantShrub1 === shrub1 && feature.properties.dominantShrub2 === shrub2)
+              };
+
+              // if shrub1 is not null, but shrub2 is null or blank, set shrub2 to (none)
+              if ((shrub1 !== 'null' && shrub1 !== '') && (shrub2 === 'null' || shrub2 === '')) {
+                  shrub2 = '(none)';
+              }
+
+              var shrubLayer = L.geoJSON(shrubGeojson, {
+                  style: function(feature) {
+                      return {
+                          color: "#f5b618",
+                          weight: 2,
+                          opacity: .7,
+                          fillOpacity: .5
+                      };
+                  },
+                  pane: 'ecoclass'
+              });
+
+              // Add the layer to the object using the shrub combination as the key
+              shrubLayers[shrubCombination] = shrubLayer;
+          });
+
+          // Create a layer for each combo of dominant herb
+          var uniqueHerbCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantHerb1, feature.properties.dominantHerb2].join(', ')))];
+          var herbLayers = {};
+          uniqueHerbCombinations.forEach(herbCombination => {
+
+              var [herb1, herb2] = herbCombination.split(', ');
+
+              // Skip if both are null or empty
+              if ((herb1 === 'null' || herb1 === '') && (herb2 === 'null' || herb2 === '')) {
+                  return;
+              }
+
+              // Filter the ecoclassGeojson to only include the current herb combination
+              var herbGeojson = {
+                  type: "FeatureCollection",
+                  features: ecoclassGeojson.features.filter(feature => feature.properties.dominantHerb1 === herb1 && feature.properties.dominantHerb2 === herb2)
+              };
+
+              // if herb1 is not null, but herb2 is null or blank, set herb2 to (none)
+              if ((herb1 !== 'null' && herb1 !== '') && (herb2 === 'null' || herb2 === '')) {
+                  herb2 = '(none)';
+              }
+
+              var herbLayer = L.geoJSON(herbGeojson, {
+                  style: function(feature) {
+                      return {
+                          color: "#b339fa",
+                          weight: 2,
+                          opacity: .7,
+                          fillOpacity: .5
+                      };
+                  },
+                  pane: 'ecoclass'
+              });
+
+              // Add the layer to the object using the herb combination as the key
+              herbLayers[herbCombination] = herbLayer;
+          });
+
+          // Add GeoJSON layer for burn boundary
+          var boundaryLayer = L.geoJSON(boundaryGeojson, {
+              style: function(feature) {
+                  return {
+                      color: "#000000",
+                      weight: 6,
+                      opacity: 1,
+                      fillOpacity: 0
+                  };
+              },
+              pane: 'burn-boundary'
+          });
+
+          // Add COG tile layer for classifications
+          var classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}}', {
+              maxZoom: 20,
+              pane: 'metrics'
+          })
+
+          // Add COG tile layer for continious metric, no classification
+          var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"}}', {
+              maxZoom: 20,
+              pane: 'metrics'
+          })
+
+          // Easy peasy Mapbox tileservers for the NAIP and Satellite layers
+          var naipLayer = L.tileLayer(mapboxNaipUrl, {
+              maxZoom: 20,
+              pane: 'basemaps'
+          });
+          var satelliteLayer = L.tileLayer(mapboxSatelliteUrl, {
+              maxZoom: 20,
+              pane: 'basemaps'
+          });
+
+          // Add OSM Topo
+          var openTopoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors',
+              pane: 'basemaps'
+          })
+
+
+          // Create map
+          var map = L.map('burn-map', {
+              layers: [openTopoLayer, boundaryLayer],
+          }).whenReady(function(){
+              classifiedTileLayer.addTo(this);
+          });
+
+          // Create panes to properly order basemaps and metrics
+          map.createPane('basemaps');
+          map.getPane('basemaps').style.zIndex = 2;
+
+          map.createPane('metrics');
+          map.getPane('metrics').style.zIndex = 5;
+
+          map.createPane('ecoclass');
+          map.getPane('ecoclass').style.zIndex = 9;
+
+          map.createPane('burn-boundary');
+          map.getPane('burn-boundary').style.zIndex = 7;
+
+
+          // Add layer controls - one for basemap, one for metrics
+          var baseLayers = {
+              "None": L.tileLayer('', {pane: 'basemaps'}), // Empty layer to remove all basemaps
+              "OpenTopoMap": openTopoLayer,
+              "NAIP": naipLayer,
+              "Satellite": satelliteLayer
+          };
+
+          var metricsLayers = {
+              "Continuous": continiousTileLayer,
+              "Classifications": classifiedTileLayer
+          };
+
+          var polyLayers = {
+              "Burn Boundary": boundaryLayer,
+              "EDIT Ecological Classification": ecoclassLayer
+          }
+
+          // Loading indicator
+          var loadingDiv = L.DomUtil.create('div', 'loading');
+          loadingDiv.innerHTML = 'Loading...';
+          document.body.appendChild(loadingDiv);
+
+          // Add event listeners to each layer
+          for (var key in baseLayers) {
+              if (key === 'None') {
+                  continue;
+              }
+              baseLayers[key].setZIndex(2);
+              baseLayers[key].on({
+                  'loading': function() {
+                      loadingDiv.style.display = 'block';
+                  },
+                  'load': function() {
+                      loadingDiv.style.display = 'none';
+                  }
+              });
+          }
+
+          for (var key in metricsLayers) {
+              metricsLayers[key].setZIndex(5);
+              metricsLayers[key].on({
+                  'loading': function() {
+                      loadingDiv.style.display = 'block';
+                  },
+                  'load': function() {
+                      loadingDiv.style.display = 'none';
+                  }
+              });
+          }
+
+          for (var key in polyLayers) {
+              polyLayers[key].setZIndex(8);
+              polyLayers[key].on({
+                  'loading': function() {
+                      loadingDiv.style.display = 'block';
+                  },
+                  'load': function() {
+                      loadingDiv.style.display = 'none';
+                  }
+              });
+          }
+
+          var groupedOverlays = {
+              "Burn Metrics": metricsLayers,
+              "Polygons": polyLayers,
+              "Tree Cover": treeLayers,
+              "Shrub Cover": shrubLayers,
+              "Herb Cover": herbLayers
+          };
+
+          var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {
+              exclusiveGroups: ["Burn Metrics"],
+              position: 'topleft',
+              collapsed: false
+          }).addTo(map);
+
+          var opacitySlider = document.getElementById('opacity-slider');
+
+          var updateOpacityClassified = function(e) {
+              classifiedTileLayer.setOpacity(e.target.value);
+          };
+          var updateOpacityContinious = function(e) {
+              continiousTileLayer.setOpacity(e.target.value);
+          };
+
+          opacitySlider.addEventListener('input', updateOpacityClassified);
+          opacitySlider.addEventListener('input', updateOpacityContinious);
+
+          // Iterate over each metric
+          burnMetricInfo = document.getElementById('burn-metric-info');
+          for (var key in burnMetricText) {
+              // Create a div for the metric
+              var div = document.createElement('div');
+
+              // Add the metric name and formula
+              div.innerHTML = '<strong>' + burnMetricText[key].metric_name + '</strong><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="math">\\(' + burnMetricText[key].formula + '\\)</span>';
+
+              // Add padding between divs
+              div.style.padding = '10px';
+              div.style.zIndex = 1000;
+
+              // Highlight the current metric
+              if (key.toLowerCase() === burnMetric.toLowerCase()) {
+                  div.style.backgroundColor = '#ffe875';
+              }
+
+              // Append the div to the container
+              burnMetricInfo.appendChild(div);
+
+              // Ask MathJax to typeset the new div
+              MathJax.typeset([div]);
+          }
+
+          // Add threshold sliders w/ noUiSlider
+          var categoricalSlider = document.getElementById('categorical-slider');
+          noUiSlider.create(categoricalSlider, {
+              start: [-.025, .125, 0.250, 0.8],
+              connect: [true, true, true, true, false],
+              range: {
+                  'min': -.4,
+                  'max': .8
+              },
+              step: .025,
+              direction: 'rtl',
+              orientation: 'vertical',
+              pips: {
+                  mode: 'steps',
+                  stepped: true,
+                  density: 16,
+                  format: wNumb({
+                      decimals: 2,
+                      to: function(value) {
+                          // Convert to percentage from float
+                          return (value * 100).toFixed(0) + '%';
+                      }
+                  }),
+                  filter: function(value, type) {
+                      return value % (4 * 0.025) === 0 ? 1 : -1;
+                  }
+              },
+              behaviour: 'tap-drag',
+              tooltips: true,
+              format: wNumb({
+                  decimals: 3
+              }),
+          });
+
+          // Add continious slider w/ noUiSlider
+          var continuousSlider = document.getElementById('continuous-slider');
+          noUiSlider.create(continuousSlider, {
+              start: [-.025, .4],
+              connect: [true, true, true],
+              range: {
+                  'min': -.4,
+                  'max': .8
+              },
+              step: .025,
+              direction: 'rtl',
+              orientation: 'vertical',
+              pips: {
+                  mode: 'steps',
+                  stepped: true,
+                  density: 16,
+                  format: wNumb({
+                      decimals: 2,
+                      to: function(value) {
+                          // Convert to percentage from float
+                          return (value * 100).toFixed(0) + '%';
+                      }
+                  }),
+                  filter: function(value, type) {
+                      return value % (4 * 0.025) === 0 ? 1 : -1;
+                  }
+              },
+              behaviour: 'tap-drag',
+              tooltips: true,
+              format: wNumb({
+                  decimals: 3
+              }),
+          });
+          // Initially hide the continuous slider
+          continuousSlider.style.display = 'none';
+
+          categoricalSlider.noUiSlider.on('update', function(values, handle) {
+              var thresholds = {
+                  [values[0]]: 250,
+                  [values[1]]: 175,
+                  [values[2]]: 100,
+                  [values[3]]: 25
+              };
+              classifiedTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
+          });
+
+          continuousSlider.noUiSlider.on('update', function(values, handle) {
+              var thresholds = {
+                  min: values[0],
+                  max: values[1]
+              };
+              continiousTileLayer.setUrl('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params=' + JSON.stringify({thresholds: thresholds}));
+          });
+
+          // Add event listeners to swich between categorical and continious sliders
+          map.on('overlayadd', function(e) {
+              if (e.name === 'Continuous') {
+                  // If the Continuous layer is added, hide the categorical slider and show the continuous slider
+                  categoricalSlider.style.display = 'none';
+                  continuousSlider.style.display = 'block';
+              } else {
+                  categoricalSlider.style.display = 'block';
+                  continuousSlider.style.display = 'none';
+              }
+          });
+
+          // Center map on fire, based on `bounds` metadata
+          map.fitBounds(fireBounds);
+
+      }).catch(error => console.error(error));
+    </script>
+  </body>
 </html>
