@@ -35,21 +35,9 @@ class Sentinel2Client:
         self.crs = crs
 
         self.buffer = buffer
-
-        geojson_bounds = gpd.GeoDataFrame.from_features(geojson_bounds)
-        # TODO [#7]: Generalize Sentinel2Client to accept any CRS
-        # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
-        if not geojson_bounds.crs:
-            geojson_bounds = geojson_bounds.set_crs("EPSG:4326")
-        self.geojson_bounds = geojson_bounds.to_crs(crs)
-
-        geojson_bbox = geojson_bounds.bounds.to_numpy()[0]
-        self.bbox = [
-            geojson_bbox[0].round(decimals=2) - buffer,
-            geojson_bbox[1].round(decimals=2) - buffer,
-            geojson_bbox[2].round(decimals=2) + buffer,
-            geojson_bbox[3].round(decimals=2) + buffer,
-        ]
+        self.geojson_bounds = None
+        self.bbox = None
+        self.set_boundary(geojson_bounds)
 
         if barc_classifications is not None:
             self.barc_classifications = self.ingest_barc_classifications(
@@ -58,6 +46,22 @@ class Sentinel2Client:
 
         self.derived_classifications = None
         print("Initialized Sentinel2Client with bounds: {}".format(self.bbox))
+
+    def set_boundary(self, geojson_bounds):
+        gpd.GeoDataFrame.from_features(geojson_bounds)
+        # TODO [#7]: Generalize Sentinel2Client to accept any CRS
+        # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
+        if not geojson_bounds.crs:
+            geojson_bounds = geojson_bounds.set_crs("EPSG:4326")
+        self.geojson_bounds = geojson_bounds.to_crs(self.crs)
+
+        geojson_bbox = geojson_bounds.bounds.to_numpy()[0]
+        self.bbox = [
+            geojson_bbox[0].round(decimals=2) - self.buffer,
+            geojson_bbox[1].round(decimals=2) - self.buffer,
+            geojson_bbox[2].round(decimals=2) + self.buffer,
+            geojson_bbox[3].round(decimals=2) + self.buffer,
+        ]
 
     def get_items(self, date_range, cloud_cover=100, from_bbox=True, max_items=None):
         date_range_fmt = "{}/{}".format(date_range[0], date_range[1])
@@ -183,3 +187,14 @@ class Sentinel2Client:
                 [self.derived_classifications, new_classification],
                 dim="classification_source",
             )
+
+    def derive_boundary(self, metric_name="rbr", threshold=0.15):
+        metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
+        boundary = metric_layer.where(metric_layer < threshold, 0)
+
+        # convert to geojson
+        boundary = boundary.rio.clip(
+            self.geojson_bounds.geometry.values, self.geojson_bounds.crs
+        )
+
+        self.set_boundary(boundary)

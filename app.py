@@ -136,6 +136,7 @@ def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
 
 class AnaylzeBurnPOSTBody(BaseModel):
     geojson: Any
+    derive_boundary: bool
     date_ranges: dict
     fire_event_name: str
     affiliation: str
@@ -170,6 +171,28 @@ def analyze_burn(
         # calculate burn metrics
         geo_client.calc_burn_metrics()
         logger.log_text(f"Calculated burn metrics for {fire_event_name}")
+
+        if body.derive_boundary:
+            # Derive a boundary from the imagery
+            geo_client.derive_boundary("rbr", 0.15)
+            logger.log_text(f"Derived boundary for {fire_event_name}")
+
+            # Upload the derived boundary
+            sftp_client.connect()
+            with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+                tmp_geojson = tmp.name
+                with open(tmp_geojson, "w") as f:
+                    f.write(geo_client.geojson_bounds)
+
+                sftp_client.upload(
+                    source_local_path=tmp_geojson,
+                    remote_path=f"{affiliation}/{fire_event_name}/approximate_boundary.geojson",
+                )
+            sftp_client.disconnect()
+
+        # TODO: Excessive SFTP connections, refactor to use a context manager
+        # Overly conservative, connections and disconnects - likely avoided entirely by smart-open
+        # but if not, should be refactored to use a context manager
 
         # save the cog to the FTP server
         sftp_client.connect()
@@ -358,7 +381,35 @@ async def upload_shapefile(
                 f.write(geojson)
             sftp_client.upload(
                 source_local_path=tmp_geojson,
-                remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
+                remote_path=f"{affiliation}/{fire_event_name}/preexisting_boundary.geojson",
+            )
+
+        sftp_client.disconnect()
+
+        return JSONResponse(status_code=200, content={"geojson": geojson})
+
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
+
+
+@app.post("/api/upload-drawn-aoi")
+async def upload_drawn_aoi(
+    fire_event_name: str = Form(...),
+    affiliation: str = Form(...),
+    geojson: str = Form(...),
+    sftp_client: SFTPClient = Depends(get_sftp_client),
+):
+    try:
+        # Upload the geojson to SFTP
+        sftp_client.connect()
+
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+            tmp_geojson = tmp.name
+            with open(tmp_geojson, "w") as f:
+                f.write(geojson)
+            sftp_client.upload(
+                source_local_path=tmp_geojson,
+                remote_path=f"{affiliation}/{fire_event_name}/approximate_boundary.geojson",
             )
 
         sftp_client.disconnect()
