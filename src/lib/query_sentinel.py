@@ -99,7 +99,7 @@ class Sentinel2Client:
         return barc_classifications
 
     def arrange_stack(self, items, resolution=20):
-        # TODO: More appropriate error handling - seperate legit from expected
+        # TODO [#13]: More appropriate error handling - seperate legit from expected
         # Right now, many of the requests to STAC are wrapped in try/excepts at the top level, to
         # ensure no problems with timeouts and whatnot, which was an artifact of early development,
         # but this is problematic now that we use form submission
