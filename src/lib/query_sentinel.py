@@ -62,7 +62,7 @@ class Sentinel2Client:
     def get_items(self, date_range, cloud_cover=100, from_bbox=True, max_items=None):
         date_range_fmt = "{}/{}".format(date_range[0], date_range[1])
 
-        # TODO [$65b15e3ce747ff000895209c]: Cloud cover response to smoke
+        # TODO [#14]: Cloud cover response to smoke
         # Right now we don't give any mind to smoke occlusion, but we should considering we will have bias if smoke occludes our imagery
 
         query = {
