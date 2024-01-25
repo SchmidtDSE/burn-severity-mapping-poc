@@ -323,10 +323,10 @@
             var uploadedLayer = L.geoJSON(drawnGeojson, {
               style: function (feature) {
                 return {
-                  color: deriveBoundary ? "#f12215" : "#ff0000",
+                  color: deriveBoundary ? "#f12215" : "#000000",
                   weight: 2,
                   opacity: 1,
-                  fillOpacity: 0,
+                  fillOpacity: deriveBoundary ? 0 : 0.5,
                 };
               },
               pane: "boundary",
@@ -376,29 +376,24 @@
 
             // Make a request to analyze the ecoclassification, if analysis is successful
             $.when(analyzeBurn).done(function (analysisResponse) {
-              console.log("burn analysis success", analysisResponse);
-              console.log("derive boundary", deriveBoundary);
-              console.log(
-                "geojson boundary",
-                analysisResponse.geojson_boundary
-              );
-
               // Add the derived boundary to map, if we're deriving the boundary
               if (deriveBoundary) {
+                var derivedBoundaryGeojson = JSON.parse(
+                  analysisResponse.geojson_boundary
+                );
+                console.log(derivedBoundaryGeojson);
+
                 try {
                   console.log("adding derived boundary to map");
-                  var derivedLayer = L.geoJSON(
-                    JSON.stringify(analysisResponse.geojson_derived),
-                    {
-                      style: {
-                        color: "#ff0000",
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0,
-                      },
-                      pane: "boundary",
-                    }
-                  ).addTo(map);
+                  var derivedLayer = L.geoJSON(derivedBoundaryGeojson, {
+                    style: {
+                      color: "#000000",
+                      weight: 2,
+                      opacity: 1,
+                      fillOpacity: 0.5,
+                    },
+                    pane: "boundary",
+                  }).addTo(map);
 
                   console.log("adding derived layer control to map");
                   var control = L.control.layers(
