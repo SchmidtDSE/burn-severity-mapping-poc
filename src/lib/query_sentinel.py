@@ -1,5 +1,7 @@
 import requests
 import geopandas as gpd
+import rasterio.features
+import shapely.geometry
 from pystac_client import Client as PystacClient
 from datetime import datetime
 import planetary_computer
@@ -8,8 +10,10 @@ import xarray as xr
 import numpy as np
 import stackstac
 import tempfile
+from scipy.ndimage import gaussian_filter, binary_fill_holes
 import os
 from .burn_severity import calc_burn_metrics, classify_burn
+from ..util.raster_to_poly import raster_mask_to_geojson
 from src.util.sftp import SFTPClient
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
@@ -33,8 +37,10 @@ class Sentinel2Client:
         self.band_nir = band_nir
         self.band_swir = band_swir
         self.crs = crs
-
         self.buffer = buffer
+
+        # TODO: Settle on standards for storing polygons
+        # Oscillating between geojsons and geopandas dataframes, which is a bit messy. Should pick one and stick with it.
         self.geojson_bounds = None
         self.bbox = None
         self.set_boundary(geojson_bounds)
@@ -188,13 +194,34 @@ class Sentinel2Client:
                 dim="classification_source",
             )
 
-    def derive_boundary(self, metric_name="rbr", threshold=0.15):
+    def derive_boundary(self, metric_name="rbr", threshold=0.025):
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
-        boundary = metric_layer > threshold
 
-        # convert to geojson
-        boundary = boundary.rio.clip(
-            self.geojson_bounds.geometry.values, self.geojson_bounds.crs
+        # Threshold the metric layer to get a binary boundary
+        binary_mask = metric_layer.where(metric_layer >= threshold, 0)
+        binary_mask = binary_mask.where(binary_mask == 0, 1)
+
+        # Smooth the boundary, removing small artifacts
+        filled_mask = binary_fill_holes(binary_mask)
+        smoothed_mask = gaussian_filter(filled_mask, sigma=1)
+        int_mask = smoothed_mask.astype(int)
+
+        # Convert back to a DataArray
+        boundary_xr = xr.DataArray(
+            int_mask,
+            coords=metric_layer.coords,
+            dims=metric_layer.dims,
+            attrs=metric_layer.attrs,
         )
+        boundary_xr.rio.write_crs(metric_layer.rio.crs, inplace=True)
 
-        self.set_boundary(boundary)
+        # Convert to geojson
+        # TODO: More robust conversion from raster to poly
+        # This seems overcomplicated for what a simple polygonize should do, but near as I can tell
+        # there is no out of the box solution in xarray/rioxarray for this. This seems like something we
+        # will do regularly, so we should probably make a util function for it and understand why it's
+        # not a built-in method... must have more complications than I realize currently.
+
+        boundary_geojson = raster_mask_to_geojson(boundary_xr)
+
+        self.set_boundary(boundary_geojson)

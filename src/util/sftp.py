@@ -184,6 +184,7 @@ class SFTPClient:
         prefire_date_range,
         postfire_date_range,
         affiliation,
+        derive_boundary,
     ):
         with tempfile.TemporaryDirectory() as tmpdir:
             manifest = self.get_manifest()
@@ -200,6 +201,7 @@ class SFTPClient:
                 "postfire_date_range": postfire_date_range,
                 "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "requester_affiliation": affiliation,
+                "derive_boundary": derive_boundary,
             }
 
             # Upload the manifest to our SFTP server

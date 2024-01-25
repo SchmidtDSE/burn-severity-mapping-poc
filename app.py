@@ -173,23 +173,25 @@ def analyze_burn(
         geo_client.calc_burn_metrics()
         logger.log_text(f"Calculated burn metrics for {fire_event_name}")
 
-        # if derive_boundary:
-        #     # Derive a boundary from the imagery
-        #     geo_client.derive_boundary("rbr", 0.15)
-        #     logger.log_text(f"Derived boundary for {fire_event_name}")
+        if derive_boundary:
+            # Derive a boundary from the imagery
+            # TODO: Derived boundary hardcoded for rbr / .025 threshold
+            # Not sure yet but we will probably want to make this configurable
+            geo_client.derive_boundary("rbr", 0.025)
+            logger.log_text(f"Derived boundary for {fire_event_name}")
 
-        #     # Upload the derived boundary
-        #     sftp_client.connect()
-        #     with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-        #         tmp_geojson = tmp.name
-        #         with open(tmp_geojson, "w") as f:
-        #             f.write(geo_client.geojson_bounds)
+            # Upload the derived boundary
+            sftp_client.connect()
+            with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+                tmp_geojson = tmp.name
+                with open(tmp_geojson, "w") as f:
+                    f.write(geo_client.geojson_bounds.to_json())
 
-        #         sftp_client.upload(
-        #             source_local_path=tmp_geojson,
-        #             remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
-        #         )
-        #     sftp_client.disconnect()
+                sftp_client.upload(
+                    source_local_path=tmp_geojson,
+                    remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
+                )
+            sftp_client.disconnect()
 
         # TODO [#15]: Excessive SFTP connections, refactor to use a context manager
         # Overly conservative, connections and disconnects - likely avoided entirely by smart-open
