@@ -191,7 +191,7 @@ def analyze_burn(
         #         )
         #     sftp_client.disconnect()
 
-        # TODO: Excessive SFTP connections, refactor to use a context manager
+        # TODO [#15]: Excessive SFTP connections, refactor to use a context manager
         # Overly conservative, connections and disconnects - likely avoided entirely by smart-open
         # but if not, should be refactored to use a context manager
 

@@ -12,7 +12,7 @@ import geopandas as gpd
 from google.cloud import logging as cloud_logging
 
 
-# TODO [#9]: Convert to agnostic Boto client 
+# TODO [#9]: Convert to agnostic Boto client
 # Use the slick smart-open library to handle S3 connections. This maintains the agnostic nature
 # of sftp, not tied to any specific cloud provider, but is way more efficient than paramiko/sftp in terms of $$
 class SFTPClient:
@@ -29,16 +29,20 @@ class SFTPClient:
         self.available_cogs = None
 
         # Set up logging
-        logging_client = cloud_logging.Client(project='dse-nps')
+        logging_client = cloud_logging.Client(project="dse-nps")
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
         # Route Paramiko logs to Google Cloud Logging
         paramiko_logger = logging.getLogger("paramiko")
         paramiko_logger.setLevel(logging.DEBUG)
-        paramiko_logger.addHandler(cloud_logging.handlers.CloudLoggingHandler(logging_client, name=log_name))
+        paramiko_logger.addHandler(
+            cloud_logging.handlers.CloudLoggingHandler(logging_client, name=log_name)
+        )
 
-        self.logger.log_text(f"Initialized SFTPClient for {self.hostname} as {self.username}")
+        self.logger.log_text(
+            f"Initialized SFTPClient for {self.hostname} as {self.username}"
+        )
 
     def connect(self):
         """Connects to the sftp server and returns the sftp connection object"""
@@ -85,7 +89,6 @@ class SFTPClient:
         """
 
         try:
-
             # Create the target directory if it does not exist
             path, _ = os.path.split(target_local_path)
             if not os.path.isdir(path):
@@ -132,66 +135,91 @@ class SFTPClient:
         self.available_cogs = self.get_available_cogs()
         self.disconnect()
 
-    def upload_cogs(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range, affiliation):
-
+    def upload_cogs(
+        self,
+        metrics_stack,
+        fire_event_name,
+        prefire_date_range,
+        postfire_date_range,
+        affiliation,
+    ):
         with tempfile.TemporaryDirectory() as tmpdir:
-
             for band_name in metrics_stack.burn_metric.to_index():
                 # Save the band as a local COG
                 local_cog_path = os.path.join(tmpdir, f"{band_name}.tif")
-                band_cog = metrics_stack.sel(burn_metric = band_name).rio
+                band_cog = metrics_stack.sel(burn_metric=band_name).rio
                 band_cog.to_raster(local_cog_path, driver="GTiff")
 
                 # Update the COG with overviews, for faster loading at lower zoom levels
                 self.logger.log_text(f"Updating {band_name} with overviews")
-                with rasterio.open(local_cog_path, 'r+') as ds:
+                with rasterio.open(local_cog_path, "r+") as ds:
                     ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
-                    ds.update_tags(ns='rio_overview', resampling='nearest')
+                    ds.update_tags(ns="rio_overview", resampling="nearest")
 
                 self.upload(
                     source_local_path=local_cog_path,
                     remote_path=f"{affiliation}/{fire_event_name}/{band_name}.tif",
                 )
-            
+
             # Upload the difference between dNBR and RBR
             local_cog_path = os.path.join(tmpdir, f"pct_change_dnbr_rbr.tif")
-            pct_change = (metrics_stack.sel(burn_metric="rbr") - metrics_stack.sel(burn_metric="dnbr")) / \
-                metrics_stack.sel(burn_metric="dnbr") * 100
+            pct_change = (
+                (
+                    metrics_stack.sel(burn_metric="rbr")
+                    - metrics_stack.sel(burn_metric="dnbr")
+                )
+                / metrics_stack.sel(burn_metric="dnbr")
+                * 100
+            )
             pct_change.rio.to_raster(local_cog_path, driver="GTiff")
             self.upload(
                 source_local_path=local_cog_path,
                 remote_path=f"{affiliation}/{fire_event_name}/pct_change_dnbr_rbr.tif",
             )
 
-
-    def update_manifest(self, fire_event_name, bounds, prefire_date_range, postfire_date_range, affiliation):
+    def update_manifest(
+        self,
+        fire_event_name,
+        bounds,
+        prefire_date_range,
+        postfire_date_range,
+        affiliation,
+    ):
         with tempfile.TemporaryDirectory() as tmpdir:
-
             manifest = self.get_manifest()
 
             if fire_event_name in manifest:
-                self.logger.log_text(f"Fire event {fire_event_name} already exists in manifest. Overwriting.")
+                self.logger.log_text(
+                    f"Fire event {fire_event_name} already exists in manifest. Overwriting."
+                )
                 del manifest[fire_event_name]
 
             manifest[fire_event_name] = {
-                'bounds': bounds,
-                'prefire_date_range': prefire_date_range,
-                'postfire_date_range': postfire_date_range,
-                'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                'requester_affiliation': affiliation
+                "bounds": bounds,
+                "prefire_date_range": prefire_date_range,
+                "postfire_date_range": postfire_date_range,
+                "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "requester_affiliation": affiliation,
             }
 
             # Upload the manifest to our SFTP server
-            tmp_manifest_path = os.path.join(tmpdir, 'manifest_updated.json')
-            with open(tmp_manifest_path, 'w') as f:
+            tmp_manifest_path = os.path.join(tmpdir, "manifest_updated.json")
+            with open(tmp_manifest_path, "w") as f:
                 json.dump(manifest, f)
             self.upload(
-                source_local_path=tmp_manifest_path,
-                remote_path='manifest.json'
+                source_local_path=tmp_manifest_path, remote_path="manifest.json"
             )
             self.logger.log_text(f"Uploaded/updated manifest.json")
 
-    def upload_fire_event(self, metrics_stack, fire_event_name, prefire_date_range, postfire_date_range, affiliation):
+    def upload_fire_event(
+        self,
+        metrics_stack,
+        fire_event_name,
+        prefire_date_range,
+        postfire_date_range,
+        affiliation,
+        derive_boundary,
+    ):
         self.logger.log_text(f"Uploading fire event {fire_event_name}")
 
         self.upload_cogs(
@@ -199,22 +227,23 @@ class SFTPClient:
             fire_event_name=fire_event_name,
             prefire_date_range=prefire_date_range,
             postfire_date_range=postfire_date_range,
-            affiliation=affiliation
+            affiliation=affiliation,
         )
 
         bounds = [round(pos, 4) for pos in metrics_stack.rio.bounds()]
 
         self.update_manifest(
-            fire_event_name=fire_event_name, 
+            fire_event_name=fire_event_name,
             bounds=bounds,
             prefire_date_range=prefire_date_range,
             postfire_date_range=postfire_date_range,
-            affiliation=affiliation
+            affiliation=affiliation,
+            derive_boundary=derive_boundary,
         )
 
     def get_manifest(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            self.download('manifest.json', tmpdir + 'tmp_manifest.json')
+            self.download("manifest.json", tmpdir + "tmp_manifest.json")
             self.logger.log_text(f"Got manifest.json")
-            manifest = json.load(open(tmpdir + 'tmp_manifest.json', 'r'))
+            manifest = json.load(open(tmpdir + "tmp_manifest.json", "r"))
             return manifest

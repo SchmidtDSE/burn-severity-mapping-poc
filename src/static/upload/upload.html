@@ -236,6 +236,7 @@
           // Get the drawn shape
           var drawnGeojson = editableLayers.toGeoJSON();
           formData.append("geojson", JSON.stringify(drawnGeojson));
+          var deriveBoundary = true;
 
           // Make a request to upload the drawn shape
           var upload = $.ajax({
@@ -256,7 +257,8 @@
         } else if ($("#shp_zip")[0].files.length > 0) {
           // Add the shapefile to the form data
           formData.append("shapefile", $("#shp_zip")[0].files[0]);
-
+          formData.append("derive_boundary", false);
+          var deriveBoundary = false;
           // Make a request to upload the shapefile
           var upload = $.ajax({
             url: `/api/upload-shapefile-zip`,
@@ -281,7 +283,7 @@
             console.log("upload success", uploadResponse);
 
             // Make a request to analyze the burn
-            $.ajax({
+            var analyzeBurn = $.ajax({
               url: "/api/query-satellite/analyze-burn",
               type: "post",
               dataType: "json",
@@ -290,6 +292,7 @@
                 geojson: uploadResponse.geojson,
                 fire_event_name: $("#fire_event_name").val(),
                 affiliation: $("#affiliation").val(),
+                derive_boundary: deriveBoundary,
                 date_ranges: {
                   prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
                   postfire: [
@@ -309,26 +312,29 @@
               },
             });
 
-            // Make a request to analyze the ecoclassification
-            $.ajax({
-              url: "/api/query-soil/analyze-ecoclass",
-              type: "post",
-              dataType: "json",
-              contentType: "application/json",
-              data: JSON.stringify({
-                geojson: uploadResponse.geojson,
-                fire_event_name: $("#fire_event_name").val(),
-                affiliation: $("#affiliation").val(),
-              }),
-              success: function () {
-                $("#ecoclass-analysis-loading").hide();
-                $("#ecoclass-analysis-success").show();
-              },
-              error: function () {
-                console.error(error);
-                $("#ecoclass-analysis-loading").hide();
-                alert("Ecoclass analysis failed");
-              },
+            // Make a request to analyze the ecoclassification, if analysis is successful
+            $.when(analyzeBurn).done(function (analysisResponse) {
+              console.log("burn analysis success", analysisResponse);
+              $.ajax({
+                url: "/api/query-soil/analyze-ecoclass",
+                type: "post",
+                dataType: "json",
+                contentType: "application/json",
+                data: JSON.stringify({
+                  geojson: uploadResponse.geojson,
+                  fire_event_name: $("#fire_event_name").val(),
+                  affiliation: $("#affiliation").val(),
+                }),
+                success: function () {
+                  $("#ecoclass-analysis-loading").hide();
+                  $("#ecoclass-analysis-success").show();
+                },
+                error: function () {
+                  console.error(error);
+                  $("#ecoclass-analysis-loading").hide();
+                  alert("Ecoclass analysis failed");
+                },
+              });
             });
           })
           .fail(function (error) {

@@ -48,11 +48,11 @@ class Sentinel2Client:
         print("Initialized Sentinel2Client with bounds: {}".format(self.bbox))
 
     def set_boundary(self, geojson_bounds):
-        gpd.GeoDataFrame.from_features(geojson_bounds)
+        boundary_gpd = gpd.GeoDataFrame.from_features(geojson_bounds)
         # TODO [#7]: Generalize Sentinel2Client to accept any CRS
         # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
-        if not geojson_bounds.crs:
-            geojson_bounds = geojson_bounds.set_crs("EPSG:4326")
+        if not boundary_gpd.crs:
+            geojson_bounds = boundary_gpd.set_crs("EPSG:4326")
         self.geojson_bounds = geojson_bounds.to_crs(self.crs)
 
         geojson_bbox = geojson_bounds.bounds.to_numpy()[0]
@@ -190,7 +190,7 @@ class Sentinel2Client:
 
     def derive_boundary(self, metric_name="rbr", threshold=0.15):
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
-        boundary = metric_layer.where(metric_layer < threshold, 0)
+        boundary = metric_layer > threshold
 
         # convert to geojson
         boundary = boundary.rio.clip(
