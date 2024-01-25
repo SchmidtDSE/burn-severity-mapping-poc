@@ -39,7 +39,7 @@ class Sentinel2Client:
         self.crs = crs
         self.buffer = buffer
 
-        # TODO: Settle on standards for storing polygons
+        # TODO [$65b1d171f5990e0008349257]: Settle on standards for storing polygons
         # Oscillating between geojsons and geopandas dataframes, which is a bit messy. Should pick one and stick with it.
         self.geojson_bounds = None
         self.bbox = None
@@ -216,7 +216,7 @@ class Sentinel2Client:
         boundary_xr.rio.write_crs(metric_layer.rio.crs, inplace=True)
 
         # Convert to geojson
-        # TODO: More robust conversion from raster to poly
+        # TODO [$65b1d172f5990e0008349258]: More robust conversion from raster to poly
         # This seems overcomplicated for what a simple polygonize should do, but near as I can tell
         # there is no out of the box solution in xarray/rioxarray for this. This seems like something we
         # will do regularly, so we should probably make a util function for it and understand why it's
