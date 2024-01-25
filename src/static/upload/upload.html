@@ -134,7 +134,7 @@
             src="/static/upload/spinner.gif"
             alt="Uploading shapefile... this may take a few moments."
           />
-          <p>Uploading shapefile... this may take a few moments.</p>
+          <p>Uploading AOI...</p>
         </div>
 
         <div id="upload-success" style="display: none">
@@ -152,10 +152,7 @@
             src="/static/upload/spinner.gif"
             alt="Analyzing burn area... depending on AOI size, this may take several minutes."
           />
-          <p>
-            Analyzing burn area... depending on AOI size, this may take several
-            minutes.
-          </p>
+          <p>Analyzing Burn Metrics...</p>
         </div>
 
         <div id="burn-analysis-success" style="display: none">
@@ -173,10 +170,7 @@
             src="/static/upload/spinner.gif"
             alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes."
           />
-          <p>
-            Analyzing ecoclassification... depending on AOI size, this may take
-            several minutes.
-          </p>
+          <p>Fetching EDIT cover types...</p>
         </div>
 
         <div id="ecoclass-analysis-success" style="display: none">
@@ -185,7 +179,7 @@
             src="/static/upload/checkmark.png"
             alt="EDIT Ecoclass Analysis Success!"
           />
-          <p>EDIT Ecoclass Analysis Success!</p>
+          <p>EDIT Successfully Fetched!</p>
         </div>
       </div>
     </div>
@@ -315,12 +309,19 @@
 
         $.when(upload)
           .done(function (uploadResponse) {
+            // Get the GeoJSON, either from drawn AOI or uploaded shapefile
+            var AOI = JSON.parse(uploadResponse.geojson);
+
             // Disable editing on the map, and add the drawn/uploaded shape, coloring by whether its final
             editableLayers.eachLayer(function (layer) {
               editableLayers.removeLayer(layer);
             });
             map.removeControl(drawControl);
-            var uploadedLayer = L.geoJSON(drawnGeojson, {
+
+            // Add the AOI to the map - if we still derive the boundary, then style it red and without fill.
+            // We later add the derived boundary to the map, and style it black with fill.
+            // Otherwise, style it black and with fill to show its the 'real' boundary.
+            var uploadedLayer = L.geoJSON(AOI, {
               style: function (feature) {
                 return {
                   color: deriveBoundary ? "#f12215" : "#000000",
@@ -331,6 +332,9 @@
               },
               pane: "boundary",
             }).addTo(map);
+
+            // Center the uploaded layer on the map
+            map.fitBounds(uploadedLayer.getBounds());
 
             var aoiLabel = deriveBoundary
               ? "Approximate AOI"
@@ -379,9 +383,8 @@
               // Add the derived boundary to map, if we're deriving the boundary
               if (deriveBoundary) {
                 var derivedBoundaryGeojson = JSON.parse(
-                  analysisResponse.geojson_boundary
+                  analysisResponse.derived_boundary
                 );
-                console.log(derivedBoundaryGeojson);
 
                 try {
                   console.log("adding derived boundary to map");
@@ -416,7 +419,9 @@
                 dataType: "json",
                 contentType: "application/json",
                 data: JSON.stringify({
-                  geojson: analysisResponse.geojson_boundary,
+                  geojson: deriveBoundary
+                    ? analysisResponse.derived_boundary
+                    : uploadResponse.geojson,
                   fire_event_name: $("#fire_event_name").val(),
                   affiliation: $("#affiliation").val(),
                 }),

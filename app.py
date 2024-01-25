@@ -155,6 +155,8 @@ def analyze_burn(
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
     derive_boundary = body.derive_boundary
+    derived_boundary = None
+
     logger.log_text(f"Received analyze-burn request for {fire_event_name}")
 
     try:
@@ -193,8 +195,8 @@ def analyze_burn(
                 )
             sftp_client.disconnect()
 
-            # Overwrite the geojson boundary with the derived boundary
-            geojson_boundary = geo_client.geojson_boundary
+            # Return the derived boundary
+            derived_boundary = geo_client.geojson_boundary.to_json()
 
         # TODO [#15]: Excessive SFTP connections, refactor to use a context manager
         # Overly conservative, connections and disconnects - likely avoided entirely by smart-open
@@ -218,7 +220,7 @@ def analyze_burn(
             content={
                 "message": f"Cogs uploaded for {fire_event_name}",
                 "fire_event_name": fire_event_name,
-                "geojson_boundary": geojson_boundary.to_json(),
+                "derived_boundary": derived_boundary,
             },
         )
 
