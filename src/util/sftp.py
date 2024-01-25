@@ -1,9 +1,5 @@
-import paramiko
-from urllib.parse import urlparse
-import io
+import smart_open
 import os
-import tempfile
-import logging
 import json
 import datetime
 import rasterio
@@ -15,62 +11,63 @@ from google.cloud import logging as cloud_logging
 # TODO [#9]: Convert to agnostic Boto client
 # Use the slick smart-open library to handle S3 connections. This maintains the agnostic nature
 # of sftp, not tied to any specific cloud provider, but is way more efficient than paramiko/sftp in terms of $$
-class SFTPClient:
-    def __init__(self, hostname, username, private_key, port=22):
+
+
+class S3Client:
+    def __init__(self, bucket_name):
         """Constructor Method"""
-        self.connection = None
-        self.hostname = hostname
-        self.username = username
-        self.port = port
-
-        private_key_file = io.StringIO(private_key)
-        self.private_key = paramiko.RSAKey.from_private_key(private_key_file)
-
-        self.available_cogs = None
+        self.bucket_name = bucket_name
 
         # Set up logging
         logging_client = cloud_logging.Client(project="dse-nps")
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
-        # Route Paramiko logs to Google Cloud Logging
-        paramiko_logger = logging.getLogger("paramiko")
-        paramiko_logger.setLevel(logging.DEBUG)
-        paramiko_logger.addHandler(
-            cloud_logging.handlers.CloudLoggingHandler(logging_client, name=log_name)
-        )
+        self.logger.log_text(f"Initialized S3Client for {self.bucket_name}")
 
-        self.logger.log_text(
-            f"Initialized SFTPClient for {self.hostname} as {self.username}"
-        )
-
-    def connect(self):
-        """Connects to the sftp server and returns the sftp connection object"""
+    def download(self, remote_path, target_local_path):
+        """
+        Downloads the file from remote s3 server to local.
+        Also, by default extracts the file to the specified target_local_path
+        """
         try:
-            # Create SSH client
-            ssh_client = paramiko.SSHClient()
-            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            # Create the target directory if it does not exist
+            path, _ = os.path.split(target_local_path)
+            if not os.path.isdir(path):
+                try:
+                    os.makedirs(path)
+                except Exception as err:
+                    raise Exception(err)
 
-            # Connect to the server
-            ssh_client.connect(
-                self.hostname,
-                port=self.port,
-                username=self.username,
-                pkey=self.private_key,
-            )
-
-            # Create SFTP client from SSH client
-            self.connection = ssh_client.open_sftp()
+            # Download from remote s3 server to local
+            with smart_open.open(
+                f"s3://{self.bucket_name}/{remote_path}"
+            ) as remote_file:
+                with open(target_local_path, "wb") as local_file:
+                    local_file.write(remote_file.read())
 
         except Exception as err:
             raise Exception(err)
-        finally:
-            print(f"Connected to {self.hostname} as {self.username}.")
 
-    def disconnect(self):
-        """Closes the sftp connection"""
-        self.connection.close()
-        print(f"Disconnected from host {self.hostname}")
+    def upload(self, source_local_path, remote_path):
+        """
+        Uploads the source files from local to the s3 server.
+        """
+        try:
+            print(
+                f"uploading to {self.bucket_name} [(remote path: {remote_path});(source local path: {source_local_path})]"
+            )
+
+            # Upload file from local to S3
+            with open(source_local_path, "rb") as local_file:
+                with smart_open.open(
+                    f"s3://{self.bucket_name}/{remote_path}", "wb"
+                ) as remote_file:
+                    remote_file.write(local_file.read())
+            print("upload completed")
+
+        except Exception as err:
+            raise Exception(err)
 
     def listdir(self, remote_path):
         """lists all the files and directories in the specified path and returns them"""
