@@ -175,7 +175,7 @@ def analyze_burn(
 
         if derive_boundary:
             # Derive a boundary from the imagery
-            # TODO [$65b1d171f5990e0008349256]: Derived boundary hardcoded for rbr / .025 threshold
+            # TODO [#16]: Derived boundary hardcoded for rbr / .025 threshold
             # Not sure yet but we will probably want to make this configurable
             geo_client.derive_boundary("rbr", 0.025)
             logger.log_text(f"Derived boundary for {fire_event_name}")
