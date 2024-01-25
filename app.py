@@ -149,7 +149,7 @@ class AnaylzeBurnPOSTBody(BaseModel):
 def analyze_burn(
     body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)
 ):
-    geojson = json.loads(body.geojson)
+    geojson_boundary = json.loads(body.geojson)
 
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
@@ -159,7 +159,7 @@ def analyze_burn(
 
     try:
         # create a Sentinel2Client instance
-        geo_client = Sentinel2Client(geojson_bounds=geojson, buffer=0.1)
+        geo_client = Sentinel2Client(geojson_boundary=geojson_boundary, buffer=0.1)
 
         # get imagery data before and after the fire
         geo_client.query_fire_event(
@@ -185,13 +185,16 @@ def analyze_burn(
             with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
                 tmp_geojson = tmp.name
                 with open(tmp_geojson, "w") as f:
-                    f.write(geo_client.geojson_bounds.to_json())
+                    f.write(geo_client.geojson_boundary.to_json())
 
                 sftp_client.upload(
                     source_local_path=tmp_geojson,
                     remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
                 )
             sftp_client.disconnect()
+
+            # Overwrite the geojson boundary with the derived boundary
+            geojson_boundary = geo_client.geojson_boundary
 
         # TODO [#15]: Excessive SFTP connections, refactor to use a context manager
         # Overly conservative, connections and disconnects - likely avoided entirely by smart-open
@@ -210,7 +213,14 @@ def analyze_burn(
         sftp_client.disconnect()
         logger.log_text(f"Cogs uploaded for {fire_event_name}")
 
-        return f"cog uploadeds for {fire_event_name}", 200
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": f"Cogs uploaded for {fire_event_name}",
+                "fire_event_name": fire_event_name,
+                "geojson_boundary": geojson_boundary.to_json(),
+            },
+        )
 
     except Exception as e:
         logger.log_text(f"Error: {e}")

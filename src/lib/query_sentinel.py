@@ -1,7 +1,8 @@
 import requests
 import geopandas as gpd
 import rasterio.features
-import shapely.geometry
+from shapely.geometry import shape, MultiPolygon
+from shapely.ops import unary_union
 from pystac_client import Client as PystacClient
 from datetime import datetime
 import planetary_computer
@@ -10,7 +11,7 @@ import xarray as xr
 import numpy as np
 import stackstac
 import tempfile
-from scipy.ndimage import gaussian_filter, binary_fill_holes
+from scipy.ndimage import gaussian_filter, binary_fill_holes, binary_dilation
 import os
 from .burn_severity import calc_burn_metrics, classify_burn
 from ..util.raster_to_poly import raster_mask_to_geojson
@@ -22,7 +23,7 @@ SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 class Sentinel2Client:
     def __init__(
         self,
-        geojson_bounds,
+        geojson_boundary,
         barc_classifications=None,
         buffer=0.1,
         crs="EPSG:4326",
@@ -41,9 +42,9 @@ class Sentinel2Client:
 
         # TODO [#17]: Settle on standards for storing polygons
         # Oscillating between geojsons and geopandas dataframes, which is a bit messy. Should pick one and stick with it.
-        self.geojson_bounds = None
+        self.geojson_boundary = None
         self.bbox = None
-        self.set_boundary(geojson_bounds)
+        self.set_boundary(geojson_boundary)
 
         if barc_classifications is not None:
             self.barc_classifications = self.ingest_barc_classifications(
@@ -53,15 +54,15 @@ class Sentinel2Client:
         self.derived_classifications = None
         print("Initialized Sentinel2Client with bounds: {}".format(self.bbox))
 
-    def set_boundary(self, geojson_bounds):
-        boundary_gpd = gpd.GeoDataFrame.from_features(geojson_bounds)
+    def set_boundary(self, geojson_boundary):
+        boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
         # TODO [#7]: Generalize Sentinel2Client to accept any CRS
         # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
         if not boundary_gpd.crs:
-            geojson_bounds = boundary_gpd.set_crs("EPSG:4326")
-        self.geojson_bounds = geojson_bounds.to_crs(self.crs)
+            geojson_boundary = boundary_gpd.set_crs("EPSG:4326")
+        self.geojson_boundary = geojson_boundary.to_crs(self.crs)
 
-        geojson_bbox = geojson_bounds.bounds.to_numpy()[0]
+        geojson_bbox = geojson_boundary.bounds.to_numpy()[0]
         self.bbox = [
             geojson_bbox[0].round(decimals=2) - self.buffer,
             geojson_bbox[1].round(decimals=2) - self.buffer,
@@ -84,7 +85,7 @@ class Sentinel2Client:
         if from_bbox:
             query["bbox"] = self.bbox
         else:
-            query["intersects"] = self.geojson_bounds
+            query["intersects"] = self.geojson_boundary
 
         if max_items:
             query["max_items"] = max_items
@@ -99,9 +100,9 @@ class Sentinel2Client:
         )
         barc_classifications = barc_classifications.astype(int)
         barc_classifications = barc_classifications.rio.clip(
-            self.geojson_bounds.geometry.values, self.geojson_bounds.crs
+            self.geojson_boundary.geometry.values, self.geojson_boundary.crs
         )
-        # Set everything outside the geojson_bounds to np.nan
+        # Set everything outside the geojson_boundary to np.nan
         barc_classifications = barc_classifications.where(
             barc_classifications != 0, np.nan
         )
@@ -130,7 +131,10 @@ class Sentinel2Client:
 
         # Buffer the bounds to ensure we get all the data we need, plus a
         # little extra for visualization outside burn area
-        bounds_stac_crs = self.geojson_bounds.to_crs(stac_endpoint_crs).geometry.values
+
+        bounds_stac_crs = self.geojson_boundary.to_crs(
+            stac_endpoint_crs
+        ).geometry.values
 
         # Clip to our bounds (need to temporarily convert to the endpoint crs, since we can't reproject til we have <= 3 dims)
         stack = stack.rio.clip(bounds_stac_crs, bounds_stac_crs.crs)
@@ -204,7 +208,8 @@ class Sentinel2Client:
         # Smooth the boundary, removing small artifacts
         filled_mask = binary_fill_holes(binary_mask)
         smoothed_mask = gaussian_filter(filled_mask, sigma=1)
-        int_mask = smoothed_mask.astype(int)
+        buffered_mask = binary_dilation(smoothed_mask, iterations=1)
+        int_mask = buffered_mask.astype(int)
 
         # Convert back to a DataArray
         boundary_xr = xr.DataArray(
@@ -225,3 +230,11 @@ class Sentinel2Client:
         boundary_geojson = raster_mask_to_geojson(boundary_xr)
 
         self.set_boundary(boundary_geojson)
+        self.clip_metrics_stack_to_boundary()
+
+    def clip_metrics_stack_to_boundary(self):
+        self.metrics_stack = self.metrics_stack.rio.clip(
+            self.geojson_boundary.geometry.values, self.geojson_boundary.crs
+        )
+
+        self.metrics_stack = self.metrics_stack.where(self.metrics_stack != 0, np.nan)

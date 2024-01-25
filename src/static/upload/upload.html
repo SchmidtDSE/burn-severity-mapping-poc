@@ -84,20 +84,46 @@
       <div class="form-area">
         <form id="fire-analysis-form">
           <label for="prefire">Prefire Date Range:</label><br />
-          <input type="date" id="prefire-start" name="prefire-start" />
-          <input type="date" id="prefire-end" name="prefire-end" /><br />
+          <input
+            type="date"
+            id="prefire-start"
+            name="prefire-start"
+            value="2023-05-09"
+          />
+          <input
+            type="date"
+            id="prefire-end"
+            name="prefire-end"
+            value="2023-06-09"
+          /><br />
           <label for="postfire">Postfire Date Range:</label><br />
-          <input type="date" id="postfire-start" name="postfire-start" />
-          <input type="date" id="postfire-end" name="postfire-end" /><br />
+          <input
+            type="date"
+            id="postfire-start"
+            name="postfire-start"
+            value="2023-06-17"
+          />
+          <input
+            type="date"
+            id="postfire-end"
+            name="postfire-end"
+            value="2023-07-17"
+          /><br />
 
           <label for="fire_event_name">Fire Event Name:</label><br />
           <input
             type="text"
             id="fire_event_name"
             name="fire_event_name"
+            value="tst"
           /><br />
           <label for="affiliation">Affiliation:</label><br />
-          <input type="text" id="affiliation" name="affiliation" /><br />
+          <input
+            type="text"
+            id="affiliation"
+            name="affiliation"
+            value="dse"
+          /><br />
           <input type="submit" value="Submit" />
         </form>
       </div>
@@ -168,9 +194,18 @@
       // AOI Input Map
       var map = L.map("map").setView([39.7749, -100.4194], 5);
 
+      // Create panes to properly order basemaps and boundaries
+      map.createPane("basemaps");
+      map.getPane("basemaps").style.zIndex = 2;
+
+      map.createPane("boundary");
+      map.getPane("boundary").style.zIndex = 5;
+
       // Add a tile layer to the map
       L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
+        attribution: "© OpenStreetMap contributors",
+        pane: "basemaps",
       }).addTo(map);
 
       // Initialize the FeatureGroup to store editable layers
@@ -259,6 +294,7 @@
           formData.append("shapefile", $("#shp_zip")[0].files[0]);
           formData.append("derive_boundary", false);
           var deriveBoundary = false;
+
           // Make a request to upload the shapefile
           var upload = $.ajax({
             url: `/api/upload-shapefile-zip`,
@@ -279,8 +315,34 @@
 
         $.when(upload)
           .done(function (uploadResponse) {
-            // Log the data returned from the first AJAX call
-            console.log("upload success", uploadResponse);
+            // Disable editing on the map, and add the drawn/uploaded shape, coloring by whether its final
+            editableLayers.eachLayer(function (layer) {
+              editableLayers.removeLayer(layer);
+            });
+            map.removeControl(drawControl);
+            var uploadedLayer = L.geoJSON(drawnGeojson, {
+              style: function (feature) {
+                return {
+                  color: deriveBoundary ? "#f12215" : "#ff0000",
+                  weight: 2,
+                  opacity: 1,
+                  fillOpacity: 0,
+                };
+              },
+              pane: "boundary",
+            }).addTo(map);
+
+            var aoiLabel = deriveBoundary
+              ? "Approximate AOI"
+              : "Predefined Boundary";
+
+            var control = L.control.layers(
+              null,
+              {
+                aoiLabel: uploadedLayer,
+              },
+              { collapsed: false }
+            );
 
             // Make a request to analyze the burn
             var analyzeBurn = $.ajax({
@@ -315,13 +377,51 @@
             // Make a request to analyze the ecoclassification, if analysis is successful
             $.when(analyzeBurn).done(function (analysisResponse) {
               console.log("burn analysis success", analysisResponse);
+              console.log("derive boundary", deriveBoundary);
+              console.log(
+                "geojson boundary",
+                analysisResponse.geojson_boundary
+              );
+
+              // Add the derived boundary to map, if we're deriving the boundary
+              if (deriveBoundary) {
+                try {
+                  console.log("adding derived boundary to map");
+                  var derivedLayer = L.geoJSON(
+                    JSON.stringify(analysisResponse.geojson_derived),
+                    {
+                      style: {
+                        color: "#ff0000",
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0,
+                      },
+                      pane: "boundary",
+                    }
+                  ).addTo(map);
+
+                  console.log("adding derived layer control to map");
+                  var control = L.control.layers(
+                    null,
+                    {
+                      "Approximate AOI": uploadedLayer,
+                      "Derived Boundary": derivedLayer,
+                    },
+                    { collapsed: false }
+                  );
+                  control.addTo(map);
+                } catch (error) {
+                  console.error(error);
+                }
+              }
+
               $.ajax({
                 url: "/api/query-soil/analyze-ecoclass",
                 type: "post",
                 dataType: "json",
                 contentType: "application/json",
                 data: JSON.stringify({
-                  geojson: uploadResponse.geojson,
+                  geojson: analysisResponse.geojson_boundary,
                   fire_event_name: $("#fire_event_name").val(),
                   affiliation: $("#affiliation").val(),
                 }),

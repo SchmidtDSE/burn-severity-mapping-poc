@@ -1,8 +1,11 @@
 from rasterio import features
-import geopandas as gpd
-from shapely.geometry import shape
+from shapely.ops import unary_union, shape
+from shapely.geometry import MultiPolygon, mapping
 import numpy as np
-import json
+from rasterio import features
+from shapely.ops import unary_union, shape
+from shapely.geometry import MultiPolygon, mapping
+import numpy as np
 
 
 def raster_mask_to_geojson(binary_mask):
@@ -10,20 +13,29 @@ def raster_mask_to_geojson(binary_mask):
     transform = binary_mask.rio.transform()
 
     # Convert the binary mask to shapes
-    results = (
-        {"properties": {"raster_val": v}, "geometry": s}
+    results = [
+        shape(s)
         for i, (s, v) in enumerate(
             features.shapes(mask.astype(np.uint8), transform=transform)
         )
         if v == 1
-    )
+    ]
 
-    # Convert the shapes to a GeoDataFrame to get GeoJSON
-    geoms = list(results)
-    gdf = gpd.GeoDataFrame.from_features(geoms)
+    # Merge polygons and create a convex hull if necessary
+    merged = unary_union(results)
+    if isinstance(merged, MultiPolygon):
+        merged = merged.convex_hull
 
-    # weirdly to_dict doesn't create a geojson - need to convert to json then back to dict
-    boundary_geojson = gdf.to_json()
-    boundary_geojson = json.loads(boundary_geojson)
+    # Convert the geometry to GeoJSON
+    boundary_geojson = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "geometry": mapping(merged),
+            }
+        ],
+    }
 
     return boundary_geojson
