@@ -15,7 +15,7 @@ from scipy.ndimage import gaussian_filter, binary_fill_holes, binary_dilation
 import os
 from .burn_severity import calc_burn_metrics, classify_burn
 from ..util.raster_to_poly import raster_mask_to_geojson
-from src.util.sftp import SFTPClient
+from src.util.cloud_static_io import CloudStaticIOClient
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 

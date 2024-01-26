@@ -6,16 +6,49 @@ import rasterio
 from rasterio.enums import Resampling
 import geopandas as gpd
 from google.cloud import logging as cloud_logging
-
+import tempfile
+import boto3
+from botocore.exceptions import BotoCoreError, NoCredentialsError
 
 # TODO [#9]: Convert to agnostic Boto client
 # Use the slick smart-open library to handle S3 connections. This maintains the agnostic nature
 # of sftp, not tied to any specific cloud provider, but is way more efficient than paramiko/sftp in terms of $$
 
+def create_s3_client():
+    try:
+        # Get the OIDC token from your identity provider
+        id_token = os.environ.get('OIDC_TOKEN')
 
-class S3Client:
-    def __init__(self, bucket_name):
-        """Constructor Method"""
+        # Create a new STS client
+        sts_client = boto3.client('sts')
+
+        # Assume the role with web identity
+        assumed_role_object = sts_client.assume_role_with_web_identity(
+            RoleArn="arn:aws:iam::account-of-the-iam-role:role/name-of-the-iam-role",
+            RoleSessionName="AssumeRoleSession1",
+            WebIdentityToken=id_token
+        )
+
+        # Extract the credentials
+        credentials = assumed_role_object['Credentials']
+
+        # Create a new session with the temporary credentials
+        session = boto3.Session(
+            aws_access_key_id=credentials['AccessKeyId'],
+            aws_secret_access_key=credentials['SecretAccessKey'],
+            aws_session_token=credentials['SessionToken'],
+        )
+
+        return session.client('s3')
+
+    except (BotoCoreError, NoCredentialsError) as error:
+        print(error)
+        return None
+
+
+
+class CloudStaticIOClient:
+    def __init__(self, bucket_name, provider):
         self.bucket_name = bucket_name
 
         # Set up logging
@@ -23,7 +56,12 @@ class S3Client:
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
-        self.logger.log_text(f"Initialized S3Client for {self.bucket_name}")
+        if provider == "s3":
+            self.prefix = f"s3://{self.bucket_name}/public"
+        else:
+            raise Exception(f"Provider {provider} not supported")
+
+        self.logger.log_text(f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}")
 
     def download(self, remote_path, target_local_path):
         """
@@ -41,7 +79,7 @@ class S3Client:
 
             # Download from remote s3 server to local
             with smart_open.open(
-                f"s3://{self.bucket_name}/{remote_path}"
+                f"{self.prefix}/{remote_path}"
             ) as remote_file:
                 with open(target_local_path, "wb") as local_file:
                     local_file.write(remote_file.read())
@@ -61,7 +99,7 @@ class S3Client:
             # Upload file from local to S3
             with open(source_local_path, "rb") as local_file:
                 with smart_open.open(
-                    f"s3://{self.bucket_name}/{remote_path}", "wb"
+                    f"{self.prefix}/{remote_path}", "wb"
                 ) as remote_file:
                     remote_file.write(local_file.read())
             print("upload completed")
@@ -79,58 +117,20 @@ class S3Client:
         for attr in self.connection.listdir_attr(remote_path):
             yield attr
 
-    def download(self, remote_path, target_local_path):
-        """
-        Downloads the file from remote sftp server to local.
-        Also, by default extracts the file to the specified target_local_path
-        """
+    # def get_available_cogs(self):
+    #     """Lists all available COGs on the SFTP server"""
+    #     available_cogs = {}
+    #     for top_level_folder in self.connection.listdir():
+    #         if not top_level_folder.endswith(".json"):
+    #             s3_file_path = f"{top_level_folder}/metrics.tif"
+    #             available_cogs[top_level_folder] = s3_file_path
 
-        try:
-            # Create the target directory if it does not exist
-            path, _ = os.path.split(target_local_path)
-            if not os.path.isdir(path):
-                try:
-                    os.makedirs(path)
-                except Exception as err:
-                    raise Exception(err)
+    #     return available_cogs
 
-            # Download from remote sftp server to local
-            self.connection.get(remote_path, target_local_path)
-
-        except Exception as err:
-            raise Exception(err)
-
-    def upload(self, source_local_path, remote_path):
-        """
-        Uploads the source files from local to the sftp server.
-        """
-
-        try:
-            print(
-                f"uploading to {self.hostname} as {self.username} [(remote path: {remote_path});(source local path: {source_local_path})]"
-            )
-
-            # Upload file from local to SFTP
-            self.connection.put(source_local_path, remote_path)
-            print("upload completed")
-
-        except Exception as err:
-            raise Exception(err)
-
-    def get_available_cogs(self):
-        """Lists all available COGs on the SFTP server"""
-        available_cogs = {}
-        for top_level_folder in self.connection.listdir():
-            if not top_level_folder.endswith(".json"):
-                s3_file_path = f"{top_level_folder}/metrics.tif"
-                available_cogs[top_level_folder] = s3_file_path
-
-        return available_cogs
-
-    def update_available_cogs(self):
-        self.connect()
-        self.available_cogs = self.get_available_cogs()
-        self.disconnect()
+    # def update_available_cogs(self):
+    #     self.connect()
+    #     self.available_cogs = self.get_available_cogs()
+    #     self.disconnect()
 
     def upload_cogs(
         self,

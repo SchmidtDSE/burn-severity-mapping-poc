@@ -32,7 +32,7 @@ from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from src.lib.query_sentinel import Sentinel2Client
-from src.util.sftp import SFTPClient
+from src.util.cloud_static_io import CloudStaticIOClient
 from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
 from src.util.ingest_burn_zip import ingest_esri_zip_file, shp_to_geojson
 from src.lib.titiler_algorithms import algorithms
@@ -91,20 +91,10 @@ def check_dns():
 
 ### DEPENDENCIES ###
 
+def get_cloud_static_io_client():
+    return CloudStaticIOClient('burn-severity-backend', "s3")
 
-def get_sftp_client():
-    SFTP_SERVER_ENDPOINT = os.getenv("SFTP_SERVER_ENDPOINT")
-    SFTP_ADMIN_USERNAME = os.getenv("SFTP_ADMIN_USERNAME")
-    SSH_SECRET = get_ssh_secret()
-
-    logger.log_text(f"SFTP_SERVER_ENDPOINT: {SFTP_SERVER_ENDPOINT}")
-    logger.log_text(f"SFTP_ADMIN_USERNAME: {SFTP_ADMIN_USERNAME}")
-    logger.log_text(f"SSH_SECRET (trunc): {SSH_SECRET[:20]}")
-
-    return SFTPClient(SFTP_SERVER_ENDPOINT, SFTP_ADMIN_USERNAME, SSH_SECRET)
-
-
-def get_manifest(sfpt_client: SFTPClient = Depends(get_sftp_client)):
+def get_manifest(sfpt_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)):
     try:
         sfpt_client.connect()
         manifest = sfpt_client.get_manifest()
@@ -118,20 +108,20 @@ def get_manifest(sfpt_client: SFTPClient = Depends(get_sftp_client)):
 ### API ENDPOINTS ###
 
 
-@app.get("/api/query-satellite/available-cogs")
-def available_cogs(sftp_client: SFTPClient = Depends(get_sftp_client)):
-    try:
-        sftp_client.update_available_cogs()
+# @app.get("/api/query-satellite/available-cogs")
+# def available_cogs(cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)):
+#     try:
+#         cloud_static_io_client.update_available_cogs()
 
-        response = {
-            "message": "updated available cogs",
-            "available_cogs": sftp_client.available_cogs,
-        }
-        logger.log_text(f"Available COGs updated: {sftp_client.available_cogs}")
-        return response, 200
-    except Exception as e:
-        logger.log_text(f"Error: {e}")
-        return f"Error: {e}", 400
+#         response = {
+#             "message": "updated available cogs",
+#             "available_cogs": cloud_static_io_client.available_cogs,
+#         }
+#         logger.log_text(f"Available COGs updated: {cloud_static_io_client.available_cogs}")
+#         return response, 200
+#     except Exception as e:
+#         logger.log_text(f"Error: {e}")
+#         return f"Error: {e}", 400
 
 
 class AnaylzeBurnPOSTBody(BaseModel):
@@ -147,7 +137,7 @@ class AnaylzeBurnPOSTBody(BaseModel):
 # or something similar when the process is complete. Esp if the frontend remanins static.
 @app.post("/api/query-satellite/analyze-burn")
 def analyze_burn(
-    body: AnaylzeBurnPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)
+    body: AnaylzeBurnPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)
 ):
     geojson_boundary = json.loads(body.geojson)
 
@@ -183,17 +173,17 @@ def analyze_burn(
             logger.log_text(f"Derived boundary for {fire_event_name}")
 
             # Upload the derived boundary
-            sftp_client.connect()
+            cloud_static_io_client.connect()
             with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
                 tmp_geojson = tmp.name
                 with open(tmp_geojson, "w") as f:
                     f.write(geo_client.geojson_boundary.to_json())
 
-                sftp_client.upload(
+                cloud_static_io_client.upload(
                     source_local_path=tmp_geojson,
                     remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
                 )
-            sftp_client.disconnect()
+            cloud_static_io_client.disconnect()
 
             # Return the derived boundary
             derived_boundary = geo_client.geojson_boundary.to_json()
@@ -203,8 +193,7 @@ def analyze_burn(
         # but if not, should be refactored to use a context manager
 
         # save the cog to the FTP server
-        sftp_client.connect()
-        sftp_client.upload_fire_event(
+        cloud_static_io_client.upload_fire_event(
             metrics_stack=geo_client.metrics_stack,
             affiliation=affiliation,
             fire_event_name=fire_event_name,
@@ -212,7 +201,6 @@ def analyze_burn(
             postfire_date_range=date_ranges["postfire"],
             derive_boundary=derive_boundary,
         )
-        sftp_client.disconnect()
         logger.log_text(f"Cogs uploaded for {fire_event_name}")
 
         return JSONResponse(
@@ -274,7 +262,7 @@ def get_ecoclass_info(ecoclassid: str = Query(...)):
 # refactor out the low level endpoints (/api) and rename others (this isn't really an `analysis` but it does compose a lot of logic like `analyze-burn`)
 @app.post("/api/query-soil/analyze-ecoclass")
 def analyze_ecoclass(
-    body: QuerySoilPOSTBody, sftp_client: SFTPClient = Depends(get_sftp_client)
+    body: QuerySoilPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)
 ):
     fire_event_name = body.fire_event_name
     geojson = json.loads(body.geojson)
@@ -344,12 +332,11 @@ def analyze_ecoclass(
             tmp_geojson_path = tmp.name
             with open(tmp_geojson_path, "w") as f:
                 f.write(edit_ecoclass_geojson)
-            sftp_client.connect()
-            sftp_client.upload(
+
+            cloud_static_io_client.upload(
                 source_local_path=tmp_geojson_path,
                 remote_path=f"{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson",
             )
-            sftp_client.disconnect()
 
         logger.log_text(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
         return f"Ecoclass GeoJSON uploaded for {fire_event_name}", 200
@@ -364,7 +351,7 @@ async def upload_shapefile(
     fire_event_name: str = Form(...),
     affiliation: str = Form(...),
     file: UploadFile = File(...),
-    sftp_client: SFTPClient = Depends(get_sftp_client),
+    cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
 ):
     try:
         # Read the file
@@ -384,9 +371,7 @@ async def upload_shapefile(
         __shp_paths, geojson = valid_shp[0]
 
         # Upload the zip and a geojson to SFTP
-        sftp_client.connect()
-
-        sftp_client.upload(
+        cloud_static_io_client.upload(
             source_local_path=tmp_zip,
             remote_path=f"{affiliation}/{fire_event_name}/user_uploaded_{file.filename}",
         )
@@ -395,12 +380,10 @@ async def upload_shapefile(
             tmp_geojson = tmp.name
             with open(tmp_geojson, "w") as f:
                 f.write(geojson)
-            sftp_client.upload(
+            cloud_static_io_client.upload(
                 source_local_path=tmp_geojson,
                 remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
             )
-
-        sftp_client.disconnect()
 
         return JSONResponse(status_code=200, content={"geojson": geojson})
 
@@ -413,23 +396,17 @@ async def upload_drawn_aoi(
     fire_event_name: str = Form(...),
     affiliation: str = Form(...),
     geojson: str = Form(...),
-    sftp_client: SFTPClient = Depends(get_sftp_client),
+    cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
 ):
     try:
-        # Upload the geojson to SFTP
-        sftp_client.connect()
-
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
             with open(tmp_geojson, "w") as f:
                 f.write(geojson)
-            sftp_client.upload(
+            cloud_static_io_client.upload(
                 source_local_path=tmp_geojson,
                 remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
             )
-
-        sftp_client.disconnect()
-
         return JSONResponse(status_code=200, content={"geojson": geojson})
 
     except Exception as e:
