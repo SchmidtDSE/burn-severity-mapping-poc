@@ -272,8 +272,8 @@ data "aws_iam_policy_document" "session_policy" {
 }
 
 # Create the IAM role with both the assume-role and the session policy.
-resource "aws_iam_role" "role" {
-  name               = "s3_from_gcp"
+resource "aws_iam_role" "aws_s3_from_gcp" {
+  name               = "aws_s3_from_gcp"
   assume_role_policy = data.aws_iam_policy_document.oidc_assume_role_policy.json
   
   # Inline policy for session 

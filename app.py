@@ -428,8 +428,10 @@ def serve_map(
 ):
     mapbox_token = get_mapbox_secret()
 
-    tileserver_endpoint = "https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app"
-    # tileserver_endpoint = 'http://localhost:5050'
+    tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+
+    ## TODO: Use Tofu Output to construct hardocded cog and geojson urls (in case we change s3 bucket name)
+
     cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
     burn_boundary_geojson_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/boundary.geojson"
     ecoclass_geojson_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson"

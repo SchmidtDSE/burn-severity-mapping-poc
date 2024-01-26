@@ -12,7 +12,7 @@ import os
 import boto3
 from google.auth.transport import requests
 from google.auth import exceptions
-from google.auth import id_token
+from google.oauth2 import id_token
 
 # TODO [#9]: Convert to agnostic Boto client
 # Use the slick smart-open library to handle S3 connections. This maintains the agnostic nature
@@ -51,6 +51,11 @@ from google.auth import id_token
 
 class CloudStaticIOClient:
     def __init__(self, bucket_name, provider):
+
+        self.env = os.environ.get("ENV")
+        self.role_arn = os.environ.get("S3_FROM_GCP_ARN")
+        self.role_session_name = "burn-backend-session"
+
         self.bucket_name = bucket_name
 
         # Set up logging
@@ -62,9 +67,6 @@ class CloudStaticIOClient:
         self.token_time_remaining = 0
         self.validate_credentials()
 
-        self.env = os.environ.get("ENV")
-        self.role_arn = os.environ.get("S3_ACCESS_ROLE_ARN")
-        self.role_session_name = "burn-backend-session"
 
         self.sts_client = boto3.client('sts')
 
