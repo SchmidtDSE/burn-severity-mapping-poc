@@ -7,45 +7,47 @@ from rasterio.enums import Resampling
 import geopandas as gpd
 from google.cloud import logging as cloud_logging
 import tempfile
+import subprocess
+import os
 import boto3
-from botocore.exceptions import BotoCoreError, NoCredentialsError
+from google.auth.transport import requests
+from google.auth import exceptions
+from google.auth import id_token
 
 # TODO [#9]: Convert to agnostic Boto client
 # Use the slick smart-open library to handle S3 connections. This maintains the agnostic nature
 # of sftp, not tied to any specific cloud provider, but is way more efficient than paramiko/sftp in terms of $$
 
-def create_s3_client():
-    try:
-        # Get the OIDC token from your identity provider
-        id_token = os.environ.get('OIDC_TOKEN')
+# def create_s3_client():
+#     try:
+#         # Get the OIDC token from your identity provider
+#         id_token = os.environ.get('OIDC_TOKEN')
 
-        # Create a new STS client
-        sts_client = boto3.client('sts')
+#         # Create a new STS client
+#         sts_client = boto3.client('sts')
 
-        # Assume the role with web identity
-        assumed_role_object = sts_client.assume_role_with_web_identity(
-            RoleArn="arn:aws:iam::account-of-the-iam-role:role/name-of-the-iam-role",
-            RoleSessionName="AssumeRoleSession1",
-            WebIdentityToken=id_token
-        )
+#         # Assume the role with web identity
+#         assumed_role_object = sts_client.assume_role_with_web_identity(
+#             RoleArn="arn:aws:iam::account-of-the-iam-role:role/name-of-the-iam-role",
+#             RoleSessionName="AssumeRoleSession1",
+#             WebIdentityToken=id_token
+#         )
 
-        # Extract the credentials
-        credentials = assumed_role_object['Credentials']
+#         # Extract the credentials
+#         credentials = assumed_role_object['Credentials']
 
-        # Create a new session with the temporary credentials
-        session = boto3.Session(
-            aws_access_key_id=credentials['AccessKeyId'],
-            aws_secret_access_key=credentials['SecretAccessKey'],
-            aws_session_token=credentials['SessionToken'],
-        )
+#         # Create a new session with the temporary credentials
+#         session = boto3.Session(
+#             aws_access_key_id=credentials['AccessKeyId'],
+#             aws_secret_access_key=credentials['SecretAccessKey'],
+#             aws_session_token=credentials['SessionToken'],
+#         )
 
-        return session.client('s3')
+#         return session.client('s3')
 
-    except (BotoCoreError, NoCredentialsError) as error:
-        print(error)
-        return None
-
-
+#     except (BotoCoreError, NoCredentialsError) as error:
+#         print(error)
+#         return None
 
 class CloudStaticIOClient:
     def __init__(self, bucket_name, provider):
@@ -56,12 +58,48 @@ class CloudStaticIOClient:
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
+        self.token = None
+        self.token_time_remaining = 0
+        self.validate_credentials()
+
+        self.env = os.environ.get("ENV")
+        self.role_arn = os.environ.get("S3_ACCESS_ROLE_ARN")
+        self.role_session_name = "burn-backend-session"
+
+        self.sts_client = boto3.client('sts')
+
         if provider == "s3":
             self.prefix = f"s3://{self.bucket_name}/public"
         else:
             raise Exception(f"Provider {provider} not supported")
 
         self.logger.log_text(f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}")
+
+    def validate_credentials(self):
+        oidc_token = None
+        if self.env == 'LOCAL':
+            oidc_cli_call = subprocess.run(
+                ["gcloud", "auth", "print-identity-token"],
+                stdout=subprocess.PIPE,
+                check=True,
+            )
+            oidc_token = oidc_cli_call.stdout.decode().strip()
+        elif self.env == 'CLOUD':
+            try:
+                oidc_token = id_token.fetch_id_token(requests.Request(), target_audience="sts.amazonaws.com")
+            except exceptions.GoogleAuthError as e:
+                print(f"Error when fetching ID token: {e}")
+        
+        if not oidc_token:
+            raise ValueError("Failed to retrieve OIDC token")
+        
+        sts_response = self.sts_client.assume_role_with_web_identity(
+            RoleArn=self.role_arn,
+            RoleSessionName=self.role_session_name,
+            WebIdentityToken=oidc_token
+        )
+        
+        return sts_response['Credentials']
 
     def download(self, remote_path, target_local_path):
         """
