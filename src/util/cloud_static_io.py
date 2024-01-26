@@ -63,17 +63,16 @@ class CloudStaticIOClient:
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
-        self.token = None
-        self.token_time_remaining = 0
-        self.validate_credentials()
-
-
         self.sts_client = boto3.client('sts')
 
         if provider == "s3":
             self.prefix = f"s3://{self.bucket_name}/public"
         else:
             raise Exception(f"Provider {provider} not supported")
+
+        self.token = None
+        self.token_time_remaining = 0
+        self.validate_credentials()
 
         self.logger.log_text(f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}")
 
