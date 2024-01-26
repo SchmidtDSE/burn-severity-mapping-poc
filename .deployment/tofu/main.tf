@@ -41,7 +41,7 @@ locals {
 module "static_io" {
   source = "./modules/static_io"
   google_project_number = local.google_project_number
-  google_service_account_s3_email = module.burn_backend.google_service_account_s3_email
+  gcp_service_account_s3_email = module.burn_backend.gcp_service_account_s3_email
   aws_account_id = local.aws_account_id
   oidc_provider_domain_url = local.oidc_provider_domain_url
 }

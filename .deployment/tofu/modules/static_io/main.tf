@@ -228,7 +228,7 @@ data "aws_iam_policy_document" "oidc_assume_role_policy" {
       variable = "${var.oidc_provider_domain_url}:sub"
 
       values = [
-        "system:serviceaccount:${var.google_project_number}.svc.id.goog[default/${var.google_service_account_s3_email}]"
+        "system:serviceaccount:${var.google_project_number}.svc.id.goog[default/${var.gcp_service_account_s3_email}]"
       ]
     }
   }

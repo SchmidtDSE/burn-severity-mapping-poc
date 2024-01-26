@@ -3,7 +3,7 @@ variable "google_project_number" {
     type        = string
 }
 
-variable "google_service_account_s3_email" {
+variable "gcp_service_account_s3_email" {
     description = "Google service account email for GCP's access to S3"
     type        = string
 }
