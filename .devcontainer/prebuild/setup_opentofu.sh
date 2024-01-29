@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-TOFU_VERSION="1.6.0-beta4"
+TOFU_VERSION="1.6.1"
 OS="$(uname | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/')"
 TEMPDIR="$(mktemp -d)"

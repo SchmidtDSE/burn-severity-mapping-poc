@@ -111,14 +111,6 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
         value = "CLOUD"
       }
       env {
-        name  = "SFTP_SERVER_ENDPOINT"
-        value = var.sftp_server_endpoint
-      }
-      env {
-        name  = "SFTP_ADMIN_USERNAME"
-        value = var.sftp_admin_username
-      }
-      env {
         name  = "CPL_VSIL_CURL_ALLOWED_EXTENSIONS"
         value = ".tif,.TIF,.tiff"
       }
@@ -225,6 +217,9 @@ resource "google_service_account_iam_binding" "workload_identity_user" {
   ]
 }
 
+## TODO: Harcoded project string and others - now that tofu outputs are setup up, make more general
+## Will be helpful as we move to other projects and environments
+
 # Create the IAM service account for GitHub Actions
 resource "google_service_account" "github_actions" {
   account_id  = "github-actions-service-account"
@@ -237,7 +232,7 @@ resource "google_service_account" "github_actions" {
 resource "google_service_account" "burn-backend-service" {
   account_id   = "burn-backend-service"
   display_name = "Cloud Run Service Account for burn backend"
-  description  = "This service account is used by the Cloud Run service to access GCP Secrets Manager"
+  description  = "This service account is used by the Cloud Run service to access GCP Secrets Manager and authenticate with OIDC for AWS S3 access"
   project      = "dse-nps"
 }
 
@@ -250,6 +245,12 @@ resource "google_project_iam_member" "secret_accessor" {
 resource "google_project_iam_member" "log_writer" {
   project = "dse-nps"
   role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
+}
+
+resource "google_project_iam_member" "oidc_token_creator" {
+  project = "dse-nps"
+  role    = "roles/iam.serviceAccountTokenCreator"
   member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
 }
 

@@ -27,8 +27,8 @@ dependencies:
   - planetary-computer
   - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - uvicorn
-  - paramiko
   - pip
+  - smart_open
   - pip:
-    - titiler.core
-    - python-multipart
+      - titiler.core
+      - python-multipart
