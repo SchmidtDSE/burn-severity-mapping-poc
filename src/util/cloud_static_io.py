@@ -16,41 +16,6 @@ import requests
 from google.auth.transport import requests as gcp_requests
 from google.auth import impersonated_credentials, exceptions
 
-# TODO [#9]: Convert to agnostic Boto client
-# Use the slick smart-open library to handle S3 connections. This maintains the agnostic nature
-# of sftp, not tied to any specific cloud provider, but is way more efficient than paramiko/sftp in terms of $$
-
-# def create_s3_client():
-#     try:
-#         # Get the OIDC token from your identity provider
-#         id_token = os.environ.get('OIDC_TOKEN')
-
-#         # Create a new STS client
-#         sts_client = boto3.client('sts')
-
-#         # Assume the role with web identity
-#         assumed_role_object = sts_client.assume_role_with_web_identity(
-#             RoleArn="arn:aws:iam::account-of-the-iam-role:role/name-of-the-iam-role",
-#             RoleSessionName="AssumeRoleSession1",
-#             WebIdentityToken=id_token
-#         )
-
-#         # Extract the credentials
-#         credentials = assumed_role_object['Credentials']
-
-#         # Create a new session with the temporary credentials
-#         session = boto3.Session(
-#             aws_access_key_id=credentials['AccessKeyId'],
-#             aws_secret_access_key=credentials['SecretAccessKey'],
-#             aws_session_token=credentials['SessionToken'],
-#         )
-
-#         return session.client('s3')
-
-#     except (BotoCoreError, NoCredentialsError) as error:
-#         print(error)
-#         return None
-
 class CloudStaticIOClient:
     def __init__(self, bucket_name, provider):
 
@@ -66,11 +31,10 @@ class CloudStaticIOClient:
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
-        boto3.set_stream_logger('')
         self.sts_client = boto3.client('sts')
 
         if provider == "s3":
-            self.prefix = f"s3://{self.bucket_name}/public"
+            self.prefix = f"s3://{self.bucket_name}"
         else:
             raise Exception(f"Provider {provider} not supported")
 
@@ -121,7 +85,7 @@ class CloudStaticIOClient:
 
     def validate_credentials(self):
 
-        if not self.role_assumed_credentials or (self.role_assumed_credentials['Expiration'].timestamp() - time.now() < 300):
+        if not self.role_assumed_credentials or (self.role_assumed_credentials['Expiration'].timestamp() - time.time() < 300):
             oidc_token = None
             request = gcp_requests.Request()
 
@@ -154,6 +118,7 @@ class CloudStaticIOClient:
         Downloads the file from remote s3 server to local.
         Also, by default extracts the file to the specified target_local_path
         """
+        self.validate_credentials()
         try:
             # Create the target directory if it does not exist
             path, _ = os.path.split(target_local_path)
@@ -179,6 +144,7 @@ class CloudStaticIOClient:
         """
         Uploads the source files from local to the s3 server.
         """
+        self.validate_credentials()
         try:
             print(
                 f"uploading to {self.bucket_name} [(remote path: {remote_path});(source local path: {source_local_path})]"
@@ -207,21 +173,6 @@ class CloudStaticIOClient:
         for attr in self.connection.listdir_attr(remote_path):
             yield attr
 
-    # def get_available_cogs(self):
-    #     """Lists all available COGs on the SFTP server"""
-    #     available_cogs = {}
-    #     for top_level_folder in self.connection.listdir():
-    #         if not top_level_folder.endswith(".json"):
-    #             s3_file_path = f"{top_level_folder}/metrics.tif"
-    #             available_cogs[top_level_folder] = s3_file_path
-
-    #     return available_cogs
-
-    # def update_available_cogs(self):
-    #     self.connect()
-    #     self.available_cogs = self.get_available_cogs()
-    #     self.disconnect()
-
     def upload_cogs(
         self,
         metrics_stack,
@@ -245,7 +196,7 @@ class CloudStaticIOClient:
 
                 self.upload(
                     source_local_path=local_cog_path,
-                    remote_path=f"{affiliation}/{fire_event_name}/{band_name}.tif",
+                    remote_path=f"public/{affiliation}/{fire_event_name}/{band_name}.tif",
                 )
 
             # Upload the difference between dNBR and RBR
@@ -261,7 +212,7 @@ class CloudStaticIOClient:
             pct_change.rio.to_raster(local_cog_path, driver="GTiff")
             self.upload(
                 source_local_path=local_cog_path,
-                remote_path=f"{affiliation}/{fire_event_name}/pct_change_dnbr_rbr.tif",
+                remote_path=f"public/{affiliation}/{fire_event_name}/pct_change_dnbr_rbr.tif",
             )
 
     def update_manifest(

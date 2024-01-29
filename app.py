@@ -181,7 +181,7 @@ def analyze_burn(
 
                 cloud_static_io_client.upload(
                     source_local_path=tmp_geojson,
-                    remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
+                    remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
                 )
             cloud_static_io_client.disconnect()
 
@@ -335,7 +335,7 @@ def analyze_ecoclass(
 
             cloud_static_io_client.upload(
                 source_local_path=tmp_geojson_path,
-                remote_path=f"{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson",
+                remote_path=f"public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson",
             )
 
         logger.log_text(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
@@ -373,7 +373,7 @@ async def upload_shapefile(
         # Upload the zip and a geojson to SFTP
         cloud_static_io_client.upload(
             source_local_path=tmp_zip,
-            remote_path=f"{affiliation}/{fire_event_name}/user_uploaded_{file.filename}",
+            remote_path=f"public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}",
         )
 
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
@@ -382,7 +382,7 @@ async def upload_shapefile(
                 f.write(geojson)
             cloud_static_io_client.upload(
                 source_local_path=tmp_geojson,
-                remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
+                remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
             )
 
         return JSONResponse(status_code=200, content={"geojson": geojson})
@@ -405,7 +405,7 @@ async def upload_drawn_aoi(
                 f.write(geojson)
             cloud_static_io_client.upload(
                 source_local_path=tmp_geojson,
-                remote_path=f"{affiliation}/{fire_event_name}/boundary.geojson",
+                remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
             )
         return JSONResponse(status_code=200, content={"geojson": geojson})
 
