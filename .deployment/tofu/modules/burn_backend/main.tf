@@ -248,6 +248,12 @@ resource "google_project_iam_member" "log_writer" {
   member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
 }
 
+resource "google_project_iam_member" "oidc_token_creator" {
+  project = "dse-nps"
+  role    = "roles/iam.serviceAccountTokenCreator"
+  member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
+}
+
 # Give the service account permissions to deploy to Cloud Run, and to Cloud Build, and to the Workload Identity Pool
 resource "google_project_iam_member" "run_admin" {
   project  = "dse-nps"

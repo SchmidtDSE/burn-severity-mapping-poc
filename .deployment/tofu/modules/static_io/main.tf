@@ -213,14 +213,31 @@ resource "aws_s3_bucket_object" "assets" {
 # Set up STS to allow the GCP server to assume a role for AWS secrets
 
 # Defines who can assume the role.
+# Confusing string mapping for the OIDC provider URL (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#ck_aud)
+# example paylod of our token looks like:/
+  # {
+  #   "aud": "sts.amazonaws.com",
+  #   "azp": "117526146749746854545",
+  #   "email": "burn-backend-service@dse-nps.iam.gserviceaccount.com",
+  #   "email_verified": true,
+  #   "exp": 1706551963,
+  #   "iat": 1706548363,
+  #   "iss": "https://accounts.google.com",
+  #   "sub": "117526146749746854545"
+  # }
+# AWS says: aud -> azp, oaud -> aud, sub -> sub
+
 data "aws_iam_policy_document" "oidc_assume_role_policy" {
   statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
+    actions = [
+      "sts:AssumeRoleWithWebIdentity"
+    ]
     effect  = "Allow"
 
     principals {
       type        = "Federated"
-      identifiers = ["arn:aws:iam::${var.aws_account_id}:oidc-provider/${var.oidc_provider_domain_url}"]
+      # identifiers = ["arn:aws:iam::${var.aws_account_id}:oidc-provider/${var.oidc_provider_domain_url}"]
+      identifiers = ["accounts.google.com"]
     }
 
     condition {
@@ -228,7 +245,25 @@ data "aws_iam_policy_document" "oidc_assume_role_policy" {
       variable = "${var.oidc_provider_domain_url}:sub"
 
       values = [
-        "system:serviceaccount:${var.google_project_number}.svc.id.goog[default/${var.gcp_service_account_s3_email}]"
+        "${var.gcp_cloud_run_client_id}"
+      ]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${var.oidc_provider_domain_url}:aud"
+
+      values = [
+        "${var.gcp_cloud_run_client_id}"
+      ]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${var.oidc_provider_domain_url}:oaud"
+
+      values = [
+        "sts.amazonaws.com"
       ]
     }
   }

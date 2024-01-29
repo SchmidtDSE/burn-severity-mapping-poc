@@ -17,3 +17,8 @@ variable "oidc_provider_domain_url" {
     description = "OIDC provider domain URL for GCP"
     type        = string
 }
+
+variable "gcp_cloud_run_client_id" {
+    description = "GCP Cloud Run client id for burn backend service"
+    type        = string
+}

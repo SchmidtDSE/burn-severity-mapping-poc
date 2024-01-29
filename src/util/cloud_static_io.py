@@ -10,9 +10,10 @@ import tempfile
 import subprocess
 import os
 import boto3
-from google.auth.transport import requests
-from google.auth import exceptions
-from google.oauth2 import id_token
+import google.auth
+import requests
+from google.auth.transport import requests as gcp_requests
+from google.auth import impersonated_credentials, exceptions
 
 # TODO [#9]: Convert to agnostic Boto client
 # Use the slick smart-open library to handle S3 connections. This maintains the agnostic nature
@@ -54,6 +55,7 @@ class CloudStaticIOClient:
 
         self.env = os.environ.get("ENV")
         self.role_arn = os.environ.get("S3_FROM_GCP_ARN")
+        self.service_account_email = os.environ.get("GCP_SERVICE_ACCOUNT_S3_EMAIL")
         self.role_session_name = "burn-backend-session"
 
         self.bucket_name = bucket_name
@@ -63,6 +65,7 @@ class CloudStaticIOClient:
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
+        boto3.set_stream_logger('')
         self.sts_client = boto3.client('sts')
 
         if provider == "s3":
@@ -70,36 +73,68 @@ class CloudStaticIOClient:
         else:
             raise Exception(f"Provider {provider} not supported")
 
-        self.token = None
-        self.token_time_remaining = 0
+        self.iam_credentials = None
         self.validate_credentials()
 
         self.logger.log_text(f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}")
 
+    def impersonate_service_account(self):
+        # Load the credentials of the user
+        source_credentials, project = google.auth.default()
+
+        # Define the scopes of the impersonated credentials
+        target_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+
+        # Create the IAM credentials client for the impersonated service account
+        iam_credentials = impersonated_credentials.Credentials(
+            source_credentials=source_credentials,
+            target_principal=self.service_account_email,
+            target_scopes=target_scopes,
+            lifetime=3600
+        )
+
+        # Refresh the client
+        self.iam_credentials = iam_credentials
+
+    def fetch_id_token(self, audience):
+        if not self.iam_credentials.valid:
+            # Refresh the credentials
+            self.iam_credentials.refresh(Request())
+
+        # Make an authenticated HTTP request to the Google OAuth2 v1/token endpoint
+        url = f"https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/{self.service_account_email}:generateIdToken"
+        headers = {"Authorization": f"Bearer {self.iam_credentials.token}"}
+        body = {"audience": audience, "includeEmail": True}
+        response = requests.post(url, headers=headers, json=body)
+
+        # Check the response
+        if response.status_code != 200:
+            raise exceptions.DefaultCredentialsError(
+                "Failed to fetch ID token: " + response.text
+            )
+
+        # Return the ID token
+        return response.json()["token"]
+
     def validate_credentials(self):
         oidc_token = None
+        request = gcp_requests.Request()
+
         if self.env == 'LOCAL':
-            oidc_cli_call = subprocess.run(
-                ["gcloud", "auth", "print-identity-token"],
-                stdout=subprocess.PIPE,
-                check=True,
-            )
-            oidc_token = oidc_cli_call.stdout.decode().strip()
-        elif self.env == 'CLOUD':
-            try:
-                oidc_token = id_token.fetch_id_token(requests.Request(), target_audience="sts.amazonaws.com")
-            except exceptions.GoogleAuthError as e:
-                print(f"Error when fetching ID token: {e}")
-        
+            if not self.iam_credentials or self.iam_credentials.expired:
+                self.impersonate_service_account()
+            self.iam_credentials.refresh(request)
+
+        oidc_token = self.fetch_id_token(audience="sts.amazonaws.com")
         if not oidc_token:
             raise ValueError("Failed to retrieve OIDC token")
-        
+
         sts_response = self.sts_client.assume_role_with_web_identity(
             RoleArn=self.role_arn,
             RoleSessionName=self.role_session_name,
             WebIdentityToken=oidc_token
         )
-        
+
         return sts_response['Credentials']
 
     def download(self, remote_path, target_local_path):
