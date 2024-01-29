@@ -272,29 +272,10 @@ data "aws_iam_policy_document" "oidc_assume_role_policy" {
 # Defines what actions can be done once the role is assumed.
 data "aws_iam_policy_document" "session_policy" {
   statement {
-    sid    = "AllowListingOfUserFolder"
-    effect = "Allow"
-    actions = [
-      "s3:ListBucket",
-    ]
-    resources = [
-      "arn:aws:s3:::burn-severity-backend",
-    ]
-    condition {
-      test     = "StringLike"
-      variable = "s3:prefix"
-      values = [
-        "/public/*",
-        "/public",
-        "/"
-      ]
-    }
-  }
-
-  statement {
     sid    = "HomeDirObjectAccess"
     effect = "Allow"
     actions = [
+      "s3:ListBucket",
       "s3:PutObject",
       "s3:GetObject",
       "s3:DeleteObject",

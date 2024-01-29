@@ -1,4 +1,5 @@
 import smart_open
+import time
 import os
 import json
 import datetime
@@ -74,6 +75,8 @@ class CloudStaticIOClient:
             raise Exception(f"Provider {provider} not supported")
 
         self.iam_credentials = None
+        self.role_assumed_credentials = None
+        self.s3_session = None
         self.validate_credentials()
 
         self.logger.log_text(f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}")
@@ -117,25 +120,34 @@ class CloudStaticIOClient:
         return response.json()["token"]
 
     def validate_credentials(self):
-        oidc_token = None
-        request = gcp_requests.Request()
 
-        if self.env == 'LOCAL':
-            if not self.iam_credentials or self.iam_credentials.expired:
-                self.impersonate_service_account()
-            self.iam_credentials.refresh(request)
+        if not self.role_assumed_credentials or (self.role_assumed_credentials['Expiration'].timestamp() - time.now() < 300):
+            oidc_token = None
+            request = gcp_requests.Request()
 
-        oidc_token = self.fetch_id_token(audience="sts.amazonaws.com")
-        if not oidc_token:
-            raise ValueError("Failed to retrieve OIDC token")
+            if self.env == 'LOCAL':
+                if not self.iam_credentials or self.iam_credentials.expired:
+                    self.impersonate_service_account()
+                self.iam_credentials.refresh(request)
 
-        sts_response = self.sts_client.assume_role_with_web_identity(
-            RoleArn=self.role_arn,
-            RoleSessionName=self.role_session_name,
-            WebIdentityToken=oidc_token
-        )
+            oidc_token = self.fetch_id_token(audience="sts.amazonaws.com")
+            if not oidc_token:
+                raise ValueError("Failed to retrieve OIDC token")
 
-        return sts_response['Credentials']
+            sts_response = self.sts_client.assume_role_with_web_identity(
+                RoleArn=self.role_arn,
+                RoleSessionName=self.role_session_name,
+                WebIdentityToken=oidc_token
+            )
+
+            self.role_assumed_credentials = sts_response['Credentials']
+
+            self.boto_session = boto3.Session(
+                aws_access_key_id=self.role_assumed_credentials['AccessKeyId'],
+                aws_secret_access_key=self.role_assumed_credentials['SecretAccessKey'],
+                aws_session_token=self.role_assumed_credentials['SessionToken'],
+                region_name='us-east-2'
+            )
 
     def download(self, remote_path, target_local_path):
         """
@@ -153,7 +165,9 @@ class CloudStaticIOClient:
 
             # Download from remote s3 server to local
             with smart_open.open(
-                f"{self.prefix}/{remote_path}"
+                f"{self.prefix}/{remote_path}",
+                "rb",
+                transport_params={"client": self.boto_session.client('s3')},
             ) as remote_file:
                 with open(target_local_path, "wb") as local_file:
                     local_file.write(remote_file.read())
@@ -173,7 +187,9 @@ class CloudStaticIOClient:
             # Upload file from local to S3
             with open(source_local_path, "rb") as local_file:
                 with smart_open.open(
-                    f"{self.prefix}/{remote_path}", "wb"
+                    f"{self.prefix}/{remote_path}",
+                    "wb",
+                    transport_params={"client": self.boto_session.client('s3')},
                 ) as remote_file:
                     remote_file.write(local_file.read())
             print("upload completed")
