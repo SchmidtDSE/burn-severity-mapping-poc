@@ -186,6 +186,7 @@
 
     <script>
       // AOI Input Map
+      var mapboxToken = "{{ mapbox_token }}"
       var map = L.map("map").setView([39.7749, -100.4194], 5);
 
       // Create panes to properly order basemaps and boundaries
@@ -195,12 +196,24 @@
       map.createPane("boundary");
       map.getPane("boundary").style.zIndex = 5;
 
+      // // Add a tile layer to the map
+      // L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+      //   maxZoom: 19,
+      //   attribution: "© OpenStreetMap contributors",
+      //   pane: "basemaps",
+      // }).addTo(map);
+
       // Add a tile layer to the map
-      L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "© OpenStreetMap contributors",
-        pane: "basemaps",
-      }).addTo(map);
+      L.tileLayer(
+        `https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`,
+        {
+          maxZoom: 19,
+          attribution: "© Mapbox",
+          pane: "basemaps",
+          tileSize: 512,
+          zoomOffset: -1,
+        }
+      ).addTo(map);
 
       // Initialize the FeatureGroup to store editable layers
       var editableLayers = new L.FeatureGroup();

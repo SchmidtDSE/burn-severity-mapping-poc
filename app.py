@@ -96,9 +96,7 @@ def get_cloud_static_io_client():
 
 def get_manifest(sfpt_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)):
     try:
-        sfpt_client.connect()
         manifest = sfpt_client.get_manifest()
-        sfpt_client.disconnect()
         return manifest
     except Exception as e:
         logger.log_text(f"Error: {e}")
@@ -173,7 +171,7 @@ def analyze_burn(
             logger.log_text(f"Derived boundary for {fire_event_name}")
 
             # Upload the derived boundary
-            cloud_static_io_client.connect()
+
             with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
                 tmp_geojson = tmp.name
                 with open(tmp_geojson, "w") as f:
@@ -183,7 +181,6 @@ def analyze_burn(
                     source_local_path=tmp_geojson,
                     remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
                 )
-            cloud_static_io_client.disconnect()
 
             # Return the derived boundary
             derived_boundary = geo_client.geojson_boundary.to_json()
@@ -465,7 +462,14 @@ def serve_map(
 
 @app.get("/upload", response_class=HTMLResponse)
 def upload(request: Request):
-    return templates.TemplateResponse("upload/upload.html", {"request": request})
+    mapbox_token = get_mapbox_secret()
+    return templates.TemplateResponse(
+        "upload/upload.html",
+        {
+            "request": request,
+            "mapbox_token": mapbox_token,  # for NAIP and Satetllite in V0
+        }
+    )
 
 
 @app.get("/sketch", response_class=HTMLResponse)
