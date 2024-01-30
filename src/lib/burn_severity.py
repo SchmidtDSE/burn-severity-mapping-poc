@@ -69,11 +69,14 @@ def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
     rbr = calc_rbr(dnbr, nbr_prefire)
 
     # stack these arrays together, naming them by their source
+    # TODO: Look into other sources of useful info that come with satellite imagery - cloud cover, defective pixels, etc.
+    # Some of these might help us filter out bad data (especially as it relates to cloud occlusion)
     burn_stack = xr.concat(
         [nbr_prefire, nbr_postfire, dnbr, rdnbr, rbr],
         pd.Index(
             ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"], name="burn_metric"
         ),
+        coords="minimal"
     )
 
     return burn_stack
