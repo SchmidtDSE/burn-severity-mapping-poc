@@ -208,7 +208,10 @@
           const ecoclassResponse = await fetch('{{ ecoclass_geojson_url | safe }}');
           const ecoclassGeojson= await ecoclassResponse.json();
 
-          return { boundaryGeojson, ecoclassGeojson }; // Return the layers
+          const severityObsResponse = await fetch('{{ severity_obs_geojson_url | safe }}');
+          const severityObsGeojson = await severityObsResponse.json();
+
+          return { boundaryGeojson, ecoclassGeojson , severityObsGeojson}; // Return the layers
 
       }
 
@@ -290,7 +293,7 @@
       //     });
       // }
 
-      fetchData().then(({ boundaryGeojson, ecoclassGeojson }) => {
+      fetchData().then(({ boundaryGeojson, ecoclassGeojson, severityObsGeojson }) => {
 
           var ecoclassLayer = L.geoJSON(ecoclassGeojson, {
               style: function(feature) {
@@ -304,6 +307,34 @@
               // onEachFeature: onEachEcoclass,
               pane: 'ecoclass'
           });
+
+        var burnObsLayer = L.geoJSON(severityObsGeojson, {
+            pointToLayer: function(feature, latlng) {
+                var severityFactor = feature.properties.SeverityFactor;
+                var color;
+
+                // Set color based on severity factor
+                if (severityFactor === 0) {
+                    color = "#00FF00";
+                } else if (severityFactor === 1) {
+                    color = "#FFFF00";
+                } else if (severityFactor === 2) {
+                    color = "#FF9d00";
+                } else {
+                    color = "#FF0000";
+                }
+
+                console.log(severityFactor, color); // Log the severity factor and color
+
+                return L.circleMarker(latlng, {
+                    color: color,
+                    weight: 6,
+                    opacity: 1,
+                    fillOpacity: 0
+                });
+            },
+            pane: 'burn-obs'
+        });
 
           // Create a layer for each combo of dominant trees
           var uniqueTreeCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantTree1, feature.properties.dominantTree2].join(', ')))];
@@ -478,12 +509,14 @@
           map.createPane('metrics');
           map.getPane('metrics').style.zIndex = 5;
 
-          map.createPane('ecoclass');
-          map.getPane('ecoclass').style.zIndex = 9;
-
           map.createPane('burn-boundary');
           map.getPane('burn-boundary').style.zIndex = 7;
 
+          map.createPane('ecoclass');
+          map.getPane('ecoclass').style.zIndex = 9;
+
+          map.createPane('burn-obs');
+          map.getPane('burn-obs').style.zIndex = 11;
 
           // Add layer controls - one for basemap, one for metrics
           var baseLayers = {
@@ -501,6 +534,10 @@
           var polyLayers = {
               "Burn Boundary": boundaryLayer,
               "EDIT Ecological Classification": ecoclassLayer
+          }
+
+          var obsLayers = {
+              "Burn Severity": burnObsLayer
           }
 
           // Loading indicator
@@ -551,6 +588,7 @@
           var groupedOverlays = {
               "Burn Metrics": metricsLayers,
               "Polygons": polyLayers,
+              "Field Observations": obsLayers,
               "Tree Cover": treeLayers,
               "Shrub Cover": shrubLayers,
               "Herb Cover": herbLayers

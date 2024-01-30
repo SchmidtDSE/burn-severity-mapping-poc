@@ -432,7 +432,7 @@ def serve_map(
     cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
     burn_boundary_geojson_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/boundary.geojson"
     ecoclass_geojson_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson"
-
+    severity_obs_geojson_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/burn_field_observations.geojson"
     cog_tileserver_url_prefix = (
         tileserver_endpoint
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
@@ -456,6 +456,7 @@ def serve_map(
             "cog_tileserver_url_prefix": cog_tileserver_url_prefix,
             "burn_boundary_geojson_url": burn_boundary_geojson_url,
             "ecoclass_geojson_url": ecoclass_geojson_url,
+            "severity_obs_geojson_url": severity_obs_geojson_url
         },
     )
 
