@@ -163,16 +163,6 @@ class CloudStaticIOClient:
         except Exception as err:
             raise Exception(err)
 
-    def listdir(self, remote_path):
-        """lists all the files and directories in the specified path and returns them"""
-        for obj in self.connection.listdir(remote_path):
-            yield obj
-
-    def listdir_attr(self, remote_path):
-        """lists all the files and directories (with their attributes) in the specified path and returns them"""
-        for attr in self.connection.listdir_attr(remote_path):
-            yield attr
-
     def upload_cogs(
         self,
         metrics_stack,
