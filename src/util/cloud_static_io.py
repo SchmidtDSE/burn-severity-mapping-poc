@@ -167,8 +167,6 @@ class CloudStaticIOClient:
         self,
         metrics_stack,
         fire_event_name,
-        prefire_date_range,
-        postfire_date_range,
         affiliation,
     ):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -204,6 +202,25 @@ class CloudStaticIOClient:
                 source_local_path=local_cog_path,
                 remote_path=f"public/{affiliation}/{fire_event_name}/pct_change_dnbr_rbr.tif",
             )
+
+    def upload_rap_estimates(
+        self,
+        rap_estimates,
+        fire_event_name,
+        affiliation
+    ):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            local_cog_path = os.path.join(tmpdir, f"rap_estimates.tif")
+            rap_estimates.rio.to_raster(local_cog_path, driver="GTiff")
+            self.upload(
+                source_local_path=local_cog_path,
+                remote_path=f"public/{affiliation}/{fire_event_name}/rap_estimates.tif",
+            )
+            # Update the COG with overviews, for faster loading at lower zoom levels
+            self.logger.log_text(f"Updating rap_esimates with overviews")
+            with rasterio.open(local_cog_path, "r+") as ds:
+                ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
+                ds.update_tags(ns="rio_overview", resampling="nearest")
 
     def update_manifest(
         self,

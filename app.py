@@ -33,14 +33,15 @@ from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from src.lib.query_sentinel import Sentinel2Client
 from src.util.cloud_static_io import CloudStaticIOClient
-from src.util.gcp_secrets import get_ssh_secret, get_mapbox_secret
-from src.util.ingest_burn_zip import ingest_esri_zip_file, shp_to_geojson
+from src.util.gcp_secrets import get_mapbox_secret
+from src.util.ingest_burn_zip import ingest_esri_zip_file
 from src.lib.titiler_algorithms import algorithms
 from src.lib.query_soil import (
     sdm_get_ecoclassid_from_mu_info,
     sdm_get_esa_mapunitid_poly,
     edit_get_ecoclass_info,
 )
+from src.lib.query_rap import rap_get_biomass
 
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
@@ -342,6 +343,45 @@ def analyze_ecoclass(
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
 
+class AnaylzeRapPOSTBody(BaseModel):
+    geojson: Any
+    ignition_date: str
+    fire_event_name: str
+    affiliation: str
+
+@app.post("/api/query-biomass/analyze-rap")
+def analyze_rap(
+    body: AnaylzeRapPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)
+):
+    try:
+        boundary_geojson = json.loads(body.geojson)
+        ignition_date = body.ignition_date
+        fire_event_name = body.fire_event_name
+        affiliation = body.affiliation
+        rap_estimates = rap_get_biomass(
+            boundary_geojson=boundary_geojson,
+            ignition_date=ignition_date
+        )
+
+        # save the cog to the FTP server
+        cloud_static_io_client.upload_rap_estimates(
+            rap_estimates=rap_estimates,
+            affiliation=affiliation,
+            fire_event_name=fire_event_name,
+        )
+        logger.log_text(f"RAP estimates uploaded for {fire_event_name}")
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": f"RAP estimates uploaded for {fire_event_name}",
+                "fire_event_name": fire_event_name,
+            },
+        )
+    except Exception as e:
+        logger.log_text(f"Error: {e}")
+        return JSONResponse(status_code=400, content={"error": str(e)})
+    
 
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(
