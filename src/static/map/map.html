@@ -208,10 +208,13 @@
           const ecoclassResponse = await fetch('{{ ecoclass_geojson_url | safe }}');
           const ecoclassGeojson= await ecoclassResponse.json();
 
+          let severityObsGeojson = null;
           const severityObsResponse = await fetch('{{ severity_obs_geojson_url | safe }}');
-          const severityObsGeojson = await severityObsResponse.json();
+          if (severityObsResponse.status !== 404) {
+            severityObsGeojson = await severityObsResponse.json();
+          }
 
-          return { boundaryGeojson, ecoclassGeojson , severityObsGeojson}; // Return the layers
+          return { boundaryGeojson, ecoclassGeojson, severityObsGeojson}; // Return the layers
 
       }
 
@@ -494,6 +497,11 @@
               pane: 'basemaps'
           })
 
+          // Add Rangeland Analysis Platform cog layers
+          var rapLayer = L.tileLayer('{{ rap_tileserver_url | safe }}', {
+              maxZoom: 20,
+              pane: 'metrics'
+          })
 
           // Create map
           var map = L.map('burn-map', {
@@ -515,6 +523,9 @@
           map.createPane('ecoclass');
           map.getPane('ecoclass').style.zIndex = 9;
 
+          map.createPane('biomass');
+          map.getPane('biomass').style.zIndex = 10;
+
           map.createPane('burn-obs');
           map.getPane('burn-obs').style.zIndex = 11;
 
@@ -534,6 +545,10 @@
           var polyLayers = {
               "Burn Boundary": boundaryLayer,
               "EDIT Ecological Classification": ecoclassLayer
+          }
+
+          var biomassLayers = {
+              "Rangeland Analysis Platform": rapLayer
           }
 
           var obsLayers = {
@@ -585,10 +600,23 @@
               });
           }
 
+          for (var key in biomassLayers) {
+              biomassLayers[key].setZIndex(10);
+              biomassLayers[key].on({
+                  'loading': function() {
+                      loadingDiv.style.display = 'block';
+                  },
+                  'load': function() {
+                      loadingDiv.style.display = 'none';
+                  }
+              });
+          }
+
           var groupedOverlays = {
               "Burn Metrics": metricsLayers,
               "Polygons": polyLayers,
               "Field Observations": obsLayers,
+              "Biomass": biomassLayers,
               "Tree Cover": treeLayers,
               "Shrub Cover": shrubLayers,
               "Herb Cover": herbLayers

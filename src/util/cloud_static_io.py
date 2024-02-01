@@ -272,8 +272,6 @@ class CloudStaticIOClient:
         self.upload_cogs(
             metrics_stack=metrics_stack,
             fire_event_name=fire_event_name,
-            prefire_date_range=prefire_date_range,
-            postfire_date_range=postfire_date_range,
             affiliation=affiliation,
         )
 

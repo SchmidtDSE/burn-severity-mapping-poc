@@ -478,6 +478,11 @@ def serve_map(
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
     )
 
+    rap_tileserver_url = (
+        tileserver_endpoint
+        + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
+    )
+
     fire_metadata = manifest[fire_event_name]
     fire_metadata_json = json.dumps(fire_metadata)
 
@@ -496,7 +501,8 @@ def serve_map(
             "cog_tileserver_url_prefix": cog_tileserver_url_prefix,
             "burn_boundary_geojson_url": burn_boundary_geojson_url,
             "ecoclass_geojson_url": ecoclass_geojson_url,
-            "severity_obs_geojson_url": severity_obs_geojson_url
+            "severity_obs_geojson_url": severity_obs_geojson_url,
+            "rap_tileserver_url": rap_tileserver_url
         },
     )
 
