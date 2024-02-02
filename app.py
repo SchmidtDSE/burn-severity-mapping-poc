@@ -465,7 +465,8 @@ def serve_map(
 ):
     mapbox_token = get_mapbox_secret()
 
-    tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+    # tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+    tileserver_endpoint = "http://localhost:5050"
 
     ## TODO [#21]: Use Tofu Output to construct hardocded cog and geojson urls (in case we change s3 bucket name)
 

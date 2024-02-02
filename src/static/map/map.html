@@ -497,8 +497,26 @@
               pane: 'basemaps'
           })
 
-          // Add Rangeland Analysis Platform cog layers
-          var rapLayer = L.tileLayer('{{ rap_tileserver_url | safe }}', {
+          // Add Rangeland Analysis Platform annuals
+          var RapAnnualLayer = L.tileLayer('{{ rap_tileserver_url | safe }}&bidx="annual_forb_and_grass""&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"}}', {
+              maxZoom: 20,
+              pane: 'metrics'
+          })
+
+            // Add Rangeland Analysis Platform perennials
+          var RapPerennialLayer = L.tileLayer('{{ rap_tileserver_url | safe }}&bidx="perennial_forb_and_grass"&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"}}', {
+            maxZoom: 20,
+            pane: 'metrics'
+          })
+
+          // Add Rangeland Analysis Platform shrubs
+          var RapShrubLayer = L.tileLayer('{{ rap_tileserver_url | safe }}&bidx=3&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"}}', {
+            maxZoom: 20,
+            pane: 'metrics'
+          })
+
+          // Add Rangeland Analysis Platform trees
+          var RapTreeLayer = L.tileLayer('{{ rap_tileserver_url | safe }}&bidx=4&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"}}', {
               maxZoom: 20,
               pane: 'metrics'
           })
@@ -548,7 +566,10 @@
           }
 
           var biomassLayers = {
-              "Rangeland Analysis Platform": rapLayer
+              "Annual Biomass": RapAnnualLayer,
+              "Perennial Biomass": RapPerennialLayer,
+              "Shrub Biomass": RapShrubLayer,
+              "Tree Biomass": RapTreeLayer
           }
 
           var obsLayers = {
@@ -616,10 +637,10 @@
               "Burn Metrics": metricsLayers,
               "Polygons": polyLayers,
               "Field Observations": obsLayers,
-              "Biomass": biomassLayers,
-              "Tree Cover": treeLayers,
-              "Shrub Cover": shrubLayers,
-              "Herb Cover": herbLayers
+              "Rangeland Analysis Platform": biomassLayers,
+              "EDIT Tree Cover": treeLayers,
+              "EDIT Shrub Cover": shrubLayers,
+              "EDIT Herb Cover": herbLayers
           };
 
           var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {

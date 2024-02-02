@@ -210,17 +210,23 @@ class CloudStaticIOClient:
         affiliation
     ):
         with tempfile.TemporaryDirectory() as tmpdir:
-            local_cog_path = os.path.join(tmpdir, f"rap_estimates.tif")
-            rap_estimates.rio.to_raster(local_cog_path, driver="GTiff")
-            self.upload(
-                source_local_path=local_cog_path,
-                remote_path=f"public/{affiliation}/{fire_event_name}/rap_estimates.tif",
-            )
-            # Update the COG with overviews, for faster loading at lower zoom levels
-            self.logger.log_text(f"Updating rap_esimates with overviews")
-            with rasterio.open(local_cog_path, "r+") as ds:
-                ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
-                ds.update_tags(ns="rio_overview", resampling="nearest")
+            for band_name in rap_estimates.band.to_index():
+                # TODO: This is the same logic as in upload_cogs. Refactor to avoid duplication
+                # Save the band as a local COG
+                local_cog_path = os.path.join(tmpdir, f"rangeland_analysis_platform_{band_name}.tif")
+                band_cog = rap_estimates.sel(band=band_name).rio
+                band_cog.to_raster(local_cog_path, driver="GTiff")
+
+                # Update the COG with overviews, for faster loading at lower zoom levels
+                self.logger.log_text(f"Updating {band_name} with overviews")
+                with rasterio.open(local_cog_path, "r+") as ds:
+                    ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
+                    ds.update_tags(ns="rio_overview", resampling="nearest")
+
+                self.upload(
+                    source_local_path=local_cog_path,
+                    remote_path=f"public/{affiliation}/{fire_event_name}/{band_name}.tif",
+                )
 
     def update_manifest(
         self,
