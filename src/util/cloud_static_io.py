@@ -14,6 +14,7 @@ import boto3
 import google.auth
 import requests
 from google.auth.transport import requests as gcp_requests
+from google.oauth2 import id_token
 from google.auth import impersonated_credentials, exceptions
 
 class CloudStaticIOClient:
@@ -63,7 +64,7 @@ class CloudStaticIOClient:
         # Refresh the client
         self.iam_credentials = iam_credentials
 
-    def fetch_id_token(self, audience):
+    def local_fetch_id_token(self, audience):
         if not self.iam_credentials or not self.iam_credentials.valid:
             # Refresh the credentials
             self.iam_credentials.refresh(gcp_requests.Request())
@@ -93,8 +94,10 @@ class CloudStaticIOClient:
                 if not self.iam_credentials or self.iam_credentials.expired:
                     self.impersonate_service_account()
                 self.iam_credentials.refresh(request)
+                oidc_token = self.local_fetch_id_token(audience="sts.amazonaws.com")
+            else:
+                oidc_token = id_token.fetch_id_token(request, "sts.amazonaws.com")
 
-            oidc_token = self.fetch_id_token(audience="sts.amazonaws.com")
             if not oidc_token:
                 raise ValueError("Failed to retrieve OIDC token")
 
