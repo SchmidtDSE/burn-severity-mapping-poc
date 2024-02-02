@@ -213,7 +213,7 @@ class CloudStaticIOClient:
             for band_name in rap_estimates.band.to_index():
                 # TODO: This is the same logic as in upload_cogs. Refactor to avoid duplication
                 # Save the band as a local COG
-                local_cog_path = os.path.join(tmpdir, f"rangeland_analysis_platform_{band_name}.tif")
+                local_cog_path = os.path.join(tmpdir, f"{band_name}.tif")
                 band_cog = rap_estimates.sel(band=band_name).rio
                 band_cog.to_raster(local_cog_path, driver="GTiff")
 
@@ -225,7 +225,7 @@ class CloudStaticIOClient:
 
                 self.upload(
                     source_local_path=local_cog_path,
-                    remote_path=f"public/{affiliation}/{fire_event_name}/{band_name}.tif",
+                    remote_path=f"public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_{band_name}.tif",
                 )
 
     def update_manifest(

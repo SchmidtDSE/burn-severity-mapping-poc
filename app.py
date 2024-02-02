@@ -186,10 +186,6 @@ def analyze_burn(
             # Return the derived boundary
             derived_boundary = geo_client.geojson_boundary.to_json()
 
-        # TODO [#15]: Excessive SFTP connections, refactor to use a context manager
-        # Overly conservative, connections and disconnects - likely avoided entirely by smart-open
-        # but if not, should be refactored to use a context manager
-
         # save the cog to the FTP server
         cloud_static_io_client.upload_fire_event(
             metrics_stack=geo_client.metrics_stack,
@@ -465,11 +461,10 @@ def serve_map(
 ):
     mapbox_token = get_mapbox_secret()
 
-    # tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
-    tileserver_endpoint = "http://localhost:5050"
+    tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+    # tileserver_endpoint = "http://localhost:5050"
 
     ## TODO [#21]: Use Tofu Output to construct hardocded cog and geojson urls (in case we change s3 bucket name)
-
     cog_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
     burn_boundary_geojson_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/boundary.geojson"
     ecoclass_geojson_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson"
@@ -479,10 +474,30 @@ def serve_map(
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
     )
 
-    rap_tileserver_url = (
+    rap_cog_annual_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_annual_forb_and_grass.tif"
+    rap_tileserver_annual_url = (
         tileserver_endpoint
-        + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
+        + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_annual_url}&nodata=-99&return_mask=true"
     )
+
+    rap_cog_perennial_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_perennial_forb_and_grass.tif"
+    rap_tileserver_perennial_url = (
+        tileserver_endpoint
+        + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_perennial_url}&nodata=-99&return_mask=true"
+    )
+
+    rap_cog_shrub_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_shrub.tif"
+    rap_tileserver_shrub_url = (
+        tileserver_endpoint
+        + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_shrub_url}&nodata=-99&return_mask=true"
+    )
+
+    rap_cog_tree_url = f"https://burn-severity-backend.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_tree.tif"
+    rap_tileserver_tree_url = (
+        tileserver_endpoint
+        + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_tree_url}&nodata=-99&return_mask=true"
+    )
+
 
     fire_metadata = manifest[fire_event_name]
     fire_metadata_json = json.dumps(fire_metadata)
@@ -503,7 +518,10 @@ def serve_map(
             "burn_boundary_geojson_url": burn_boundary_geojson_url,
             "ecoclass_geojson_url": ecoclass_geojson_url,
             "severity_obs_geojson_url": severity_obs_geojson_url,
-            "rap_tileserver_url": rap_tileserver_url
+            "rap_tileserver_annual_url": rap_tileserver_annual_url,
+            "rap_tileserver_perennial_url": rap_tileserver_perennial_url,
+            "rap_tileserver_shrub_url": rap_tileserver_shrub_url,
+            "rap_tileserver_tree_url": rap_tileserver_tree_url,
         },
     )
 

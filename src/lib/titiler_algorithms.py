@@ -44,7 +44,6 @@ class CensorAndScale(BaseAlgorithm):
     thresholds: dict  # There is no default, which means calls to this algorithm without any parameter will fail
 
     def __call__(self, img: ImageData) -> ImageData:
-        ##BIDX Error trying to get to different bands, also the data seem to be squashed to tiny floats
         scale_min = float(self.thresholds["min"])
         scale_max = float(self.thresholds["max"])
 
