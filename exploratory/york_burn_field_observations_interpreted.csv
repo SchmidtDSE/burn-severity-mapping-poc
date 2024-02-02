@@ -25,6 +25,6 @@ FID,name,TimeStamp,Longitude,Latitude,SeverityFactor
 27,Unburned island,8/3/2023 0:00,-115.300322595,35.2252536489,0
 28,Unburned with patches of light severity,8/1/2023 0:00,-115.105515647,35.3215698751,0
 172,High severity to West - NPG interpreted,8/3/2023 0:00,-115.224902873,35.1561788518,3
-182,unburned island to north - NPG interpreted,8/3/2023 0:00,-115.221711339,35.2042500408,1
+182,unburned island to north - NPG interpreted,8/3/2023 0:00,-115.221711339,35.2042500408,0
 171,unburned to east - NPG interpreted,8/3/2023 0:00,-115.224902873,35.1561788518,3
 181,Low burn severity to south - NPG interpreted,8/3/2023 0:00,-115.221711339,35.2042500408,1
