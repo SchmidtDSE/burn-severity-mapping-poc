@@ -111,6 +111,10 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
         value = "CLOUD"
       }
       env {
+        name  = "S3_FROM_GCP_ARN"
+        value = var.s3_from_gcp_role_arn
+      }
+      env {
         name  = "CPL_VSIL_CURL_ALLOWED_EXTENSIONS"
         value = ".tif,.TIF,.tiff"
       }

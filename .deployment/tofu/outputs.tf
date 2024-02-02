@@ -8,9 +8,9 @@ output "gcp_service_account_s3_email" {
     value       = module.burn_backend.gcp_service_account_s3_email
 }
 
-output "s3_from_gcp_arn" {
+output "s3_from_gcp_role_arn" {
     description = "The ARN of the IAM Role which allows GCP to access S3"
-    value       = module.static_io.s3_from_gcp_arn
+    value       = module.static_io.s3_from_gcp_role_arn
 }
 
 output "gcp_cloud_run_uuid" {
