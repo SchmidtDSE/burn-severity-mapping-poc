@@ -211,7 +211,7 @@ class CloudStaticIOClient:
     ):
         with tempfile.TemporaryDirectory() as tmpdir:
             for band_name in rap_estimates.band.to_index():
-                # TODO [$65bd15f3575bb8000801891d]: This is the same logic as in upload_cogs. Refactor to avoid duplication
+                # TODO [#23]: This is the same logic as in upload_cogs. Refactor to avoid duplication
                 # Save the band as a local COG
                 local_cog_path = os.path.join(tmpdir, f"rangeland_analysis_platform_{band_name}.tif")
                 band_cog = rap_estimates.sel(band=band_name).rio
