@@ -114,6 +114,11 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
         name  = "S3_FROM_GCP_ARN"
         value = var.s3_from_gcp_role_arn
       }
+      ## TODO: self-referential endpoint, will be solved by refactoring out titiler and/or making fully static
+      env {
+        name  = "GCP_CLOUD_RUN_ENDPOINT"
+        value = "https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app"
+      }
       env {
         name  = "CPL_VSIL_CURL_ALLOWED_EXTENSIONS"
         value = ".tif,.TIF,.tiff"
