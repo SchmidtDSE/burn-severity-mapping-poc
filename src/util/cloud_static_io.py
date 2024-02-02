@@ -64,9 +64,9 @@ class CloudStaticIOClient:
         self.iam_credentials = iam_credentials
 
     def fetch_id_token(self, audience):
-        if not self.iam_credentials.valid:
+        if not self.iam_credentials or not self.iam_credentials.valid:
             # Refresh the credentials
-            self.iam_credentials.refresh(Request())
+            self.iam_credentials.refresh(gcp_requests.Request())
 
         # Make an authenticated HTTP request to the Google OAuth2 v1/token endpoint
         url = f"https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/{self.service_account_email}:generateIdToken"
