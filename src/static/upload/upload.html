@@ -260,6 +260,9 @@
         );
       });
 
+      var shapefileUploaded = false;
+      var aoiDrawn = false;
+
       // When a shape is drawn, disable the file input
       map.on("draw:created", function (e) {
         var type = e.layerType,
@@ -270,6 +273,9 @@
 
         // Disable the file input
         $("#shp_zip").prop("disabled", true);
+
+        // Set the aoiDrawn flag
+        aoiDrawn = true;
       });
 
       // When a file is selected, disable the draw control
@@ -277,6 +283,9 @@
         if (this.files.length > 0) {
           map.removeControl(drawControl);
         }
+
+        // Set the shapefileUploaded flag
+        shapefileUploaded = true;
       });
 
       $("#fire-analysis-form").on("submit", function (event) {
@@ -289,6 +298,13 @@
         var postfireEnd = new Date($("#postfire-end").val());
         var fireEventName = $("#fire_event_name").val();
 
+        // Check if a shapefile has been uploaded
+        if (!shapefileUploaded && !aoiDrawn) {
+          alert("Please upload a shapefile or draw an AOI");
+          return false;
+        }
+
+        // Ensure dates are valid and sequential
         if (
           isNaN(prefireStart) ||
           isNaN(prefireEnd) ||
@@ -308,6 +324,7 @@
           return false;
         }
 
+        // Ensure a fire event name is entered
         if (fireEventName == "") {
           alert("Please enter a fire event name");
           return false;
