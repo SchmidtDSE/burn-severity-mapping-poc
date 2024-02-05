@@ -203,69 +203,6 @@
     </div>
 
     <script>
-      // Form validation
-      $(document).ready(function () {
-        $("#fire-analysis-form").on("submit", function (e) {
-          e.preventDefault();
-
-          // Validate prefire-start
-          var prefireStart = new Date($("#prefire-start").val());
-          if (isNaN(prefireStart)) {
-            alert("Please enter a valid prefire start date");
-            return false;
-          }
-
-          // Validate prefire-end
-          var prefireEnd = new Date($("#prefire-end").val());
-          if (isNaN(prefireEnd)) {
-            alert("Please enter a valid prefire end date");
-            return false;
-          }
-
-          // Check if prefire-start is before prefire-end
-          if (prefireStart >= prefireEnd) {
-            alert("Prefire start date must be before prefire end date");
-            return false;
-          }
-
-          // Validate postfire-start
-          var postfireStart = new Date($("#postfire-start").val());
-          if (isNaN(postfireStart)) {
-            alert("Please enter a valid postfire start date");
-            return false;
-          }
-
-          // Check if prefire-end is before postfire-start
-          if (prefireEnd >= postfireStart) {
-            alert("Prefire end date must be before postfire start date");
-            return false;
-          }
-
-          // Validate postfire-end
-          var postfireEnd = new Date($("#postfire-end").val());
-          if (isNaN(postfireEnd)) {
-            alert("Please enter a valid postfire end date");
-            return false;
-          }
-
-          // Check if postfire-start is before postfire-end
-          if (postfireStart >= postfireEnd) {
-            alert("Postfire start date must be before postfire end date");
-            return false;
-          }
-
-          // Validate fire_event_name
-          var fireEventName = $("#fire_event_name").val();
-          if (fireEventName == "") {
-            alert("Please enter a fire event name");
-            return false;
-          }
-
-          // If all validations pass, submit the form
-          this.submit();
-        });
-      });
-
       // AOI Input Map
       var mapboxToken = "{{ mapbox_token }}";
       var map = L.map("map").setView([39.7749, -100.4194], 5);
@@ -344,6 +281,37 @@
 
       $("#fire-analysis-form").on("submit", function (event) {
         event.preventDefault();
+
+        // Validate the form
+        var prefireStart = new Date($("#prefire-start").val());
+        var prefireEnd = new Date($("#prefire-end").val());
+        var postfireStart = new Date($("#postfire-start").val());
+        var postfireEnd = new Date($("#postfire-end").val());
+        var fireEventName = $("#fire_event_name").val();
+
+        if (
+          isNaN(prefireStart) ||
+          isNaN(prefireEnd) ||
+          isNaN(postfireStart) ||
+          isNaN(postfireEnd)
+        ) {
+          alert("Please enter valid dates");
+          return false;
+        }
+
+        if (
+          prefireStart >= prefireEnd ||
+          prefireEnd >= postfireStart ||
+          postfireStart >= postfireEnd
+        ) {
+          alert("Please enter valid date ranges");
+          return false;
+        }
+
+        if (fireEventName == "") {
+          alert("Please enter a fire event name");
+          return false;
+        }
 
         // Show the upload loading spinner
         $("#upload-loading").show();
