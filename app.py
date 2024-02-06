@@ -8,6 +8,7 @@ import tempfile
 from typing import Tuple, List, Any
 from pydantic import BaseModel
 import pandas as pd
+import sentry_sdk
 
 # For network debugging
 import socket
@@ -43,6 +44,17 @@ from src.lib.query_soil import (
 )
 from src.lib.query_rap import rap_get_biomass
 
+sentry_sdk.init(
+    dsn="https://3660129e232b3c796208a5e46945d838@o4506701219364864.ingest.sentry.io/4506701221199872",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
+
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix="/cog", tags=["Cloud Optimized GeoTIFF"])
@@ -64,6 +76,9 @@ def index():
     logger.log_text("ping pong")
     return "Alive", 200
 
+@app.get("/sentry-debug")
+async def trigger_error():
+    __division_by_zero = 1 / 0
 
 @app.get("/check-connectivity")
 def check_connectivity():

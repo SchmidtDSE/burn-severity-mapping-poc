@@ -20,6 +20,7 @@ dependencies:
   - planetary-computer
   - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - smart_open
+  - sentry-sdk[fastapi]
   - uvicorn
   - pip
   - pip:
