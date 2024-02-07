@@ -311,33 +311,39 @@
               pane: 'ecoclass'
           });
 
-        var burnObsLayer = L.geoJSON(severityObsGeojson, {
-            pointToLayer: function(feature, latlng) {
-                var severityFactor = feature.properties.SeverityFactor;
-                var color;
+        if (severityObsGeojson) {
+            var burnObsLayer = L.geoJSON(severityObsGeojson, {
+                pointToLayer: function(feature, latlng) {
+                    var severityFactor = feature.properties.SeverityFactor;
+                    var color;
 
-                // Set color based on severity factor
-                if (severityFactor === 0) {
-                    color = "#00FF00";
-                } else if (severityFactor === 1) {
-                    color = "#FFFF00";
-                } else if (severityFactor === 2) {
-                    color = "#FF9d00";
-                } else {
-                    color = "#FF0000";
-                }
+                    // Set color based on severity factor
+                    if (severityFactor === 0) {
+                        color = "#00FF00";
+                    } else if (severityFactor === 1) {
+                        color = "#FFFF00";
+                    } else if (severityFactor === 2) {
+                        color = "#FF9d00";
+                    } else {
+                        color = "#FF0000";
+                    }
 
-                console.log(severityFactor, color); // Log the severity factor and color
+                    console.log(severityFactor, color); // Log the severity factor and color
 
-                return L.circleMarker(latlng, {
-                    color: color,
-                    weight: 6,
-                    opacity: 1,
-                    fillOpacity: 0
-                });
-            },
-            pane: 'burn-obs'
-        });
+                    return L.circleMarker(latlng, {
+                        color: color,
+                        weight: 6,
+                        opacity: 1,
+                        fillOpacity: 0
+                    });
+                },
+                pane: 'burn-obs'
+            });
+
+          var obsLayers = {
+              "Burn Severity": burnObsLayer
+          }
+        }
 
           // Create a layer for each combo of dominant trees
           var uniqueTreeCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantTree1, feature.properties.dominantTree2].join(', ')))];
@@ -572,10 +578,6 @@
               "Tree Biomass": RapTreeLayer
           }
 
-          var obsLayers = {
-              "Burn Severity": burnObsLayer
-          }
-
           // Loading indicator
           var loadingDiv = L.DomUtil.create('div', 'loading');
           loadingDiv.innerHTML = 'Loading...';
@@ -636,15 +638,18 @@
           var groupedOverlays = {
               "Burn Metrics": metricsLayers,
               "Polygons": polyLayers,
-              "Field Observations": obsLayers,
               "Rangeland Analysis Platform": biomassLayers,
               "EDIT Tree Cover": treeLayers,
               "EDIT Shrub Cover": shrubLayers,
               "EDIT Herb Cover": herbLayers
           };
 
+          if (severityObsGeojson) {
+              groupedOverlays["Burn Observations"] = obsLayers;
+          }
+
           var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {
-              exclusiveGroups: ["Burn Metrics"],
+            //   exclusiveGroups: ["Burn Metrics"],
               position: 'topleft',
               collapsed: false
           }).addTo(map);
