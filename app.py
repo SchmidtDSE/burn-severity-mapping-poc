@@ -174,62 +174,68 @@ def analyze_burn(
     sentry_sdk.set_context("analyze_burn", {"request": body})
     logger.log_text(f"Received analyze-burn request for {fire_event_name}")
 
-    # create a Sentinel2Client instance
-    geo_client = Sentinel2Client(geojson_boundary=geojson_boundary, buffer=0.1)
+    try:
+        # create a Sentinel2Client instance
+        geo_client = Sentinel2Client(geojson_boundary=geojson_boundary, buffer=0.1)
 
-    # get imagery data before and after the fire
-    geo_client.query_fire_event(
-        prefire_date_range=date_ranges["prefire"],
-        postfire_date_range=date_ranges["postfire"],
-        from_bbox=True,
-    )
-    logger.log_text(f"Obtained imagery for {fire_event_name}")
+        # get imagery data before and after the fire
+        geo_client.query_fire_event(
+            prefire_date_range=date_ranges["prefire"],
+            postfire_date_range=date_ranges["postfire"],
+            from_bbox=True,
+        )
+        logger.log_text(f"Obtained imagery for {fire_event_name}")
 
-    # calculate burn metrics
-    geo_client.calc_burn_metrics()
-    logger.log_text(f"Calculated burn metrics for {fire_event_name}")
+        # calculate burn metrics
+        geo_client.calc_burn_metrics()
+        logger.log_text(f"Calculated burn metrics for {fire_event_name}")
 
-    if derive_boundary:
-        # Derive a boundary from the imagery
-        # TODO [#16]: Derived boundary hardcoded for rbr / .025 threshold
-        # Not sure yet but we will probably want to make this configurable
-        geo_client.derive_boundary("rbr", 0.025)
-        logger.log_text(f"Derived boundary for {fire_event_name}")
+        if derive_boundary:
+            # Derive a boundary from the imagery
+            # TODO [#16]: Derived boundary hardcoded for rbr / .025 threshold
+            # Not sure yet but we will probably want to make this configurable
+            geo_client.derive_boundary("rbr", 0.025)
+            logger.log_text(f"Derived boundary for {fire_event_name}")
 
-        # Upload the derived boundary
+            # Upload the derived boundary
 
-        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-            tmp_geojson = tmp.name
-            with open(tmp_geojson, "w") as f:
-                f.write(geo_client.geojson_boundary.to_json())
+            with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+                tmp_geojson = tmp.name
+                with open(tmp_geojson, "w") as f:
+                    f.write(geo_client.geojson_boundary.to_json())
 
-            cloud_static_io_client.upload(
-                source_local_path=tmp_geojson,
-                remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
-            )
+                cloud_static_io_client.upload(
+                    source_local_path=tmp_geojson,
+                    remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
+                )
 
-        # Return the derived boundary
-        derived_boundary = geo_client.geojson_boundary.to_json()
+            # Return the derived boundary
+            derived_boundary = geo_client.geojson_boundary.to_json()
 
-    # save the cog to the FTP server
-    cloud_static_io_client.upload_fire_event(
-        metrics_stack=geo_client.metrics_stack,
-        affiliation=affiliation,
-        fire_event_name=fire_event_name,
-        prefire_date_range=date_ranges["prefire"],
-        postfire_date_range=date_ranges["postfire"],
-        derive_boundary=derive_boundary,
-    )
-    logger.log_text(f"Cogs uploaded for {fire_event_name}")
+        # save the cog to the FTP server
+        cloud_static_io_client.upload_fire_event(
+            metrics_stack=geo_client.metrics_stack,
+            affiliation=affiliation,
+            fire_event_name=fire_event_name,
+            prefire_date_range=date_ranges["prefire"],
+            postfire_date_range=date_ranges["postfire"],
+            derive_boundary=derive_boundary,
+        )
+        logger.log_text(f"Cogs uploaded for {fire_event_name}")
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "message": f"Cogs uploaded for {fire_event_name}",
-            "fire_event_name": fire_event_name,
-            "derived_boundary": derived_boundary,
-        },
-    )
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": f"Cogs uploaded for {fire_event_name}",
+                "fire_event_name": fire_event_name,
+                "derived_boundary": derived_boundary,
+            },
+        )
+    
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.log_text(f"Error: {e}")
+        return f"Error: {e}", 400
 
 
 class QuerySoilPOSTBody(BaseModel):
@@ -285,77 +291,84 @@ def analyze_ecoclass(
 
     sentry_sdk.set_context("analyze_ecoclass", {"request": body})
 
-    mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
-    mu_polygon_keys = [
-        mupolygonkey
-        for __musym, __nationalmusym, __mukey, mupolygonkey in mapunit_gdf.index
-    ]
-    mrla_df = sdm_get_ecoclassid_from_mu_info(mu_polygon_keys)
+    try:
+            
+        mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
+        mu_polygon_keys = [
+            mupolygonkey
+            for __musym, __nationalmusym, __mukey, mupolygonkey in mapunit_gdf.index
+        ]
+        mrla_df = sdm_get_ecoclassid_from_mu_info(mu_polygon_keys)
 
-    # join mapunitids with link table for ecoclassids
-    mapunit_with_ecoclassid_df = mapunit_gdf.join(mrla_df).set_index("ecoclassid")
+        # join mapunitids with link table for ecoclassids
+        mapunit_with_ecoclassid_df = mapunit_gdf.join(mrla_df).set_index("ecoclassid")
 
-    edit_ecoclass_df_row_dicts = []
-    ecoclass_ids = mrla_df["ecoclassid"].unique()
+        edit_ecoclass_df_row_dicts = []
+        ecoclass_ids = mrla_df["ecoclassid"].unique()
 
-    n_ecoclasses = len(ecoclass_ids)
-    n_within_edit = 0
+        n_ecoclasses = len(ecoclass_ids)
+        n_within_edit = 0
 
-    for ecoclass_id in ecoclass_ids:
-        edit_success, edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
-        if edit_success:
-            n_within_edit += 1
-            logger.log_text(f"Success: {ecoclass_id} exists within EDIT backend")
-            edit_ecoclass_df_row_dict = edit_ecoclass_json["generalInformation"][
-                "dominantSpecies"
-            ]
-            edit_ecoclass_df_row_dict["ecoclassid"] = ecoclass_id
-            edit_ecoclass_df_row_dicts.append(edit_ecoclass_df_row_dict)
+        for ecoclass_id in ecoclass_ids:
+            edit_success, edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
+            if edit_success:
+                n_within_edit += 1
+                logger.log_text(f"Success: {ecoclass_id} exists within EDIT backend")
+                edit_ecoclass_df_row_dict = edit_ecoclass_json["generalInformation"][
+                    "dominantSpecies"
+                ]
+                edit_ecoclass_df_row_dict["ecoclassid"] = ecoclass_id
+                edit_ecoclass_df_row_dicts.append(edit_ecoclass_df_row_dict)
+            else:
+                logger.log_text(
+                    f"Missing: {edit_ecoclass_json} doesn't exist within EDIT backend"
+                )
+
+        logger.log_text(
+            f"Found {n_within_edit} of {n_ecoclasses} ecoclasses ({100*round(n_within_edit/n_ecoclasses, 2)}%) within EDIT backend"
+        )
+
+        if n_within_edit > 0:
+            edit_ecoclass_df = pd.DataFrame(edit_ecoclass_df_row_dicts).set_index(
+                "ecoclassid"
+            )
         else:
-            logger.log_text(
-                f"Missing: {edit_ecoclass_json} doesn't exist within EDIT backend"
+            # Populate with empty dataframe, for consistency's sake (so that the frontend doesn't have to handle this case)
+            edit_ecoclass_df = pd.DataFrame(
+                [],
+                columns=[
+                    "dominantTree1",
+                    "dominantShrub1",
+                    "dominantHerb1",
+                    "dominantTree2",
+                    "dominantShrub2",
+                    "dominantHerb2",
+                ],
             )
 
-    logger.log_text(
-        f"Found {n_within_edit} of {n_ecoclasses} ecoclasses ({100*round(n_within_edit/n_ecoclasses, 2)}%) within EDIT backend"
-    )
+        # join ecoclassids with edit ecoclass info, to get spatial ecoclass info
+        edit_ecoclass_geojson = mapunit_with_ecoclassid_df.join(
+            edit_ecoclass_df, how="left"
+        ).to_json()
 
-    if n_within_edit > 0:
-        edit_ecoclass_df = pd.DataFrame(edit_ecoclass_df_row_dicts).set_index(
-            "ecoclassid"
-        )
-    else:
-        # Populate with empty dataframe, for consistency's sake (so that the frontend doesn't have to handle this case)
-        edit_ecoclass_df = pd.DataFrame(
-            [],
-            columns=[
-                "dominantTree1",
-                "dominantShrub1",
-                "dominantHerb1",
-                "dominantTree2",
-                "dominantShrub2",
-                "dominantHerb2",
-            ],
-        )
+        # save the ecoclass_geojson to the FTP server
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+            tmp_geojson_path = tmp.name
+            with open(tmp_geojson_path, "w") as f:
+                f.write(edit_ecoclass_geojson)
 
-    # join ecoclassids with edit ecoclass info, to get spatial ecoclass info
-    edit_ecoclass_geojson = mapunit_with_ecoclassid_df.join(
-        edit_ecoclass_df, how="left"
-    ).to_json()
+            cloud_static_io_client.upload(
+                source_local_path=tmp_geojson_path,
+                remote_path=f"public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson",
+            )
 
-    # save the ecoclass_geojson to the FTP server
-    with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-        tmp_geojson_path = tmp.name
-        with open(tmp_geojson_path, "w") as f:
-            f.write(edit_ecoclass_geojson)
+        logger.log_text(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
+        return f"Ecoclass GeoJSON uploaded for {fire_event_name}", 200
 
-        cloud_static_io_client.upload(
-            source_local_path=tmp_geojson_path,
-            remote_path=f"public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson",
-        )
-
-    logger.log_text(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
-    return f"Ecoclass GeoJSON uploaded for {fire_event_name}", 200
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.log_text(f"Error: {e}")
+        return f"Error: {e}", 400
 
 
 class AnaylzeRapPOSTBody(BaseModel):
@@ -375,26 +388,33 @@ def analyze_rap(
 
     sentry_sdk.set_context("analyze_rap", {"request": body})
 
-    rap_estimates = rap_get_biomass(
-        boundary_geojson=boundary_geojson,
-        ignition_date=ignition_date
-    )
+    try:
+        rap_estimates = rap_get_biomass(
+            boundary_geojson=boundary_geojson,
+            ignition_date=ignition_date
+        )
 
-    # save the cog to the FTP server
-    cloud_static_io_client.upload_rap_estimates(
-        rap_estimates=rap_estimates,
-        affiliation=affiliation,
-        fire_event_name=fire_event_name,
-    )
-    logger.log_text(f"RAP estimates uploaded for {fire_event_name}")
+        # save the cog to the FTP server
+        cloud_static_io_client.upload_rap_estimates(
+            rap_estimates=rap_estimates,
+            affiliation=affiliation,
+            fire_event_name=fire_event_name,
+        )
+        logger.log_text(f"RAP estimates uploaded for {fire_event_name}")
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "message": f"RAP estimates uploaded for {fire_event_name}",
-            "fire_event_name": fire_event_name,
-        },
-    )
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": f"RAP estimates uploaded for {fire_event_name}",
+                "fire_event_name": fire_event_name,
+            },
+        )
+
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.log_text(f"Error: {e}")
+        return f"Error: {e}", 400
+
 
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(
@@ -406,39 +426,44 @@ async def upload_shapefile(
 ):
     sentry_sdk.set_context("upload_shapefile", {"fire_event_name": fire_event_name, "affiliation": affiliation})
 
-    # Read the file
-    zip_content = await file.read()
+    try:
+        # Read the file
+        zip_content = await file.read()
 
-    # Write the content to a temporary file
-    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
-        tmp.write(zip_content)
-        tmp_zip = tmp.name
+        # Write the content to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
+            tmp.write(zip_content)
+            tmp_zip = tmp.name
 
-    valid_shp, __valid_tiff = ingest_esri_zip_file(tmp_zip)
+        valid_shp, __valid_tiff = ingest_esri_zip_file(tmp_zip)
 
-    # For now assert that there is only one shapefile
-    assert (
-        len(valid_shp) == 1
-    ), "Zip must contain exactly one shapefile (with associated files: .shx, .prj and optionally, .dbf)"
-    __shp_paths, geojson = valid_shp[0]
+        # For now assert that there is only one shapefile
+        assert (
+            len(valid_shp) == 1
+        ), "Zip must contain exactly one shapefile (with associated files: .shx, .prj and optionally, .dbf)"
+        __shp_paths, geojson = valid_shp[0]
 
-    # Upload the zip and a geojson to SFTP
-    cloud_static_io_client.upload(
-        source_local_path=tmp_zip,
-        remote_path=f"public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}",
-    )
-
-    with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-        tmp_geojson = tmp.name
-        with open(tmp_geojson, "w") as f:
-            f.write(geojson)
+        # Upload the zip and a geojson to SFTP
         cloud_static_io_client.upload(
-            source_local_path=tmp_geojson,
-            remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
+            source_local_path=tmp_zip,
+            remote_path=f"public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}",
         )
 
-    return JSONResponse(status_code=200, content={"geojson": geojson})
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+            tmp_geojson = tmp.name
+            with open(tmp_geojson, "w") as f:
+                f.write(geojson)
+            cloud_static_io_client.upload(
+                source_local_path=tmp_geojson,
+                remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
+            )
 
+        return JSONResponse(status_code=200, content={"geojson": geojson})
+
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.log_text(f"Error: {e}")
+        return f"Error: {e}", 400
 
 
 @app.post("/api/upload-drawn-aoi")
@@ -451,16 +476,21 @@ async def upload_drawn_aoi(
 ):
     sentry_sdk.set_context("upload_drawn_aoi", {"fire_event_name": fire_event_name, "affiliation": affiliation})
 
-    with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-        tmp_geojson = tmp.name
-        with open(tmp_geojson, "w") as f:
-            f.write(geojson)
-        cloud_static_io_client.upload(
-            source_local_path=tmp_geojson,
-            remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
-        )
-    return JSONResponse(status_code=200, content={"geojson": geojson})
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+            tmp_geojson = tmp.name
+            with open(tmp_geojson, "w") as f:
+                f.write(geojson)
+            cloud_static_io_client.upload(
+                source_local_path=tmp_geojson,
+                remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
+            )
+        return JSONResponse(status_code=200, content={"geojson": geojson})
 
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.log_text(f"Error: {e}")
+        return f"Error: {e}", 400
 
 ### WEB PAGES ###
 
