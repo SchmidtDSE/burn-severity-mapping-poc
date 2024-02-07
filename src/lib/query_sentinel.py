@@ -70,7 +70,7 @@ class Sentinel2Client:
             geojson_bbox[3].round(decimals=2) + self.buffer,
         ]
 
-    def get_items(self, date_range, cloud_cover=100, from_bbox=True, max_items=None):
+    def get_items(self, date_range, from_bbox=True, max_items=None):
         date_range_fmt = "{}/{}".format(date_range[0], date_range[1])
 
         # TODO [#14]: Cloud cover response to smoke
