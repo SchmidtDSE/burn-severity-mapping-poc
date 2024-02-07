@@ -174,7 +174,7 @@ def analyze_burn(
     derive_boundary = body.derive_boundary
     derived_boundary = None
 
-    sentry_sdk.set_context({"analzye_burn": {"request": body}})
+    sentry_sdk.set_context("analyze_burn", {"request": body})
     logger.log_text(f"Received analyze-burn request for {fire_event_name}")
 
     try:
@@ -291,7 +291,7 @@ def analyze_ecoclass(
     geojson = json.loads(body.geojson)
     affiliation = body.affiliation
 
-    sentry_sdk.set_context({"analzye_ecoclass": {"request": body}})
+    sentry_sdk.set_context("analyze_ecoclass", {"request": body})
     try:
         mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
         mu_polygon_keys = [
@@ -384,7 +384,7 @@ def analyze_rap(
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
 
-    sentry_sdk.set_context({"analzye_rap": {"request": body}})
+    sentry_sdk.set_context("analyze_rap", {"request": body})
 
     try:
 
@@ -421,7 +421,7 @@ async def upload_shapefile(
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry = Depends(init_sentry)
 ):
-    sentry_sdk.set_context({"upload_shapefile": {"fire_event_name": fire_event_name, "affiliation": affiliation}})
+    sentry_sdk.set_context("upload_shapefile", {"fire_event_name": fire_event_name, "affiliation": affiliation})
     try:
         # Read the file
         zip_content = await file.read()
@@ -468,7 +468,7 @@ async def upload_drawn_aoi(
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry = Depends(init_sentry)
 ):
-    sentry_sdk.set_context({"upload_drawn_aoi": {"fire_event_name": fire_event_name, "affiliation": affiliation}})
+    sentry_sdk.set_context("upload_drawn_aoi", {"fire_event_name": fire_event_name, "affiliation": affiliation})
     try:
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
