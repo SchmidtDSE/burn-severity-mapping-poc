@@ -491,7 +491,7 @@ async def upload_drawn_aoi(
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
-
+    
 ### WEB PAGES ###
 
 
