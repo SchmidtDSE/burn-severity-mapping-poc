@@ -96,7 +96,7 @@ class CloudStaticIOClient:
                 self.iam_credentials.refresh(request)
                 oidc_token = self.local_fetch_id_token(audience="sts.amazonaws.com")
             else:
-                oidc_token = id_token.fetch_id_token(request, "https://sts.amazonaws.com")
+                oidc_token = id_token.fetch_id_token(request, "sts.amazonaws.com")
 
             if not oidc_token:
                 raise ValueError("Failed to retrieve OIDC token")
