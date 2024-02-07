@@ -90,7 +90,7 @@ def check_connectivity():
         return {"status_code": response.status_code, "response_body": response.text}
     except Exception as e:
         logger.log_text(f"Connectivity check: Error {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/check-dns")
@@ -102,7 +102,7 @@ def check_dns():
         return {"ip_address": ip_address}
     except Exception as e:
         logger.log_text(f"DNS check: Error {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 ### DEPENDENCIES ###
@@ -130,23 +130,6 @@ def init_sentry():
 
 
 ### API ENDPOINTS ###
-
-
-# @app.get("/api/query-satellite/available-cogs")
-# def available_cogs(cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)):
-#     try:
-#         cloud_static_io_client.update_available_cogs()
-
-#         response = {
-#             "message": "updated available cogs",
-#             "available_cogs": cloud_static_io_client.available_cogs,
-#         }
-#         logger.log_text(f"Available COGs updated: {cloud_static_io_client.available_cogs}")
-#         return response, 200
-#     except Exception as e:
-#         logger.log_text(f"Error: {e}")
-#         return f"Error: {e}", 400
-
 
 class AnaylzeBurnPOSTBody(BaseModel):
     geojson: Any
@@ -235,8 +218,7 @@ def analyze_burn(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
-        return f"Error: {e}", 400
-
+        raise HTTPException(status_code=400, detail=str(e))
 
 class QuerySoilPOSTBody(BaseModel):
     geojson: Any
@@ -368,7 +350,7 @@ def analyze_ecoclass(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
-        return f"Error: {e}", 400
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 class AnaylzeRapPOSTBody(BaseModel):
@@ -413,7 +395,7 @@ def analyze_rap(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
-        return f"Error: {e}", 400
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/api/upload-shapefile-zip")
@@ -463,7 +445,7 @@ async def upload_shapefile(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
-        return f"Error: {e}", 400
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/api/upload-drawn-aoi")
@@ -490,7 +472,7 @@ async def upload_drawn_aoi(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
-        return f"Error: {e}", 400
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 ### WEB PAGES ###
