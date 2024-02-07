@@ -8,6 +8,7 @@ import tempfile
 from typing import Tuple, List, Any
 from pydantic import BaseModel
 import pandas as pd
+import sentry_sdk
 
 # For network debugging
 import socket
@@ -43,6 +44,17 @@ from src.lib.query_soil import (
 )
 from src.lib.query_rap import rap_get_biomass
 
+sentry_sdk.init(
+    dsn="https://3660129e232b3c796208a5e46945d838@o4506701219364864.ingest.sentry.io/4506701221199872",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
+
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix="/cog", tags=["Cloud Optimized GeoTIFF"])
@@ -64,6 +76,9 @@ def index():
     logger.log_text("ping pong")
     return "Alive", 200
 
+@app.get("/sentry-debug")
+async def trigger_error():
+    __division_by_zero = 1 / 0
 
 @app.get("/check-connectivity")
 def check_connectivity():
@@ -95,13 +110,23 @@ def check_dns():
 def get_cloud_static_io_client():
     return CloudStaticIOClient('burn-severity-backend', "s3")
 
-def get_manifest(sfpt_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)):
-    try:
-        manifest = sfpt_client.get_manifest()
-        return manifest
-    except Exception as e:
-        logger.log_text(f"Error: {e}")
-        return f"Error: {e}", 400
+def get_manifest(cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)):
+    manifest = cloud_static_io_client.get_manifest()
+    return manifest
+
+def init_sentry():
+    sentry_sdk.init(
+        dsn="https://3660129e232b3c796208a5e46945d838@o4506701219364864.ingest.sentry.io/4506701221199872",
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+        # Set profiles_sample_rate to 1.0 to profile 100%
+        # of sampled transactions.
+        # We recommend adjusting this value in production.
+        profiles_sample_rate=1.0,
+    )
+    sentry_sdk.set_context("env", {"env": os.getenv('ENV')})
+    logger.log_text("Sentry initialized")
 
 
 ### API ENDPOINTS ###
@@ -136,7 +161,7 @@ class AnaylzeBurnPOSTBody(BaseModel):
 # or something similar when the process is complete. Esp if the frontend remanins static.
 @app.post("/api/query-satellite/analyze-burn")
 def analyze_burn(
-    body: AnaylzeBurnPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)
+    body: AnaylzeBurnPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client), __sentry = Depends(init_sentry)
 ):
     geojson_boundary = json.loads(body.geojson)
 
@@ -146,6 +171,7 @@ def analyze_burn(
     derive_boundary = body.derive_boundary
     derived_boundary = None
 
+    sentry_sdk.set_context("analyze_burn", {"request": body})
     logger.log_text(f"Received analyze-burn request for {fire_event_name}")
 
     try:
@@ -205,8 +231,9 @@ def analyze_burn(
                 "derived_boundary": derived_boundary,
             },
         )
-
+    
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
 
@@ -256,13 +283,16 @@ def get_ecoclass_info(ecoclassid: str = Query(...)):
 # refactor out the low level endpoints (/api) and rename others (this isn't really an `analysis` but it does compose a lot of logic like `analyze-burn`)
 @app.post("/api/query-soil/analyze-ecoclass")
 def analyze_ecoclass(
-    body: QuerySoilPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)
+    body: QuerySoilPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client), __sentry = Depends(init_sentry)
 ):
     fire_event_name = body.fire_event_name
     geojson = json.loads(body.geojson)
     affiliation = body.affiliation
 
+    sentry_sdk.set_context("analyze_ecoclass", {"request": body})
+
     try:
+            
         mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
         mu_polygon_keys = [
             mupolygonkey
@@ -336,8 +366,10 @@ def analyze_ecoclass(
         return f"Ecoclass GeoJSON uploaded for {fire_event_name}", 200
 
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
         return f"Error: {e}", 400
+
 
 class AnaylzeRapPOSTBody(BaseModel):
     geojson: Any
@@ -347,13 +379,16 @@ class AnaylzeRapPOSTBody(BaseModel):
 
 @app.post("/api/query-biomass/analyze-rap")
 def analyze_rap(
-    body: AnaylzeRapPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client)
+    body: AnaylzeRapPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client), __sentry = Depends(init_sentry)
 ):
+    boundary_geojson = json.loads(body.geojson)
+    ignition_date = body.ignition_date
+    fire_event_name = body.fire_event_name
+    affiliation = body.affiliation
+
+    sentry_sdk.set_context("analyze_rap", {"request": body})
+
     try:
-        boundary_geojson = json.loads(body.geojson)
-        ignition_date = body.ignition_date
-        fire_event_name = body.fire_event_name
-        affiliation = body.affiliation
         rap_estimates = rap_get_biomass(
             boundary_geojson=boundary_geojson,
             ignition_date=ignition_date
@@ -374,10 +409,12 @@ def analyze_rap(
                 "fire_event_name": fire_event_name,
             },
         )
+
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
-        return JSONResponse(status_code=400, content={"error": str(e)})
-    
+        return f"Error: {e}", 400
+
 
 @app.post("/api/upload-shapefile-zip")
 async def upload_shapefile(
@@ -385,7 +422,10 @@ async def upload_shapefile(
     affiliation: str = Form(...),
     file: UploadFile = File(...),
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
+    __sentry = Depends(init_sentry)
 ):
+    sentry_sdk.set_context("upload_shapefile", {"fire_event_name": fire_event_name, "affiliation": affiliation})
+
     try:
         # Read the file
         zip_content = await file.read()
@@ -421,7 +461,9 @@ async def upload_shapefile(
         return JSONResponse(status_code=200, content={"geojson": geojson})
 
     except Exception as e:
-        return JSONResponse(status_code=400, content={"error": str(e)})
+        sentry_sdk.capture_exception(e)
+        logger.log_text(f"Error: {e}")
+        return f"Error: {e}", 400
 
 
 @app.post("/api/upload-drawn-aoi")
@@ -430,7 +472,10 @@ async def upload_drawn_aoi(
     affiliation: str = Form(...),
     geojson: str = Form(...),
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
+    __sentry = Depends(init_sentry)
 ):
+    sentry_sdk.set_context("upload_drawn_aoi", {"fire_event_name": fire_event_name, "affiliation": affiliation})
+
     try:
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
@@ -443,8 +488,9 @@ async def upload_drawn_aoi(
         return JSONResponse(status_code=200, content={"geojson": geojson})
 
     except Exception as e:
-        return JSONResponse(status_code=400, content={"error": str(e)})
-
+        sentry_sdk.capture_exception(e)
+        logger.log_text(f"Error: {e}")
+        return f"Error: {e}", 400
 
 ### WEB PAGES ###
 

@@ -21,7 +21,7 @@ class CloudStaticIOClient:
     def __init__(self, bucket_name, provider):
 
         self.env = os.environ.get("ENV")
-        self.role_arn = os.environ.get("S3_FROM_GCP_ARN")
+        self.role_arn = os.environ.get("S3_FROM_GCP_ROLE_ARN")
         self.service_account_email = os.environ.get("GCP_SERVICE_ACCOUNT_S3_EMAIL")
         self.role_session_name = "burn-backend-session"
 
@@ -96,7 +96,7 @@ class CloudStaticIOClient:
                 self.iam_credentials.refresh(request)
                 oidc_token = self.local_fetch_id_token(audience="sts.amazonaws.com")
             else:
-                oidc_token = id_token.fetch_id_token(request, "sts.amazonaws.com")
+                oidc_token = id_token.fetch_id_token(request, "https://sts.amazonaws.com")
 
             if not oidc_token:
                 raise ValueError("Failed to retrieve OIDC token")

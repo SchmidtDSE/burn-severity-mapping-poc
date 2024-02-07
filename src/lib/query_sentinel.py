@@ -70,7 +70,7 @@ class Sentinel2Client:
             geojson_bbox[3].round(decimals=2) + self.buffer,
         ]
 
-    def get_items(self, date_range, cloud_cover=100, from_bbox=True, max_items=None):
+    def get_items(self, date_range, from_bbox=True, max_items=None):
         date_range_fmt = "{}/{}".format(date_range[0], date_range[1])
 
         # TODO [#14]: Cloud cover response to smoke
@@ -163,6 +163,9 @@ class Sentinel2Client:
         postfire_items = self.get_items(
             postfire_date_range, from_bbox=from_bbox, max_items=max_items
         )
+
+        if len(prefire_items) == 0 or len(postfire_items) == 0:
+            raise ValueError('Date ranges insufficient for enough imagery to calculate burn metrics')
 
         self.prefire_stack = self.arrange_stack(prefire_items)
         self.postfire_stack = self.arrange_stack(postfire_items)

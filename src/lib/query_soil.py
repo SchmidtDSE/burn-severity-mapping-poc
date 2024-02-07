@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 import tempfile
 import urllib
 from shapely.ops import transform
+import sentry_sdk
 
 SDM_ENDPOINT_TABULAR = "https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest"
 SDM_ENDPOINT_SPATIAL = (

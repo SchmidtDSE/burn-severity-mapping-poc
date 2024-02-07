@@ -29,6 +29,7 @@ dependencies:
   - uvicorn
   - pip
   - smart_open
+  - sentry-sdk[fastapi]
   - pip:
       - titiler.core
       - python-multipart
