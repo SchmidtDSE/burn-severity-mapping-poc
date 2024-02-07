@@ -25,6 +25,20 @@
         justify-content: space-between;
       }
 
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        grid-gap: 20px;
+      }
+
+      .grid-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #ccc;
+        padding: 20px;
+      }
       .upload-area {
         flex: 0 0 30%;
         border: 1px solid #ccc;
@@ -129,76 +143,78 @@
       </div>
     </div>
     <div class="indicator-area">
-      <div id="upload-loading" style="display: none">
-        <img
-          class="indicator-img"
-          src="/static/upload/spinner.gif"
-          alt="Uploading shapefile... this may take a few moments."
-        />
-        <p>Uploading AOI...</p>
-      </div>
+      <div class="grid-container">
+        <div id="upload-loading" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/spinner.gif"
+            alt="Uploading shapefile... this may take a few moments."
+          />
+          <p>Uploading AOI...</p>
+        </div>
 
-      <div id="upload-success" style="display: none">
-        <img
-          class="indicator-img"
-          src="/static/upload/checkmark.png"
-          alt="Upload Success!"
-        />
-        <p>Upload Success!</p>
-      </div>
+        <div id="upload-success" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/checkmark.png"
+            alt="Upload Success!"
+          />
+          <p>Upload Success!</p>
+        </div>
 
-      <div id="burn-analysis-loading" style="display: none">
-        <img
-          class="indicator-img"
-          src="/static/upload/spinner.gif"
-          alt="Analyzing burn area... depending on AOI size, this may take several minutes."
-        />
-        <p>Analyzing Burn Metrics...</p>
-      </div>
+        <div id="burn-analysis-loading" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/spinner.gif"
+            alt="Analyzing burn area... depending on AOI size, this may take several minutes."
+          />
+          <p>Analyzing Burn Metrics...</p>
+        </div>
 
-      <div id="burn-analysis-success" style="display: none">
-        <img
-          class="indicator-img"
-          src="/static/upload/checkmark.png"
-          alt="Burn Metric Analysis Success!"
-        />
-        <p>Burn Metric Analysis Success!</p>
-      </div>
+        <div id="burn-analysis-success" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/checkmark.png"
+            alt="Burn Metric Analysis Success!"
+          />
+          <p>Burn Metric Analysis Success!</p>
+        </div>
 
-      <div id="ecoclass-analysis-loading" style="display: none">
-        <img
-          class="indicator-img"
-          src="/static/upload/spinner.gif"
-          alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes."
-        />
-        <p>Fetching EDIT cover types...</p>
-      </div>
+        <div id="ecoclass-analysis-loading" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/spinner.gif"
+            alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes."
+          />
+          <p>Fetching EDIT cover types...</p>
+        </div>
 
-      <div id="ecoclass-analysis-success" style="display: none">
-        <img
-          class="indicator-img"
-          src="/static/upload/checkmark.png"
-          alt="EDIT Ecoclass Analysis Success!"
-        />
-        <p>EDIT Successfully Fetched!</p>
-      </div>
+        <div id="ecoclass-analysis-success" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/checkmark.png"
+            alt="EDIT Ecoclass Analysis Success!"
+          />
+          <p>EDIT Successfully Fetched!</p>
+        </div>
 
-      <div id="rap-analysis-loading" style="display: none">
-        <img
-          class="indicator-img"
-          src="/static/upload/spinner.gif"
-          alt="Analyzing RAP... depending on AOI size, this may take several minutes."
-        />
-        <p>Fetching RAP...</p>
-      </div>
+        <div id="rap-analysis-loading" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/spinner.gif"
+            alt="Analyzing RAP... depending on AOI size, this may take several minutes."
+          />
+          <p>Fetching RAP...</p>
+        </div>
 
-      <div id="rap-analysis-success" style="display: none">
-        <img
-          class="indicator-img"
-          src="/static/upload/checkmark.png"
-          alt="RAP Analysis Success!"
-        />
-        <p>RAP Successfully Fetched!</p>
+        <div id="rap-analysis-success" style="display: none">
+          <img
+            class="indicator-img"
+            src="/static/upload/checkmark.png"
+            alt="RAP Analysis Success!"
+          />
+          <p>RAP Successfully Fetched!</p>
+        </div>
       </div>
     </div>
 
@@ -334,6 +350,7 @@
         $("#upload-loading").show();
         $("#burn-analysis-loading").show();
         $("#ecoclass-analysis-loading").show();
+        $("#rap-analysis-loading").show();
 
         var formData = new FormData();
         formData.append("file", $("#shp_zip")[0].files[0]);
