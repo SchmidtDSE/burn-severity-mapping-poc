@@ -9,7 +9,8 @@ from typing import Tuple, List, Any
 from pydantic import BaseModel
 import pandas as pd
 import sentry_sdk
-
+from markdown import markdown
+from pathlib import Path
 # For network debugging
 import socket
 import requests
@@ -612,3 +613,20 @@ def directory(request: Request, manifest: dict = Depends(get_manifest)):
 @app.get("/sketch", response_class=HTMLResponse)
 def sketch(request: Request):
     return templates.TemplateResponse("sketch/sketch.html", {"request": request})
+
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    # Read the markdown file
+    with open(Path("src/static/home/home.md")) as f:
+        md_content = f.read()
+
+    # Convert markdown to HTML
+    html_content = markdown(md_content)
+
+    return templates.TemplateResponse(
+        "home.html",
+        {
+            "request": request,
+            "content": html_content,
+        },
+    )

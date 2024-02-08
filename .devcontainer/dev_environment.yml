@@ -23,6 +23,7 @@ dependencies:
   - ipython
   - jupyter
   - pystac-client
+  - markdown
   - boto3
   - planetary-computer
   - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
