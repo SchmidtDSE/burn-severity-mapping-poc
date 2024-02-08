@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Fire Analysis Form</title>
+    <title>Fire Analysis Upload</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link
       rel="stylesheet"
@@ -218,13 +218,23 @@
       </div>
     </div>
 
-    <div class="products">
-      <h3>Derived Products</h3>
-      <p>
-        <a id="map-rbr" href="" style="display: none"></a>
-        <a id="map-dnbr" href="" style="display: none"></a>
-      </p>
-      <div id="products"></div>
+    <div class="container">
+      <div class="products">
+        <h3>Derived Products</h3>
+        <p>
+          <ul style="list-style: none">
+            <li><a id="map-rbr" href="" style="font-size: 16px; display: none;"><strong>Interactive Map of Relative Burn Ratio (RBR)</strong></a></li>
+            <li><a id="map-dnbr" href="" style="font-size: 16px; display: none"><strong>Interactive Map of Delta Normalized Burn Ratio (dNBR)</strong></a></li>
+          </ul>
+        </p>
+        <div id="products-loading" style="display: none;">
+          <img
+            class="indicator-img"
+            src="/static/upload/spinner.gif"
+          />
+        </div>
+        <div id="products-list"></div>
+      </div>
     </div>
 
     <script>
@@ -245,17 +255,22 @@
             fire_event_name: $("#fire_event_name").val(),
             affiliation: $("#affiliation").val(),
           }),
+          success: function () {
+            $("#map-rbr").show();
+            $("#map-dnbr").show();
+            $('#products-loading').hide();
+          },
           error: function (error) {
             console.error(error);
             alert("Failed to get derived products.");
           },
         });
 
-        var mapRbrUrl = `${tileserverEndpoint}/map/${affiliation}/${fire_event_name}/rbr`;
-        var mapDnbrUrl = `${tileserverEndpoint}/map/${affiliation}/${fire_event_name}/dnbr`;
+        var mapRbrUrl = `${tileserverEndpoint}/map/${affiliation}/${fireEventName}/rbr`;
+        var mapDnbrUrl = `${tileserverEndpoint}/map/${affiliation}/${fireEventName}/dnbr`;
 
         $.when(derivedProductsResponse).done(function (response) {
-          var productsDiv = $("#products");
+          var productsDiv = $("#products-list");
           var productListItem = $("<ul></ul>");
           Object.entries(response).forEach(function ([
             productType,
@@ -270,15 +285,8 @@
           productsDiv.append(productListItem);
 
           // Add map url to the `map-id` div
-          $("#map-rbr").text("Interactive Map of Relative Burn Ratio (RBR)");
-          $("#map-rbr").attr("href", mapUrl);
-          $("#map-rbr").show();
-
-          $("#map-dnbr").text(
-            "Interactive Map of Delta Normalized Burn Ratio (dNBR)"
-          );
-          $("#map-dnbr").attr("href", mapUrl);
-          $("#map-dnbr").show();
+          $("#map-rbr").attr("href", mapRbrUrl);
+          $("#map-dnbr").attr("href", mapDnbrUrl);
         });
       }
 
@@ -413,6 +421,7 @@
         $("#burn-analysis-loading").show();
         $("#ecoclass-analysis-loading").show();
         $("#rap-analysis-loading").show();
+        $('#products-loading').show();
 
         var formData = new FormData();
         formData.append("file", $("#shp_zip")[0].files[0]);
