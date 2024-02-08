@@ -17,7 +17,7 @@ from google.auth.transport import requests as gcp_requests
 from google.oauth2 import id_token
 from google.auth import impersonated_credentials, exceptions
 
-## TODO: Make bucket https a tofu output
+## TODO [$65c41e8d3121920008cb9fff]: Make bucket https a tofu output
 BUCKET_HTTPS_PREFIX = "https://burn-severity-backend.s3.us-east-2.amazonaws.com"
 
 class CloudStaticIOClient:
