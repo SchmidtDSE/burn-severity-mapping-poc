@@ -89,71 +89,127 @@
       </div>
     </div>
     <script>
+        // Fetch the produced products
+        function getProducts(affiliation, fireEventName) {
+            // If all four requests are successful, get the map url and all derived products
+            var derivedProductsResponse = $.ajax({
+            url: "/api/get-derived-products",
+            type: "post",
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify({
+                fire_event_name: $("#fire_event_name").val(),
+                affiliation: $("#affiliation").val(),
+            }),
+            success: function (response) {
+                console.log(response);
+                return response;
+            },
+            error: function (error) {
+                console.error(error);
+                alert("Failed to get derived products.");
+            },
+        });
+        return derivedProductsResponse;
+      }
+
       function formatFireInfo(json) {
-        var obj = JSON.parse(json);
+          var obj = JSON.parse(json);
 
-        var bounds = 'Bounds: ' + obj.bounds.join(', ');
-        var prefireDateRange = 'Prefire Date Range: ' + obj.prefire_date_range.join(' to ');
-        var postfireDateRange = 'Postfire Date Range: ' + obj.postfire_date_range.join(' to ');
-        var lastUpdated = 'Last Updated: ' + obj.last_updated;
-        var deriveBoundary = 'Derive Boundary: ' + (obj.derive_boundary ? 'Yes' : 'No');
+          var bounds = '<li><strong>Bounds:</strong> ' + obj.bounds.join(', ') + '</li>';
+          var prefireDateRange = '<li><strong>Prefire Date Range:</strong> ' + obj.prefire_date_range.join(' to ') + '</li>';
+          var postfireDateRange = '<li><strong>Postfire Date Range:</strong> ' + obj.postfire_date_range.join(' to ') + '</li>';
+          var lastUpdated = '<li><strong>Last Updated:</strong> ' + obj.last_updated + '</li>';
+          var deriveBoundary = '<li><strong>Derive Boundary:</strong> ' + (obj.derive_boundary ? 'Yes' : 'No') + '</li>';
 
-        return bounds + '<br>' + prefireDateRange + '<br>' + postfireDateRange + '<br>' + lastUpdated + '<br>' + deriveBoundary;
+          return '<ul>' + bounds + prefireDateRange + postfireDateRange + lastUpdated + deriveBoundary + '</ul>';
       }
 
-      var manifest = JSON.parse({{manifest | tojson | safe}});
-      var mapboxToken = "{{ mapbox_token }}";
-      console.log(manifest);
-      var backendUrl = "https://your-backend-url";
+        var manifest = JSON.parse({{manifest | tojson | safe}});
+        var mapboxToken = "{{ mapbox_token }}";
+        console.log(manifest);
+        var backendUrl = "https://your-backend-url";
 
 
-        // Initialize the map
-        var map = L.map("map").setView([39.7749, -100.4194], 5);
+          // Initialize the map
+          var map = L.map("map").setView([39.7749, -100.4194], 5);
 
-        // Create panes
-        map.createPane("basemaps");
-        map.getPane("basemaps").style.zIndex = 2;
-        map.createPane("boundary");
-        map.getPane("boundary").style.zIndex = 5;
+          // Create panes
+          map.createPane("basemaps");
+          map.getPane("basemaps").style.zIndex = 2;
+          map.createPane("boundary");
+          map.getPane("boundary").style.zIndex = 5;
 
-        // Add a tile layer to the map
-        L.tileLayer(
-            `https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`,
-            {
-                maxZoom: 19,
-                attribution: "© Mapbox",
-                pane: "basemaps",
-                tileSize: 512,
-                zoomOffset: -1,
+          // Add a tile layer to the map
+          L.tileLayer(
+              `https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`,
+              {
+                  maxZoom: 19,
+                  attribution: "© Mapbox",
+                  pane: "basemaps",
+                  tileSize: 512,
+                  zoomOffset: -1,
+              }
+          ).addTo(map);
+
+        // Populate affiliation dropdown
+        for (var affiliation in manifest) {
+            $("#affiliationDropdown").append(new Option(affiliation, affiliation));
+        }
+
+        // When an affiliation is selected
+        $("#affiliationDropdown").change(function () {
+            var selectedAffiliation = $(this).val();
+
+            // Clear and populate fire name dropdown
+            $("#fireNameDropdown")
+            .empty()
+            .append(new Option("Select Fire Name", ""));
+            for (var fireName in manifest[selectedAffiliation]) {
+            $("#fireNameDropdown").append(new Option(fireName, fireName));
             }
-        ).addTo(map);
+        });
 
-      // Populate affiliation dropdown
-      for (var affiliation in manifest) {
-          $("#affiliationDropdown").append(new Option(affiliation, affiliation));
-      }
+        // When a fire name is selected
+        $("#fireNameDropdown").change(function () {
+            var selectedAffiliation = $("#affiliationDropdown").val();
+            var selectedFireName = $(this).val();
+            var products = getProducts(selectedAffiliation, selectedFireName);
 
-      // When an affiliation is selected
-      $("#affiliationDropdown").change(function () {
-          var selectedAffiliation = $(this).val();
+            $.when(products).done(function (products) {
+                console.log(products);
+                // Display the boundary on the map
+                if (map.hasLayer("boundary")) {
+                    map.removeLayer("boundary");
+                }
+                // Fetch the boundary geojson and display it on the map
+                console.log(products);
+                console.log(products.boundary_geojson)
 
-          // Clear and populate fire name dropdown
-          $("#fireNameDropdown")
-          .empty()
-          .append(new Option("Select Fire Name", ""));
-          for (var fireName in manifest[selectedAffiliation]) {
-          $("#fireNameDropdown").append(new Option(fireName, fireName));
-          }
-      });
+                var boundaryGeojsonUrl = products.boundary_geojson
 
-      // When a fire name is selected
-      $("#fireNameDropdown").change(function () {
-          var selectedAffiliation = $("#affiliationDropdown").val();
-          var selectedFireName = $(this).val();
-
-          // Display fire info
-          $("#fireInfo").html(formatFireInfo(JSON.stringify(manifest[selectedAffiliation][selectedFireName])));
-      });
+                fetch(boundaryGeojsonUrl).then(
+                    function (response) {
+                        response.json().then(function (data) {
+                            L.geoJSON(data, {
+                                pane: "boundary",
+                                style: function (feature) {
+                                    return {
+                                        color: "red",
+                                        weight: 2,
+                                        opacity: 1,
+                                        fillOpacity: 0.1,
+                                    };
+                                },
+                            }).addTo(map);
+                            map.fitBounds(L.geoJSON(data).getBounds());
+                            // Display fire info
+                            $("#fireInfo").html(formatFireInfo(JSON.stringify(manifest[selectedAffiliation][selectedFireName])));
+                        });
+                    }
+                );
+            });
+        });
     </script>
   </body>
 </html>
