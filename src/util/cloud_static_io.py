@@ -246,18 +246,20 @@ class CloudStaticIOClient:
         with tempfile.TemporaryDirectory() as tmpdir:
             manifest = self.get_manifest()
 
-            if fire_event_name in manifest:
+            if affiliation in manifest and fire_event_name in manifest[affiliation]:
                 self.logger.log_text(
-                    f"Fire event {fire_event_name} already exists in manifest. Overwriting."
+                    f"Fire event {fire_event_name} already exists in manifest for affiliation {affiliation}. Overwriting."
                 )
-                del manifest[fire_event_name]
+                del manifest[affiliation][fire_event_name]
 
-            manifest[fire_event_name] = {
+            if affiliation not in manifest:
+                manifest[affiliation] = {}
+
+            manifest[affiliation][fire_event_name] = {
                 "bounds": bounds,
                 "prefire_date_range": prefire_date_range,
                 "postfire_date_range": postfire_date_range,
                 "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "requester_affiliation": affiliation,
                 "derive_boundary": derive_boundary,
             }
 

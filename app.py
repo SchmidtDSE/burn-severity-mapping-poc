@@ -594,6 +594,20 @@ def upload(request: Request):
         }
     )
 
+@app.get("/directory", response_class=HTMLResponse)
+def directory(request: Request, manifest: dict = Depends(get_manifest)):
+    mapbox_token = get_mapbox_secret()
+    manifest_json = json.dumps(manifest)
+    cloud_run_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+    return templates.TemplateResponse(
+        "directory/directory.html",
+        {
+            "request": request,
+            "manifest": manifest_json,
+            "mapbox_token": mapbox_token,
+            "cloud_run_endpoint": cloud_run_endpoint
+        }
+    )
 
 @app.get("/sketch", response_class=HTMLResponse)
 def sketch(request: Request):
