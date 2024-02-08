@@ -46,6 +46,8 @@ As this is a work in progress, there are a few things to note regarding usage of
 - The combinaton of `Fire Event Name` and `Affiliation` _must be unique_. If you re-submit a request using the same `Fire Event Name` and `Affiliation`, you will overwrite the existing products within the server. Please feel free to do so if you've made a mistake or if you are experimenting!
 - Within the map view, the left side legend may be obscured on some screens - this may occur if your burn area is sufficently rich with cover type information and is a known issue. You may be able to resolve this by zooming out within your browser.
 
+If something breaks, or otherwise goes awry, we will receive logs of your session and will hopefully be able to resolve your issue - feel free to reach out to [mweltman-fahs@berkeley.edu](mailto:mweltman-fahs@berkeley.edu) and/or [npg@berkeley.edu](mailto:npg@berkeley.edu) with any additional context you think may be useful!
+
 ## Background
 
 This is a very early development prototype of a _Wildfire Severity and Recovery Tool_, devloped by Eric and Wendy Schmidt Center for Data Science & Environment (DSE) at Berkeley in Collaboration with the National Parks Service, meant to gather feedback from interested collaborators and users.
