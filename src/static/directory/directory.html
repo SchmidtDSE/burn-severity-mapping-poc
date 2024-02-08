@@ -91,16 +91,19 @@
     <script>
         // Fetch the produced products
         function getProducts(affiliation, fireEventName) {
+            postData = JSON.stringify({
+                fire_event_name: $("#fireNameDropdown").val(),
+                affiliation: $("#affiliationDropdown").val(),
+            })
+            console.log("postData: ", postData);
+
             // If all four requests are successful, get the map url and all derived products
             var derivedProductsResponse = $.ajax({
             url: "/api/get-derived-products",
             type: "post",
             dataType: "json",
             contentType: "application/json",
-            data: JSON.stringify({
-                fire_event_name: $("#fire_event_name").val(),
-                affiliation: $("#affiliation").val(),
-            }),
+            data: postData,
             success: function (response) {
                 console.log(response);
                 return response;
@@ -174,6 +177,7 @@
         $("#fireNameDropdown").change(function () {
             var selectedAffiliation = $("#affiliationDropdown").val();
             var selectedFireName = $(this).val();
+
             var products = getProducts(selectedAffiliation, selectedFireName);
 
             $.when(products).done(function (products) {
