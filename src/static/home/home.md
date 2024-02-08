@@ -1,80 +1,58 @@
-### Goals
+## Wildfire Severity and Recovery Tool, Version 0
 
-Near-term
+**Note: This tool and website are under ongoing development - it is recommended that you save any and all analytical outputs you deem essential.**
 
-- Enable NPS land managers to rapidly understand the severity of fires in arid landscapes, using rapidly-updated `Sentinel-2` and/or `LANDSAT` imagery, using a DSE-developed modelling approach and web application collaboratively designed with NPS end-users
+<div class="center-flexbox">
+    <a href="/upload">
+        <img src="static/home/upload.png" alt="Upload" class="nav-icon" />
+        <p>Upload</p>
+    </a>
+    <a href="/directory">
+        <img src="static/home/directory.png" alt="Directory" class="nav-icon"/>
+        <p>Directory</p>
+    </a>
+    <a href="/map/DSE/York/rbr">
+        <img src="static/home/map.png" alt="Example Map" class="nav-icon"/>
+        <p>Example Map</p>
+    </a>
+</div>
 
-Long-term
+#### Introduction
 
-- Develop and refine the tool to support NPS efforts in post-fire recovery, by investigating the post-fire effects of firebreak strategies, effectiveness of re-vegetation efforts, community range migration, among others
+This is a very early development prototype of a _Wildfire Severity and Recovery Tool_, devloped by Eric and Wendy Schmidt Center for Data Science & Environment (DSE) at Berkeley in Collaboration with the National Parks Service, meant to gather feedback from interested collaborators and users.
 
-### Current Approach: BAER / BARC Classifications
+The core of this collaboration comes from a need to better understand the severity of fires occuring in low biomass areas - in our initial case, in Southern California (specifically, Joshua Tree National Park and Mojave National Preserve).
 
-BAER is generated rapidly after a fire occurs, but is not a great representation of 'true' vegetation loss for a few reasons (motivated in part by _Safford et. al. 2008_).
+This tool uses publicly available satellite imagery (currently, the European Space Agency's _Sentinel 2_ imagery) to estimate fire severity metrics on-demand.
 
-1. **BARC framework and validation are not designed around arid ecosystems, and thus lack sensitivity to low biomass - comparisons of pre and post-fire comparisons are absolute, not relative**
-2. BARC is not very useful at low spatial resolutions, due to the BAER minimum delineations being around 40 acres
-3. BARC severity classifications vary from fire to fire, and classification thresholds are determined manually using opaque methodology, making spatial and temporal comparisons across fires difficult
-4. BARC is not validated with quantitative field data, so while relative comparisons might be valid, it is hard to make accurate **absolute** estimations of vegetation loss post-fire.
+#### Methodology
 
-### Best Practice: Relative Spectral Metrics
+The process of deriving burn severity metrics from satellite imagery typically involves comparing imagery from before and after a fire event, to determine how 'different' these images are in terms of reflective vegetation. Specifically, these metrics exploit the difference in two spectral bands provided by satellite imagery:
 
-To account for the fact that JOTR and other arid parks exist have relatively little biomass in vegetation compared to forest counterparts considered by BARC, we plan to analyze a suite of relative spectral metrics that adjust the fire severity metric of interest (usually the difference in spectral metrics before and after a fire).
+- **Near Infrared**, which is highly reflective in healthy vegetation
+- **Shortwave Infrared**, which is highly reflective in burned areas
 
-### Step 1 - Develop Data / Modelling Infrastructure
+![Exploting Spectral Response Curves](static/home/nir_swir.jpg)
 
-Inputs:
+##### Absolute Metrics
 
-- High frequency, low spatial resolution, highest spectral resolution remote sensing data
-  - `Sentinel-2`, soon-to-be `LANDSAT` and potentially `PLANET`
-- Low frequency, higher spatial resolution, low spectral resolution
-  - National Agricultural Imagery Program (`NAIP`)
-- One-off frequency, extremely high spatial resolution, variable spectral resolution
-  - LIDAR imagery from previous survey work
-
-In the context of fire severity modelling, absolute metrics, such as the _Normalized Burn Ratio_ ($NBR$), tend to be more effective for comparison across high and low biomass areas, but tend to be biased low in low biomass areas since the absolute changes ($dNBR$) are small in magnitude according to lack of adjustment.
+Absolute metrics, such as the _Normalized Burn Ratio_ ($NBR$), tend to be more effective for comparison across high and low biomass areas, since they essentially describe the _absolute difference_ in reflectiveness of healthy vegetation, regardless of how much vegetation existed there in the first place.
 
 $$ NBR = \frac{NIR - SWIR}{NIR + SWIR} $$
 
-$$ dNBR = NBR*{prefire} - NBR*{postfire}$$
+$$ dNBR = NBR\_{prefire} - NBR\_{postfire} $$
 
-To address these issues, some commonly accepted adjustments include the _Relative Difference in Normalized Burn Ratio_ ($RdNBR$), as well as the _Relativized Burn Ratio_ ($RBR$), both of which attempt to adjust the relative change by the reflectance of the area pre-fire, such that fire severity is scaled to local reflectance in each given pixel.
+In theory, this means that higher differences represent larger magnitudes of lost healthy vegetation. However, these tend to be biased low in low biomass areas or areas with sparse vegetation, because the absolute loss of vegetation, even in what would be considered an extreme fire event, is lower than the possible loss of vegetation in a higher biomass area.
+
+##### Relative Metrics
+
+Relative metrics, in contrast, scale the estimate of fire intensity at any particular point to its own prefire conditions - essentially, the intensity of a fire is expressed as a percentage of how much healthy vegetative signal was lost.
 
 $$RdNBR = \frac{dNBR}{|(NBR_{prefire})^{0.5}|}$$
 
 $$ RBR = \frac{dNBR}{NBR\_{prefire} +1.001}$$
 
-Each of these metrics can be derived from satellite imagery, at various degrees of temporal and spatial resolution. The simplest approach would be to settle on one source (likely `Sentinel-2`, as it has the higher temporal resolution than `LANDSAT`), and interpolate values between collection. However, a particular challenge identified in the case of immediate post-fire analysis is the potential occlusion of smoke - most approaches employ some manual approaches to find the best available pre-fire and post-fire images, which could lead to (1) some vegetative cover/biomass bias due phenology between image dates or (2) lag in analysis time in waiting for smoke-free imagery to be collected, since satellites return at best every 5 days.
-
-If we discover that relying on a imaging source is insufficient, either due to a lack of timeliness in imaging after fire (due to smoke or cloud occlusion) or simply due to issues with ground-truth accuracy (described in step 2), we may investigate a method which incorporates multiple imagery sources, as illustrated with `ESTARFM` fusion model employed in _Liu et. al. 2022_.
-
-### Step 2 - Validate Using NPS, BLM, USGS Ground-Truth
-
-Inputs:
-
-- Remote Sensing data as discussed above
-- Vegetation cover data
-  - Assessment, Inventory and Monitoring data from BLM / USGS, used to train [USDA's Rangeland Analysis Platform](https://rangelands.app/)
-  - Any and All NPS data that resemble AIM format (_specific fields and aggregations to be discussed with the JOTR/NPS team and through further investigation_)
-- Exogenous Land Features
-  - Soil / Lithography inputs using SSURGO, WebSoilSurvey, etc
-  - Terrain information using Digital Elevation Models (DEM) or other finer sources
-
-Using the approach described above, we will perform an initial analysis describing how well each relative metric (using _just_ a remote sensing approach) approximates vegetation metrics derived through ground truth data. An example of this approach, which focuses instead on the _Composite Burn Index_ (CBI), is illustrated in _Cardil et. al. 2019_.
-
-Depending on the results here, we may discover that one of the metrics above is a good enough approximation of reality to prove useful to the NPS in fire recovery efforts, and thus would move on to step 3.
-
-However, if we are not satisfied with the accuracy of such a model, another approach to this step would be to use vegetation cover as a target variable in a supervised learning model. Instead of treating the spectral indices as the output themselves, we might use these spectral indices as inputs (potentially including exogenous land features) to directly predict vegetation cover percentage. Such an approach would require more complete and land-cover-balanced vegetation data, but might result in better performance on NPS-managed lands in Southern California.
-
-### Step 3 – Develop Web Application and Interactive Elements
-
-Alongside modelling efforts, following guidance and feedback from JOTR staff and NPS stakeholders, we plan to develop an interactive web application which allows managers to visualize, for example:
-
-- (1) Point-in-time estimates of vegetative cover
-- (2) Trends in green-up and senescence
-- (3) Vegetative effects of disturbance
-
-The metrics visualized within this tool will be highly dependent on evidence of utility to park managers, from steps 1 and 2, and are subject to change throughout the design process and/or after project 'completion'.
+This means that, between low and high biomass areas, you would observe equivalent $RBR$ values even if the high biomass area experienced higher $dNBR$ values than the low biomass area.
 
 ### References
 

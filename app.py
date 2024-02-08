@@ -45,17 +45,6 @@ from src.lib.query_soil import (
 )
 from src.lib.query_rap import rap_get_biomass
 
-sentry_sdk.init(
-    dsn="https://3660129e232b3c796208a5e46945d838@o4506701219364864.ingest.sentry.io/4506701221199872",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
-    profiles_sample_rate=1.0,
-)
-
 app = FastAPI()
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix="/cog", tags=["Cloud Optimized GeoTIFF"])
@@ -72,7 +61,7 @@ templates = Jinja2Templates(directory="src/static")
 ### HELPERS ###
 
 
-@app.get("/")
+@app.get("/healthz")
 def index():
     logger.log_text("ping pong")
     return "Alive", 200
@@ -624,7 +613,7 @@ def home(request: Request):
     html_content = markdown(md_content)
 
     return templates.TemplateResponse(
-        "home.html",
+        "home/home.html",
         {
             "request": request,
             "content": html_content,
