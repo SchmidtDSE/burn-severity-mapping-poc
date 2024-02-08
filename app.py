@@ -474,6 +474,31 @@ async def upload_drawn_aoi(
         logger.log_text(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
+class GetDerivedProductsPOSTBody(BaseModel):
+    fire_event_name: str
+    affiliation: str
+
+@app.post("/api/get-derived-products")
+async def get_derived_products(
+    body: GetDerivedProductsPOSTBody,
+    cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
+    __sentry = Depends(init_sentry)
+):
+    fire_event_name = body.fire_event_name
+    affiliation = body.affiliation
+
+    sentry_sdk.set_context("get_derived_products", {"fire_event_name": fire_event_name, "affiliation": affiliation})
+
+    try:
+        derived_products = cloud_static_io_client.get_derived_products(
+            affiliation=affiliation, fire_event_name=fire_event_name
+        )
+        return JSONResponse(status_code=200, content=derived_products)
+
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.log_text(f"Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 ### WEB PAGES ###
 
@@ -558,11 +583,14 @@ def serve_map(
 @app.get("/upload", response_class=HTMLResponse)
 def upload(request: Request):
     mapbox_token = get_mapbox_secret()
+    tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+
     return templates.TemplateResponse(
         "upload/upload.html",
         {
             "request": request,
             "mapbox_token": mapbox_token,  # for NAIP and Satetllite in V0
+            "tileserver_endpoint": tileserver_endpoint
         }
     )
 

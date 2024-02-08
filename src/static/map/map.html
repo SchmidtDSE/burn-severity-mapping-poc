@@ -482,7 +482,7 @@
           })
 
           // Add COG tile layer for continious metric, no classification
-          var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"}}', {
+          var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"},"color":"red"}', {
               maxZoom: 20,
               pane: 'metrics'
           })
@@ -504,25 +504,25 @@
           })
 
           // Add Rangeland Analysis Platform annuals
-          var RapAnnualLayer = L.tileLayer('{{ rap_tileserver_annual_url | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"}}', {
+          var RapAnnualLayer = L.tileLayer('{{ rap_tileserver_annual_url | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"},"color":"blue"}', {
               maxZoom: 20,
               pane: 'metrics'
           })
 
             // Add Rangeland Analysis Platform perennials
-          var RapPerennialLayer = L.tileLayer('{{ rap_tileserver_perennial_url | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"}}', {
+          var RapPerennialLayer = L.tileLayer('{{ rap_tileserver_perennial_url | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"},"color":"blue"}', {
             maxZoom: 20,
             pane: 'metrics'
           })
 
           // Add Rangeland Analysis Platform shrubs
-          var RapShrubLayer = L.tileLayer('{{ rap_tileserver_shrub_url | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"}}', {
+          var RapShrubLayer = L.tileLayer('{{ rap_tileserver_shrub_url | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"},"color":"blue"}', {
             maxZoom: 20,
             pane: 'metrics'
           })
 
           // Add Rangeland Analysis Platform trees
-          var RapTreeLayer = L.tileLayer('{{ rap_tileserver_tree_url | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"}}', {
+          var RapTreeLayer = L.tileLayer('{{ rap_tileserver_tree_url | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"0","max":"1000"},"color":"blue"}', {
               maxZoom: 20,
               pane: 'metrics'
           })

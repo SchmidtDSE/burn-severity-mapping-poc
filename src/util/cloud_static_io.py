@@ -17,6 +17,9 @@ from google.auth.transport import requests as gcp_requests
 from google.oauth2 import id_token
 from google.auth import impersonated_credentials, exceptions
 
+## TODO: Make bucket https a tofu output
+BUCKET_HTTPS_PREFIX = "https://burn-severity-backend.s3.us-east-2.amazonaws.com"
+
 class CloudStaticIOClient:
     def __init__(self, bucket_name, provider):
 
@@ -301,3 +304,15 @@ class CloudStaticIOClient:
             self.logger.log_text(f"Got manifest.json")
             manifest = json.load(open(tmpdir + "tmp_manifest.json", "r"))
             return manifest
+
+    def get_derived_products(self, affiliation, fire_event_name):
+        s3_client = self.boto_session.client('s3')
+        paginator = s3_client.get_paginator('list_objects_v2')
+        derived_products = {}
+        bucket_prefix = f"public/{affiliation}/{fire_event_name}/"
+        for page in paginator.paginate(Bucket=self.bucket_name, Prefix=bucket_prefix):
+            for obj in page['Contents']:
+                full_https_url = BUCKET_HTTPS_PREFIX + '/' + obj['Key']
+                filename = os.path.basename(obj['Key'])
+                derived_products[filename] = full_https_url
+        return derived_products

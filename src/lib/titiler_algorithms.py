@@ -4,10 +4,20 @@ from rio_tiler.models import ImageData
 import numpy as np
 
 
-def convert_to_rgb(classified: np.ndarray, mask: np.ndarray) -> np.ndarray:
+def convert_to_rgb(classified: np.ndarray, mask: np.ndarray, color: str) -> np.ndarray:
     # Convert to a red rgb image, from grayscale
-    r_channel = np.full_like(classified, 255)
-    classified_rgb = np.stack([r_channel, classified, classified], axis=0)
+    if color == "red":
+        r_channel = np.full_like(classified, 255)
+        classified_rgb = np.stack([r_channel, classified, classified], axis=0)
+    elif color == "green":
+        g_channel = np.full_like(classified, 255)
+        classified_rgb = np.stack([classified, g_channel, classified], axis=0)
+    elif color == "blue":
+        b_channel = np.full_like(classified, 255)
+        classified_rgb = np.stack([classified, classified, b_channel], axis=0)
+    else:
+        raise ValueError(f"Invalid color: {color}")
+
     rgb_mask = np.stack([mask, mask, mask], axis=0).squeeze()
 
     final_img = np.ma.MaskedArray(classified_rgb, mask=rgb_mask)
@@ -16,6 +26,7 @@ def convert_to_rgb(classified: np.ndarray, mask: np.ndarray) -> np.ndarray:
 
 class Classify(BaseAlgorithm):
     thresholds: dict  # There is no default, which means calls to this algorithm without any parameter will fail
+    color: str = "red"  # Default to red
 
     def __call__(self, img: ImageData) -> ImageData:
         float_burn_data = img.data.squeeze()
@@ -29,7 +40,7 @@ class Classify(BaseAlgorithm):
 
         classified = np.select(threshold_checks, png_int_values).astype(np.uint8)
 
-        final_img = convert_to_rgb(classified, mask)
+        final_img = convert_to_rgb(classified, mask, self.color)
 
         # Create output ImageData
         return ImageData(
@@ -42,6 +53,7 @@ class Classify(BaseAlgorithm):
 
 class CensorAndScale(BaseAlgorithm):
     thresholds: dict  # There is no default, which means calls to this algorithm without any parameter will fail
+    color: str = "red"  # Default to red
 
     def __call__(self, img: ImageData) -> ImageData:
         scale_min = float(self.thresholds["min"])
@@ -67,7 +79,7 @@ class CensorAndScale(BaseAlgorithm):
         # Convert to uint8
         int_data = img.data.astype(np.uint8).squeeze()
 
-        final_img = convert_to_rgb(int_data, mask_transparent)
+        final_img = convert_to_rgb(int_data, mask_transparent, self.color)
 
         return ImageData(
             final_img,

@@ -221,6 +221,49 @@
     <script>
       // AOI Input Map
       var mapboxToken = "{{ mapbox_token }}";
+      var tileserverEndpoint = "{{ tileserver_endpoint }}";
+
+      function checkSuccess() {
+        if (successCounter === 4) {
+          // If all four requests are successful, get the map url and all derived products
+          var derivedProductsResponse = $.ajax({
+            url: "/api/get-derived-products",
+            type: "post",
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify({
+              fire_event_name: $("#fire_event_name").val(),
+              affiliation: $("#affiliation").val(),
+            }),
+            success: function (mapUrl) {
+              $("#map-url").text(mapUrl);
+              $("#map-url").attr("href", mapUrl);
+              $("#map-url").show();
+            },
+            error: function (error) {
+              console.error(error);
+              alert("Failed to get derived products.");
+            },
+          });
+
+          when(derivedProductsResponse).done(function (response) {
+            var mapUrl = response.mapUrl;
+            $("#map-url").text(mapUrl);
+            $("#map-url").attr("href", mapUrl);
+            $("#map-url").show();
+
+            response.products.forEach(function (product) {
+              var productType = product[0];
+              var productUrl = product[1];
+              var productElement = $(`#${productType}-url`);
+              productElement.text(productUrl);
+              productElement.attr("href", productUrl);
+              productElement.show();
+            });
+          });
+        }
+      }
+
       var map = L.map("map").setView([39.7749, -100.4194], 5);
 
       // Create panes to properly order basemaps and boundaries
