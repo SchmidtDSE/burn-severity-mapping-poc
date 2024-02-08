@@ -74,7 +74,7 @@
           <option value="">Select Fire Name</option>
         </select>
         <div id="fireInfo"></div>
-        <ul id="urlList"></ul>
+        <ul id="products-list"></ul>
       </div>
       <div class="map-area">
         <div class="location-search">
@@ -105,7 +105,6 @@
             contentType: "application/json",
             data: postData,
             success: function (response) {
-                console.log(response);
                 return response;
             },
             error: function (error) {
@@ -181,37 +180,46 @@
             var products = getProducts(selectedAffiliation, selectedFireName);
 
             $.when(products).done(function (products) {
-                console.log(products);
                 // Display the boundary on the map
-                if (map.hasLayer("boundary")) {
-                    map.removeLayer("boundary");
-                }
+                // if (map.hasLayer("boundary")) {
+                //     map.removeLayer("boundary");
+                // }
                 // Fetch the boundary geojson and display it on the map
-                console.log(products);
-                console.log(products.boundary_geojson)
+                var productsDiv = $("#products-list");
+                var productListItem = $("<ul></ul>");
+                Object.entries(products).forEach(function ([
+                    productType,
+                    productUrl,
+                ]) {
+                    console.log(productType, productUrl);
+                    var productElement = $("<li><a></a></li>");
+                    productElement.find("a").text(productType);
+                    productElement.find("a").attr("href", productUrl);
+                    productListItem.append(productElement);
+                });
+                productsDiv.append(productListItem);
+                var boundaryGeojsonUrl = products['boundary.geojson'];
 
-                var boundaryGeojsonUrl = products.boundary_geojson
-
-                fetch(boundaryGeojsonUrl).then(
-                    function (response) {
-                        response.json().then(function (data) {
-                            L.geoJSON(data, {
-                                pane: "boundary",
-                                style: function (feature) {
-                                    return {
-                                        color: "red",
-                                        weight: 2,
-                                        opacity: 1,
-                                        fillOpacity: 0.1,
-                                    };
-                                },
-                            }).addTo(map);
-                            map.fitBounds(L.geoJSON(data).getBounds());
-                            // Display fire info
-                            $("#fireInfo").html(formatFireInfo(JSON.stringify(manifest[selectedAffiliation][selectedFireName])));
-                        });
-                    }
-                );
+            fetch(boundaryGeojsonUrl)
+                .then(response => response.json())
+                .then(boundaryGeojson => {
+                    console.log(boundaryGeojson);
+                    L.geoJSON(boundaryGeojson, {
+                        pane: "boundary",
+                        style: function (feature) {
+                            return {
+                                color: "red",
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.1,
+                            };
+                        },
+                    }).addTo(map);
+                    map.fitBounds(L.geoJSON(boundaryGeojson).getBounds());
+                    // Display fire info
+                    $("#fireInfo").html(formatFireInfo(JSON.stringify(manifest[selectedAffiliation][selectedFireName])));
+                })
+                .catch(error => console.error('Error:', error));
             });
         });
     </script>
