@@ -553,7 +553,7 @@ def serve_map(
     )
 
 
-    fire_metadata = manifest[fire_event_name]
+    fire_metadata = manifest[affiliation][fire_event_name]
     fire_metadata_json = json.dumps(fire_metadata)
 
     with open("src/static/map/burn_metric_text.json") as json_file:

@@ -74,7 +74,16 @@
           <option value="">Select Fire Name</option>
         </select>
         <div id="fireInfo"></div>
+        <p>
+          <ul style="list-style: none">
+            <li><a id="map-rbr" href="" style="font-size: 16px; display: none;"><strong>Interactive Map of Relative Burn Ratio (RBR)</strong></a></li>
+            <li><a id="map-dnbr" href="" style="font-size: 16px; display: none"><strong>Interactive Map of Delta Normalized Burn Ratio (dNBR)</strong></a></li>
+          </ul>
+        </p>
         <ul id="products-list"></ul>
+        <div id="info-loading" style="display: none">
+          <img class="indicator-img" src="/static/upload/spinner.gif" />
+        </div>
       </div>
       <div class="map-area">
         <div class="location-search">
@@ -90,12 +99,12 @@
     </div>
     <script>
         // Fetch the produced products
-        function getProducts(affiliation, fireEventName) {
+        var cloudRunEndpoint = "{{ cloud_run_endpoint }}";
+        function getProducts(cloudRunEndpoint, affiliation, fireEventName) {
             postData = JSON.stringify({
                 fire_event_name: $("#fireNameDropdown").val(),
                 affiliation: $("#affiliationDropdown").val(),
             })
-            console.log("postData: ", postData);
 
             // If all four requests are successful, get the map url and all derived products
             var derivedProductsResponse = $.ajax({
@@ -112,7 +121,37 @@
                 alert("Failed to get derived products.");
             },
         });
-        return derivedProductsResponse;
+        var mapRbrUrl = `${cloudRunEndpoint}/map/${affiliation}/${fireEventName}/rbr`;
+        var mapDnbrUrl = `${cloudRunEndpoint}/map/${affiliation}/${fireEventName}/dnbr`;
+
+        return new Promise (function (resolve, reject) {
+            $.when(derivedProductsResponse).done(function (products) {
+                // Fetch the boundary geojson and display it on the map
+                var productsDiv = $("#products-list");
+                var productListItem = $("<ul></ul>");
+                Object.entries(products).forEach(function ([
+                    productType,
+                    productUrl,
+                ]) {
+                    var productElement = $("<li><a></a></li>");
+                    productElement.find("a").text(productType);
+                    productElement.find("a").attr("href", productUrl);
+                    productListItem.append(productElement);
+                });
+                productsDiv.append(productListItem);
+
+                // Add map url to the `map-id` div
+                $("#map-rbr").attr("href", mapRbrUrl);
+                $("#map-dnbr").attr("href", mapDnbrUrl);
+                console.log(products)
+                boundaryGeojsonUrl = products['boundary.geojson'];
+                resolve(boundaryGeojsonUrl);
+            }).fail(function (error) {
+                console.error(error);
+                alert("Failed to get derived products.");
+                reject(error);
+            });
+        });
       }
 
       function formatFireInfo(json) {
@@ -129,9 +168,9 @@
 
         var manifest = JSON.parse({{manifest | tojson | safe}});
         var mapboxToken = "{{ mapbox_token }}";
-        console.log(manifest);
         var backendUrl = "https://your-backend-url";
 
+        var boundaryLayer = null; // Keep a reference to the boundary layer
 
           // Initialize the map
           var map = L.map("map").setView([39.7749, -100.4194], 5);
@@ -174,54 +213,47 @@
 
         // When a fire name is selected
         $("#fireNameDropdown").change(function () {
+            $("#products-list").empty();
+            $("#fireInfo").empty();
+            $("#map-rbr").hide();
+            $("#map-dnbr").hide();
+
+            if (boundaryLayer) {
+                map.removeLayer(boundaryLayer);
+            }
+            $("#info-loading").show()
+
             var selectedAffiliation = $("#affiliationDropdown").val();
             var selectedFireName = $(this).val();
 
-            var products = getProducts(selectedAffiliation, selectedFireName);
+            var boundaryGeojsonUrl = getProducts(cloudRunEndpoint, selectedAffiliation, selectedFireName).then(
+                function (boundaryGeojsonUrl) {
+                    fetch(boundaryGeojsonUrl)
+                        .then(response => response.json())
+                        .then(boundaryGeojson => {
+                            $("#info-loading").hide()
+                            $("#map-rbr").show();
+                            $("#map-dnbr").show();
 
-            $.when(products).done(function (products) {
-                // Display the boundary on the map
-                // if (map.hasLayer("boundary")) {
-                //     map.removeLayer("boundary");
-                // }
-                // Fetch the boundary geojson and display it on the map
-                var productsDiv = $("#products-list");
-                var productListItem = $("<ul></ul>");
-                Object.entries(products).forEach(function ([
-                    productType,
-                    productUrl,
-                ]) {
-                    console.log(productType, productUrl);
-                    var productElement = $("<li><a></a></li>");
-                    productElement.find("a").text(productType);
-                    productElement.find("a").attr("href", productUrl);
-                    productListItem.append(productElement);
+                            boundaryLayer = L.geoJSON(boundaryGeojson, {
+                                pane: "boundary",
+                                style: function (feature) {
+                                    return {
+                                        color: "red",
+                                        weight: 2,
+                                        opacity: 1,
+                                        fillOpacity: 0.1,
+                                    };
+                                },
+                            })
+                            boundaryLayer.addTo(map);
+                            map.fitBounds(boundaryLayer.getBounds());
+                            // Display fire info
+                            $("#fireInfo").html(formatFireInfo(JSON.stringify(manifest[selectedAffiliation][selectedFireName])));
+                        })
+                        .catch(error => console.error('Error:', error));
+                    });
                 });
-                productsDiv.append(productListItem);
-                var boundaryGeojsonUrl = products['boundary.geojson'];
-
-            fetch(boundaryGeojsonUrl)
-                .then(response => response.json())
-                .then(boundaryGeojson => {
-                    console.log(boundaryGeojson);
-                    L.geoJSON(boundaryGeojson, {
-                        pane: "boundary",
-                        style: function (feature) {
-                            return {
-                                color: "red",
-                                weight: 2,
-                                opacity: 1,
-                                fillOpacity: 0.1,
-                            };
-                        },
-                    }).addTo(map);
-                    map.fitBounds(L.geoJSON(boundaryGeojson).getBounds());
-                    // Display fire info
-                    $("#fireInfo").html(formatFireInfo(JSON.stringify(manifest[selectedAffiliation][selectedFireName])));
-                })
-                .catch(error => console.error('Error:', error));
-            });
-        });
     </script>
   </body>
 </html>
