@@ -218,50 +218,68 @@
       </div>
     </div>
 
+    <div class="products">
+      <h3>Derived Products</h3>
+      <p>
+        <a id="map-rbr" href="" style="display: none"></a>
+        <a id="map-dnbr" href="" style="display: none"></a>
+      </p>
+      <div id="products"></div>
+    </div>
+
     <script>
       // AOI Input Map
       var mapboxToken = "{{ mapbox_token }}";
       var tileserverEndpoint = "{{ tileserver_endpoint }}";
 
-      function checkSuccess() {
-        if (successCounter === 4) {
-          // If all four requests are successful, get the map url and all derived products
-          var derivedProductsResponse = $.ajax({
-            url: "/api/get-derived-products",
-            type: "post",
-            dataType: "json",
-            contentType: "application/json",
-            data: JSON.stringify({
-              fire_event_name: $("#fire_event_name").val(),
-              affiliation: $("#affiliation").val(),
-            }),
-            success: function (mapUrl) {
-              $("#map-url").text(mapUrl);
-              $("#map-url").attr("href", mapUrl);
-              $("#map-url").show();
-            },
-            error: function (error) {
-              console.error(error);
-              alert("Failed to get derived products.");
-            },
-          });
+      var successCounter = 0;
 
-          when(derivedProductsResponse).done(function (response) {
-            var mapUrl = response.mapUrl;
-            $("#map-url").text(mapUrl);
-            $("#map-url").attr("href", mapUrl);
-            $("#map-url").show();
+      function getProducts(tileserverEndpoint, affiliation, fireEventName) {
+        // If all four requests are successful, get the map url and all derived products
+        var derivedProductsResponse = $.ajax({
+          url: "/api/get-derived-products",
+          type: "post",
+          dataType: "json",
+          contentType: "application/json",
+          data: JSON.stringify({
+            fire_event_name: $("#fire_event_name").val(),
+            affiliation: $("#affiliation").val(),
+          }),
+          error: function (error) {
+            console.error(error);
+            alert("Failed to get derived products.");
+          },
+        });
 
-            response.products.forEach(function (product) {
-              var productType = product[0];
-              var productUrl = product[1];
-              var productElement = $(`#${productType}-url`);
-              productElement.text(productUrl);
-              productElement.attr("href", productUrl);
-              productElement.show();
-            });
+        var mapRbrUrl = `${tileserverEndpoint}/map/${affiliation}/${fire_event_name}/rbr`;
+        var mapDnbrUrl = `${tileserverEndpoint}/map/${affiliation}/${fire_event_name}/dnbr`;
+
+        $.when(derivedProductsResponse).done(function (response) {
+          var productsDiv = $("#products");
+          var productListItem = $("<ul></ul>");
+          Object.entries(response).forEach(function ([
+            productType,
+            productUrl,
+          ]) {
+            console.log(productType, productUrl);
+            var productElement = $("<li><a></a></li>");
+            productElement.find("a").text(productType);
+            productElement.find("a").attr("href", productUrl);
+            productListItem.append(productElement);
           });
-        }
+          productsDiv.append(productListItem);
+
+          // Add map url to the `map-id` div
+          $("#map-rbr").text("Interactive Map of Relative Burn Ratio (RBR)");
+          $("#map-rbr").attr("href", mapUrl);
+          $("#map-rbr").show();
+
+          $("#map-dnbr").text(
+            "Interactive Map of Delta Normalized Burn Ratio (dNBR)"
+          );
+          $("#map-dnbr").attr("href", mapUrl);
+          $("#map-dnbr").show();
+        });
       }
 
       var map = L.map("map").setView([39.7749, -100.4194], 5);
@@ -356,6 +374,7 @@
         var postfireStart = new Date($("#postfire-start").val());
         var postfireEnd = new Date($("#postfire-end").val());
         var fireEventName = $("#fire_event_name").val();
+        var affiliation = $("#affiliation").val();
 
         // Check if a shapefile has been uploaded
         if (!shapefileUploaded && !aoiDrawn) {
@@ -416,6 +435,7 @@
             success: function () {
               $("#upload-loading").hide();
               $("#upload-success").show();
+              successCounter++;
             },
             error: function () {
               $("#upload-loading").hide();
@@ -438,6 +458,7 @@
             success: function () {
               $("#upload-loading").hide();
               $("#upload-success").show();
+              successCounter++;
             },
             error: function () {
               $("#upload-loading").hide();
@@ -509,6 +530,7 @@
               success: function (analysisResponse) {
                 $("#burn-analysis-loading").hide();
                 $("#burn-analysis-success").show();
+                successCounter++;
               },
               error: function (error) {
                 console.error(error);
@@ -567,6 +589,11 @@
                 success: function () {
                   $("#ecoclass-analysis-loading").hide();
                   $("#ecoclass-analysis-success").show();
+                  successCounter++;
+                  if (successCounter == 4) {
+                    // wait until all 4 requests are successful
+                    getProducts(tileserverEndpoint, affiliation, fireEventName);
+                  }
                 },
                 error: function () {
                   console.error(error);
@@ -591,6 +618,11 @@
                 success: function () {
                   $("#rap-analysis-loading").hide();
                   $("#rap-analysis-success").show();
+                  successCounter++;
+                  if (successCounter == 4) {
+                    // wait until all 4 requests are successful
+                    getProducts(tileserverEndpoint, affiliation, fireEventName);
+                  }
                 },
                 error: function () {
                   console.error(error);

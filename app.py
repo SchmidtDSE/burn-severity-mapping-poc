@@ -590,7 +590,7 @@ def upload(request: Request):
         {
             "request": request,
             "mapbox_token": mapbox_token,  # for NAIP and Satetllite in V0
-            "tileserver_endpoint": tileserver_endpoint
+            "tileserver_endpoint": tileserver_endpoint,
         }
     )
 
