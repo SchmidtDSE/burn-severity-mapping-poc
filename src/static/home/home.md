@@ -11,7 +11,7 @@
         <img src="static/home/directory.png" alt="Directory" class="nav-icon"/>
         <p>Directory</p>
     </a>
-    <a href="/map/DSE/York/rbr">
+    <a href="/map/DSE/Geology/rbr">
         <img src="static/home/map.png" alt="Example Map" class="nav-icon"/>
         <p>Example Map</p>
     </a>
