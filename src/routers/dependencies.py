@@ -4,6 +4,7 @@ from logging import Logger
 from google.cloud import logging
 import sentry_sdk
 from src.util.cloud_static_io import CloudStaticIOClient
+from src.util.gcp_secrets import get_mapbox_secret as gcp_get_mapbox_secret
 import os
 
 def get_cloud_logger():
@@ -44,3 +45,5 @@ def init_sentry(
     sentry_sdk.set_context("env", {"env": os.getenv('ENV')})
     logger.log_text("Sentry initialized")
 
+def get_mapbox_secret():
+    return gcp_get_mapbox_secret()
