@@ -42,19 +42,19 @@ from src.routers.upload import (
     drawn_aoi,
     shapefile_zip
 )
+from src.routers.fetch import (
+    rangeland_analysis_platform,
+    ecoclass
+)
 
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from src.lib.titiler_algorithms import algorithms
 
+## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
-
-
-cog = TilerFactory(process_dependency=algorithms.dependency)
-app.include_router(cog.router, prefix="/cog", tags=["tileserver"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
-
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 templates = Jinja2Templates(directory="src/static")
 
@@ -67,193 +67,17 @@ app.include_router(dns.router)
 ### ANALYZE ###
 app.include_router(spectral_burn_metrics.router)
 
-## UPLOAD ## 
+### UPLOAD ### 
 app.include_router(drawn_aoi.router)
 app.include_router(shapefile_zip.router)
 
 ### FETCH ###
+app.include_router(rangeland_analysis_platform.router)
+app.include_router(ecoclass.router)
 
-## TILESERVER ##
+### TILESERVER ###
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix="/cog", tags=["tileserver"])
-add_exception_handlers(app, DEFAULT_STATUS_CODES)
-
-# class QuerySoilPOSTBody(BaseModel):
-#     geojson: Any
-#     fire_event_name: str
-#     affiliation: str
-
-
-# @app.post("/api/query-soil/get-esa-mapunitid-poly")
-# def get_esa_mapunitid_poly(body: QuerySoilPOSTBody):
-#     geojson = body.geojson
-#     fire_event_name = body.fire_event_name
-#     mapunitpoly_geojson = sdm_get_esa_mapunitid_poly(geojson)
-#     return JSONResponse(
-#         status_code=200,
-#         content={"mapunitpoly_geojson": json.loads(mapunitpoly_geojson)},
-#     )
-#     # return polygon_response
-
-
-# class MUPair(BaseModel):
-#     mu_pair: Tuple[str, str]
-
-
-# class QueryEcoclassidPOSTBody(BaseModel):
-#     mu_pair_tuples: List[MUPair]
-
-
-# @app.post("/api/query-soil/get-ecoclassid-from-mu-info")
-# def get_ecoclassid_from_mu_info(body: QueryEcoclassidPOSTBody):
-#     mu_pair_tuples = body.mu_pair_tuples
-#     mrla = sdm_get_ecoclassid_from_mu_info(mu_pair_tuples)
-#     return JSONResponse(status_code=200, content={"mrla": json.loads(mrla)})
-
-
-# @app.get("/api/query-soil/get-ecoclass-info")
-# def get_ecoclass_info(ecoclassid: str = Query(...)):
-#     status_code, ecoclass_info = edit_get_ecoclass_info(ecoclassid)
-#     return JSONResponse(
-#         status_code=status_code, content={"ecoclass_info": ecoclass_info}
-#     )
-
-
-# # TODO [#6]: Restrucutre FastAPI endpoints to seperate user-facing endpoints from internal endpoints
-# # refactor out the low level endpoints (/api) and rename others (this isn't really an `analysis` but it does compose a lot of logic like `analyze-burn`)
-# @app.post("/api/query-soil/analyze-ecoclass")
-# def analyze_ecoclass(
-#     body: QuerySoilPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client), __sentry = Depends(init_sentry)
-# ):
-#     fire_event_name = body.fire_event_name
-#     geojson = json.loads(body.geojson)
-#     affiliation = body.affiliation
-
-#     sentry_sdk.set_context("analyze_ecoclass", {"request": body})
-
-#     try:
-            
-#         mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
-#         mu_polygon_keys = [
-#             mupolygonkey
-#             for __musym, __nationalmusym, __mukey, mupolygonkey in mapunit_gdf.index
-#         ]
-#         mrla_df = sdm_get_ecoclassid_from_mu_info(mu_polygon_keys)
-
-#         # join mapunitids with link table for ecoclassids
-#         mapunit_with_ecoclassid_df = mapunit_gdf.join(mrla_df).set_index("ecoclassid")
-
-#         edit_ecoclass_df_row_dicts = []
-#         ecoclass_ids = mrla_df["ecoclassid"].unique()
-
-#         n_ecoclasses = len(ecoclass_ids)
-#         n_within_edit = 0
-
-#         for ecoclass_id in ecoclass_ids:
-#             edit_success, edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
-#             if edit_success:
-#                 n_within_edit += 1
-#                 logger.log_text(f"Success: {ecoclass_id} exists within EDIT backend")
-#                 edit_ecoclass_df_row_dict = edit_ecoclass_json["generalInformation"][
-#                     "dominantSpecies"
-#                 ]
-#                 edit_ecoclass_df_row_dict["ecoclassid"] = ecoclass_id
-#                 edit_ecoclass_df_row_dicts.append(edit_ecoclass_df_row_dict)
-#             else:
-#                 logger.log_text(
-#                     f"Missing: {edit_ecoclass_json} doesn't exist within EDIT backend"
-#                 )
-
-#         logger.log_text(
-#             f"Found {n_within_edit} of {n_ecoclasses} ecoclasses ({100*round(n_within_edit/n_ecoclasses, 2)}%) within EDIT backend"
-#         )
-
-#         if n_within_edit > 0:
-#             edit_ecoclass_df = pd.DataFrame(edit_ecoclass_df_row_dicts).set_index(
-#                 "ecoclassid"
-#             )
-#         else:
-#             # Populate with empty dataframe, for consistency's sake (so that the frontend doesn't have to handle this case)
-#             edit_ecoclass_df = pd.DataFrame(
-#                 [],
-#                 columns=[
-#                     "dominantTree1",
-#                     "dominantShrub1",
-#                     "dominantHerb1",
-#                     "dominantTree2",
-#                     "dominantShrub2",
-#                     "dominantHerb2",
-#                 ],
-#             )
-
-#         # join ecoclassids with edit ecoclass info, to get spatial ecoclass info
-#         edit_ecoclass_geojson = mapunit_with_ecoclassid_df.join(
-#             edit_ecoclass_df, how="left"
-#         ).to_json()
-
-#         # save the ecoclass_geojson to the FTP server
-#         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-#             tmp_geojson_path = tmp.name
-#             with open(tmp_geojson_path, "w") as f:
-#                 f.write(edit_ecoclass_geojson)
-
-#             cloud_static_io_client.upload(
-#                 source_local_path=tmp_geojson_path,
-#                 remote_path=f"public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson",
-#             )
-
-#         logger.log_text(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
-#         return f"Ecoclass GeoJSON uploaded for {fire_event_name}", 200
-
-#     except Exception as e:
-#         sentry_sdk.capture_exception(e)
-#         logger.log_text(f"Error: {e}")
-#         raise HTTPException(status_code=400, detail=str(e))
-
-
-# class AnaylzeRapPOSTBody(BaseModel):
-#     geojson: Any
-#     ignition_date: str
-#     fire_event_name: str
-#     affiliation: str
-
-# @app.post("/api/query-biomass/analyze-rap")
-# def analyze_rap(
-#     body: AnaylzeRapPOSTBody, cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client), __sentry = Depends(init_sentry)
-# ):
-#     boundary_geojson = json.loads(body.geojson)
-#     ignition_date = body.ignition_date
-#     fire_event_name = body.fire_event_name
-#     affiliation = body.affiliation
-
-#     sentry_sdk.set_context("analyze_rap", {"request": body})
-
-#     try:
-#         rap_estimates = rap_get_biomass(
-#             boundary_geojson=boundary_geojson,
-#             ignition_date=ignition_date
-#         )
-
-#         # save the cog to the FTP server
-#         cloud_static_io_client.upload_rap_estimates(
-#             rap_estimates=rap_estimates,
-#             affiliation=affiliation,
-#             fire_event_name=fire_event_name,
-#         )
-#         logger.log_text(f"RAP estimates uploaded for {fire_event_name}")
-
-#         return JSONResponse(
-#             status_code=200,
-#             content={
-#                 "message": f"RAP estimates uploaded for {fire_event_name}",
-#                 "fire_event_name": fire_event_name,
-#             },
-#         )
-
-#     except Exception as e:
-#         sentry_sdk.capture_exception(e)
-#         logger.log_text(f"Error: {e}")
-#         raise HTTPException(status_code=400, detail=str(e))
 
 
 # class GetDerivedProductsPOSTBody(BaseModel):

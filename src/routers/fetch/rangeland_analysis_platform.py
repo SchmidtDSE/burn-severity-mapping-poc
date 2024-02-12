@@ -3,10 +3,8 @@ from fastapi.responses import JSONResponse
 from logging import Logger
 from typing import Any
 from pydantic import BaseModel
-import tempfile
 import sentry_sdk
 import json
-import pandas as pd
 
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
 from src.lib.query_rap import (
@@ -27,7 +25,7 @@ class AnaylzeRapPOSTBody(BaseModel):
 def fetch_rangeland_analysis_platform(
     body: AnaylzeRapPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
-    __sentry = Depends(init_sentry),
+    __sentry: None = Depends(init_sentry),
     logger: Logger = Depends(get_cloud_logger),
 ):
     boundary_geojson = json.loads(body.geojson)

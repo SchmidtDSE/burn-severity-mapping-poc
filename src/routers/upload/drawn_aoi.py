@@ -16,7 +16,7 @@ async def upload_drawn_aoi(
     geojson: str = Form(...),
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     logger: Logger = Depends(get_cloud_logger),
-    __sentry = Depends(init_sentry)
+    __sentry: None = Depends(init_sentry),
 ):
     sentry_sdk.set_context("upload_drawn_aoi", {"fire_event_name": fire_event_name, "affiliation": affiliation})
 
