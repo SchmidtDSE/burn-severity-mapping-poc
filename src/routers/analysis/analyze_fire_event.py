@@ -66,7 +66,6 @@ def analyze_burn(
             logger.log_text(f"Derived boundary for {fire_event_name}")
 
             # Upload the derived boundary
-
             with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
                 tmp_geojson = tmp.name
                 with open(tmp_geojson, "w") as f:
