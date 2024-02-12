@@ -29,51 +29,54 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from src.routers.debug import (
+from src.routers.check import (
+    connectivity,
+    dns,
     health,
-    trigger_error,
-    check_connectivity,
-    check_dns
+    sentry_error
 )
-from src.routers.analysis import (
-    analyze_fire_event
+from src.routers.analyze import (
+    fire_event
+)
+from src.routers.upload import (
+    drawn_aoi,
+    shapefile_zip
 )
 
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
-from src.lib.query_sentinel import Sentinel2Client
-from src.util.cloud_static_io import CloudStaticIOClient
-from src.util.gcp_secrets import get_mapbox_secret
-from src.util.ingest_burn_zip import ingest_esri_zip_file
 from src.lib.titiler_algorithms import algorithms
-from src.lib.query_soil import (
-    sdm_get_ecoclassid_from_mu_info,
-    sdm_get_esa_mapunitid_poly,
-    edit_get_ecoclass_info,
-)
-from src.lib.query_rap import rap_get_biomass
 
 app = FastAPI(docs_url="/documentation")
-app.include_router(health.router)
-app.include_router(trigger_error.router)
+
 
 cog = TilerFactory(process_dependency=algorithms.dependency)
-app.include_router(cog.router, prefix="/cog", tags=["Cloud Optimized GeoTIFF"])
+app.include_router(cog.router, prefix="/cog", tags=["tileserver"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 templates = Jinja2Templates(directory="src/static")
 
-### DEBUG ###
+### CHECK ###
 app.include_router(health.router)
-app.include_router(trigger_error.router)
-app.include_router(check_connectivity.router)
-app.include_router(check_dns.router)
+app.include_router(sentry_error.router)
+app.include_router(connectivity.router)
+app.include_router(dns.router)
 
-### API ENDPOINTS ###
+### ANALYZE ###
+app.include_router(fire_event.router)
 
-app.include_router(analyze_fire_event.router)
+## UPLOAD ## 
+app.include_router(drawn_aoi.router)
+app.include_router(shapefile_zip.router)
+
+### FETCH ###
+
+## TILESERVER ##
+cog = TilerFactory(process_dependency=algorithms.dependency)
+app.include_router(cog.router, prefix="/cog", tags=["tileserver"])
+add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
 # class QuerySoilPOSTBody(BaseModel):
 #     geojson: Any

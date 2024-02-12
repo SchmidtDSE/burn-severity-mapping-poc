@@ -6,7 +6,7 @@ import requests
 
 router = APIRouter()
 
-@router.get("/check-connectivity", tags=["debug"], description="Check connectivity to example.com")
+@router.get("/check-connectivity", tags=["check"], description="Check connectivity to example.com")
 def check_connectivity(logger: Logger = Depends(get_cloud_logger)):
     try:
         response = requests.get("http://example.com")

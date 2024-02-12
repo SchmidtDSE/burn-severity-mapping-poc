@@ -12,7 +12,7 @@ from src.util.ingest_burn_zip import ingest_esri_zip_file
 
 router = APIRouter()
 
-@router.post("/api/upload-shapefile-zip")
+@router.post("/api/upload-shapefile-zip", tags=["upload"], description="Upload a shapefile zip of a predefined fire event area")
 async def upload_shapefile(
     fire_event_name: str = Form(...),
     affiliation: str = Form(...),

@@ -9,7 +9,7 @@ from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 
-@router.post("/api/upload-drawn-aoi")
+@router.post("/api/upload-drawn-aoi", tags=["upload"], description="Upload a drawn AOI boundary to cloud storage")
 async def upload_drawn_aoi(
     fire_event_name: str = Form(...),
     affiliation: str = Form(...),

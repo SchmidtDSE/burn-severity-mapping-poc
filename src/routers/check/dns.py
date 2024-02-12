@@ -7,7 +7,7 @@ import os
 
 router = APIRouter()
 
-@router.get("/check-dns", tags=["debug"], summary="Check DNS resolution")
+@router.get("/check-dns", tags=["check"], summary="Check DNS resolution")
 def check_dns(logger: Logger = Depends(get_cloud_logger)):
     try:
         TEST_DOMAIN = "www.google.com"
