@@ -12,7 +12,7 @@ from src.util.ingest_burn_zip import ingest_esri_zip_file
 
 router = APIRouter()
 
-@router.post("/api/upload-shapefile-zip", tags=["upload"], description="Upload a shapefile zip of a predefined fire event area")
+@router.post("/api/upload/shapefile-zip", tags=["upload"], description="Upload a shapefile zip of a predefined fire event area")
 async def upload_shapefile(
     fire_event_name: str = Form(...),
     affiliation: str = Form(...),
@@ -47,7 +47,7 @@ async def upload_shapefile(
             remote_path=user_uploaded_s3_path,
         )
 
-        logger.info(f"Uploaded zip file ({user_uploaded_s3_path})")
+        logger.log_text(f"Uploaded zip file ({user_uploaded_s3_path})")
 
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
@@ -59,7 +59,7 @@ async def upload_shapefile(
                 remote_path=boundary_s3_path,
             )
 
-        logger.info(f"Uploaded geojson file ({boundary_s3_path})")
+        logger.log_text(f"Uploaded geojson file ({boundary_s3_path})")
 
         return JSONResponse(status_code=200, content={"geojson": geojson})
 
