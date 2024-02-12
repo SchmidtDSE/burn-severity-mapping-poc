@@ -1,4 +1,3 @@
-
 from fastapi import Depends, APIRouter, HTTPException, Form, File, UploadFile
 from fastapi.responses import JSONResponse
 from logging import Logger
@@ -41,20 +40,26 @@ async def upload_shapefile(
         ), "Zip must contain exactly one shapefile (with associated files: .shx, .prj and optionally, .dbf)"
         __shp_paths, geojson = valid_shp[0]
 
-        # Upload the zip and a geojson to SFTP
+        user_uploaded_s3_path = "public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}"
+        # Upload the zip and a geojson to s3
         cloud_static_io_client.upload(
             source_local_path=tmp_zip,
-            remote_path=f"public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}",
+            remote_path=user_uploaded_s3_path,
         )
+
+        logger.info(f"Uploaded zip file ({user_uploaded_s3_path})")
 
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
             with open(tmp_geojson, "w") as f:
                 f.write(geojson)
+            boundary_s3_path = f"public/{affiliation}/{fire_event_name}/boundary.geojson"
             cloud_static_io_client.upload(
                 source_local_path=tmp_geojson,
-                remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
+                remote_path=boundary_s3_path,
             )
+
+        logger.info(f"Uploaded geojson file ({boundary_s3_path})")
 
         return JSONResponse(status_code=200, content={"geojson": geojson})
 
@@ -62,4 +67,3 @@ async def upload_shapefile(
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
-

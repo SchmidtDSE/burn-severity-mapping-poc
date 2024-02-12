@@ -13,7 +13,6 @@ from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 
-
 class AnaylzeBurnPOSTBody(BaseModel):
     geojson: Any
     derive_boundary: bool
