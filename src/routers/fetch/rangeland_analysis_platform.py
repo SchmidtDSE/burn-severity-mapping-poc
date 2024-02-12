@@ -21,7 +21,7 @@ class AnaylzeRapPOSTBody(BaseModel):
     fire_event_name: str
     affiliation: str
 
-@router.post("/api/fetch/rangeland_analysis_platform", tags=["fetch"], description="Fetch Rangeland Analysis Platform (RAP) biomass estimates")
+@router.post("/api/fetch/rangeland-analysis-platform", tags=["fetch"], description="Fetch Rangeland Analysis Platform (RAP) biomass estimates")
 def fetch_rangeland_analysis_platform(
     body: AnaylzeRapPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
