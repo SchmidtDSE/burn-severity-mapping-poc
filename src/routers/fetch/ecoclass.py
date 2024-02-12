@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import tempfile
 import sentry_sdk
 import json
+import pandas as pd
 
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
 from src.lib.query_soil import (
