@@ -22,7 +22,7 @@ class QuerySoilPOSTBody(BaseModel):
     fire_event_name: str
     affiliation: str
 
-@router.post("/api/fetch/ecoclass")
+@router.post("/api/fetch/ecoclass", tags=["fetch"], description="Fetch ecoclass data (using Soil Data Mart / Web Soil Survey for Map Unit polygons, and the Ecological Site Description database for ecoclass info)")
 def fetch_ecoclass(
     body: QuerySoilPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),

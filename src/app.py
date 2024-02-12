@@ -46,6 +46,9 @@ from src.routers.fetch import (
     rangeland_analysis_platform,
     ecoclass
 )
+from src.routers.list import (
+    derived_products
+)
 
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
@@ -75,38 +78,14 @@ app.include_router(shapefile_zip.router)
 app.include_router(rangeland_analysis_platform.router)
 app.include_router(ecoclass.router)
 
+### LIST ###
+app.include_router(derived_products.router)
+
 ### TILESERVER ###
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix="/cog", tags=["tileserver"])
 
-
-# class GetDerivedProductsPOSTBody(BaseModel):
-#     fire_event_name: str
-#     affiliation: str
-
-# @app.post("/api/get-derived-products")
-# async def get_derived_products(
-#     body: GetDerivedProductsPOSTBody,
-#     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
-#     __sentry = Depends(init_sentry)
-# ):
-#     fire_event_name = body.fire_event_name
-#     affiliation = body.affiliation
-
-#     sentry_sdk.set_context("get_derived_products", {"fire_event_name": fire_event_name, "affiliation": affiliation})
-
-#     try:
-#         derived_products = cloud_static_io_client.get_derived_products(
-#             affiliation=affiliation, fire_event_name=fire_event_name
-#         )
-#         return JSONResponse(status_code=200, content=derived_products)
-
-#     except Exception as e:
-#         sentry_sdk.capture_exception(e)
-#         logger.log_text(f"Error: {e}")
-#         raise HTTPException(status_code=400, detail=str(e))
-
-# ### WEB PAGES ###
+### WEB PAGES ###
 
 
 # @app.get(
