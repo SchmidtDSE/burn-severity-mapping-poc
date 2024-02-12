@@ -22,8 +22,8 @@ class QuerySoilPOSTBody(BaseModel):
     fire_event_name: str
     affiliation: str
 
-@router.post("/api/fetch/fetch-ecoclass")
-def analyze_ecoclass(
+@router.post("/api/fetch/ecoclass")
+def fetch_ecoclass(
     body: QuerySoilPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),

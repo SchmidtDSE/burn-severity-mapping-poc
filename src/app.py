@@ -36,7 +36,7 @@ from src.routers.check import (
     sentry_error
 )
 from src.routers.analyze import (
-    fire_event
+    spectral_burn_metrics
 )
 from src.routers.upload import (
     drawn_aoi,
@@ -65,7 +65,7 @@ app.include_router(connectivity.router)
 app.include_router(dns.router)
 
 ### ANALYZE ###
-app.include_router(fire_event.router)
+app.include_router(spectral_burn_metrics.router)
 
 ## UPLOAD ## 
 app.include_router(drawn_aoi.router)

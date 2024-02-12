@@ -4,7 +4,7 @@ from logging import Logger
 
 router = APIRouter()
 
-@router.get("/check-health", tags=["check"], description="Health check endpoint")
+@router.get("/api/check/health", tags=["check"], description="Health check endpoint")
 def health(logger: Logger = Depends(get_cloud_logger)):
     logger.log_text("Health check endpoint called")
     return "Alive", 200

@@ -24,8 +24,8 @@ class AnaylzeBurnPOSTBody(BaseModel):
 # TODO [#5]: Decide on / implement cloud tasks or other async batch
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
-@router.post("/api/query-satellite/analyze-fire-event", tags=["analysis"], description="Analyze a fire event")
-def analyze_burn(
+@router.post("/api/analyze/burn-metrics", tags=["analysis"], description="Analyze a fire event")
+def analyze_burn_metrics(
     body: AnaylzeBurnPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry = Depends(init_sentry),
