@@ -30,6 +30,8 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
+from src.routers.debug import health
+
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
@@ -46,25 +48,29 @@ from src.lib.query_soil import (
 from src.lib.query_rap import rap_get_biomass
 
 app = FastAPI()
+app.include_router(health.router)
+
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix="/cog", tags=["Cloud Optimized GeoTIFF"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
-
-
-logging_client = logging.Client(project="dse-nps")
-log_name = "burn-backend"
-logger = logging_client.logger(log_name)
 
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 templates = Jinja2Templates(directory="src/static")
 
 ### HELPERS ###
+# def get_cloud_logger():
+#     logging_client = logging.Client(project="dse-nps")
+#     log_name = "burn-backend"
+#     logger = logging_client.logger(log_name)
 
+#     return logger
 
-@app.get("/healthz")
-def index():
-    logger.log_text("ping pong")
-    return "Alive", 200
+# @app.get("/healthz")
+# def index(logger = Depends(get_cloud_logger)):
+#     logger.log_text("ping pong")
+#     return "Alive", 200
+
+# app.get("/health")(health)
 
 @app.get("/sentry-debug")
 async def trigger_error():
@@ -81,7 +87,6 @@ def check_connectivity():
     except Exception as e:
         logger.log_text(f"Connectivity check: Error {e}")
         raise HTTPException(status_code=400, detail=str(e))
-
 
 @app.get("/check-dns")
 def check_dns():
@@ -117,6 +122,7 @@ def init_sentry():
     )
     sentry_sdk.set_context("env", {"env": os.getenv('ENV')})
     logger.log_text("Sentry initialized")
+
 
 
 ### API ENDPOINTS ###
