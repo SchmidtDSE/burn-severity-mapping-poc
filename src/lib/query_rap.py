@@ -18,6 +18,9 @@ def rap_get_biomass(ignition_date, boundary_geojson, buffer_distance=0.01):
     if rap_year > 2022:
         print("RAP data is only available up to 2022 - falling back to 2022 RAP data")
         rap_year = 2022
+    elif rap_year < 1986:
+        raise ValueError("RAP data is only available from 1986")
+
     rap_url = f"http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-npp/v3/vegetation-npp-v3-{rap_year}.tif"
 
     # Create a buffer around the boundary

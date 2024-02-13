@@ -1,0 +1,20 @@
+name: Build Prod and PyTest
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build Docker image
+        run: docker build -t my-image -f .deployment/prod.Dockerfile .
+
+      - name: Run tests
+        run: docker run my-image pytest -kv
