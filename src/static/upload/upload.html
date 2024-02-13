@@ -251,7 +251,7 @@
       function getProducts(tileserverEndpoint, affiliation, fireEventName) {
         // If all four requests are successful, get the map url and all derived products
         var derivedProductsResponse = $.ajax({
-          url: "/api/get-derived-products",
+          url: "/api/list/derived-products",
           type: "post",
           dataType: "json",
           contentType: "application/json",
@@ -440,7 +440,7 @@
 
           // Make a request to upload the drawn shape
           var upload = $.ajax({
-            url: `/api/upload-drawn-aoi`,
+            url: `/api/upload/drawn-aoi`,
             type: "post",
             processData: false,
             contentType: false,
@@ -463,7 +463,7 @@
 
           // Make a request to upload the shapefile
           var upload = $.ajax({
-            url: `/api/upload-shapefile-zip`,
+            url: `/api/upload/shapefile-zip`,
             type: "post",
             processData: false,
             contentType: false,
@@ -523,7 +523,7 @@
 
             // Make a request to analyze the burn
             var analyzeBurn = $.ajax({
-              url: "/api/query-satellite/analyze-burn",
+              url: "/api/analyze/spectral-burn-metrics",
               type: "post",
               dataType: "json",
               contentType: "application/json",
@@ -588,7 +588,7 @@
               }
 
               $.ajax({
-                url: "/api/query-soil/analyze-ecoclass",
+                url: "/api/fetch/ecoclass",
                 type: "post",
                 dataType: "json",
                 contentType: "application/json",
@@ -616,7 +616,7 @@
               });
 
               $.ajax({
-                url: "/api/query-biomass/analyze-rap",
+                url: "/api/fetch/rangeland-analysis-platform",
                 type: "post",
                 dataType: "json",
                 contentType: "application/json",
