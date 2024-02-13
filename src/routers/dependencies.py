@@ -7,6 +7,7 @@ from src.util.cloud_static_io import CloudStaticIOClient
 from src.util.gcp_secrets import get_mapbox_secret as gcp_get_mapbox_secret
 import os
 
+
 def get_cloud_logger():
     logging_client = logging.Client(project="dse-nps")
     log_name = "burn-backend"
@@ -14,21 +15,22 @@ def get_cloud_logger():
 
     return logger
 
+
 def get_cloud_static_io_client(logger: Logger = Depends(get_cloud_logger)):
     logger.log_text("Creating CloudStaticIOClient")
-    return CloudStaticIOClient('burn-severity-backend', "s3")
+    return CloudStaticIOClient("burn-severity-backend", "s3")
+
 
 def get_manifest(
-        cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
-        logger: Logger = Depends(get_cloud_logger)
+    cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
+    logger: Logger = Depends(get_cloud_logger),
 ):
     logger.log_text("Getting manifest")
     manifest = cloud_static_io_client.get_manifest()
     return manifest
 
-def init_sentry(
-        logger: Logger = Depends(get_cloud_logger)
-):
+
+def init_sentry(logger: Logger = Depends(get_cloud_logger)):
     logger.log_text("Initializing Sentry client")
 
     ## TODO: Move to sentry to environment variable if we keep sentry
@@ -42,8 +44,9 @@ def init_sentry(
         # We recommend adjusting this value in production.
         profiles_sample_rate=1.0,
     )
-    sentry_sdk.set_context("env", {"env": os.getenv('ENV')})
+    sentry_sdk.set_context("env", {"env": os.getenv("ENV")})
     logger.log_text("Sentry initialized")
+
 
 def get_mapbox_secret():
     return gcp_get_mapbox_secret()

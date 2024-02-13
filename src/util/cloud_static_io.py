@@ -20,6 +20,7 @@ from google.auth import impersonated_credentials, exceptions
 ## TODO [#26]: Make bucket https a tofu output
 BUCKET_HTTPS_PREFIX = "https://burn-severity-backend.s3.us-east-2.amazonaws.com"
 
+
 class CloudStaticIOClient:
     def __init__(self, bucket_name, provider):
 
@@ -35,7 +36,7 @@ class CloudStaticIOClient:
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
-        self.sts_client = boto3.client('sts')
+        self.sts_client = boto3.client("sts")
 
         if provider == "s3":
             self.prefix = f"s3://{self.bucket_name}"
@@ -47,7 +48,9 @@ class CloudStaticIOClient:
         self.s3_session = None
         self.validate_credentials()
 
-        self.logger.log_text(f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}")
+        self.logger.log_text(
+            f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}"
+        )
 
     def impersonate_service_account(self):
         # Load the credentials of the user
@@ -61,7 +64,7 @@ class CloudStaticIOClient:
             source_credentials=source_credentials,
             target_principal=self.service_account_email,
             target_scopes=target_scopes,
-            lifetime=3600
+            lifetime=3600,
         )
 
         # Refresh the client
@@ -89,11 +92,13 @@ class CloudStaticIOClient:
 
     def validate_credentials(self):
 
-        if not self.role_assumed_credentials or (self.role_assumed_credentials['Expiration'].timestamp() - time.time() < 300):
+        if not self.role_assumed_credentials or (
+            self.role_assumed_credentials["Expiration"].timestamp() - time.time() < 300
+        ):
             oidc_token = None
             request = gcp_requests.Request()
 
-            if self.env == 'LOCAL':
+            if self.env == "LOCAL":
                 if not self.iam_credentials or self.iam_credentials.expired:
                     self.impersonate_service_account()
                 self.iam_credentials.refresh(request)
@@ -107,16 +112,16 @@ class CloudStaticIOClient:
             sts_response = self.sts_client.assume_role_with_web_identity(
                 RoleArn=self.role_arn,
                 RoleSessionName=self.role_session_name,
-                WebIdentityToken=oidc_token
+                WebIdentityToken=oidc_token,
             )
 
-            self.role_assumed_credentials = sts_response['Credentials']
+            self.role_assumed_credentials = sts_response["Credentials"]
 
             self.boto_session = boto3.Session(
-                aws_access_key_id=self.role_assumed_credentials['AccessKeyId'],
-                aws_secret_access_key=self.role_assumed_credentials['SecretAccessKey'],
-                aws_session_token=self.role_assumed_credentials['SessionToken'],
-                region_name='us-east-2'
+                aws_access_key_id=self.role_assumed_credentials["AccessKeyId"],
+                aws_secret_access_key=self.role_assumed_credentials["SecretAccessKey"],
+                aws_session_token=self.role_assumed_credentials["SessionToken"],
+                region_name="us-east-2",
             )
 
     def download(self, remote_path, target_local_path):
@@ -138,7 +143,7 @@ class CloudStaticIOClient:
             with smart_open.open(
                 f"{self.prefix}/{remote_path}",
                 "rb",
-                transport_params={"client": self.boto_session.client('s3')},
+                transport_params={"client": self.boto_session.client("s3")},
             ) as remote_file:
                 with open(target_local_path, "wb") as local_file:
                     local_file.write(remote_file.read())
@@ -161,7 +166,7 @@ class CloudStaticIOClient:
                 with smart_open.open(
                     f"{self.prefix}/{remote_path}",
                     "wb",
-                    transport_params={"client": self.boto_session.client('s3')},
+                    transport_params={"client": self.boto_session.client("s3")},
                 ) as remote_file:
                     remote_file.write(local_file.read())
             print("upload completed")
@@ -209,12 +214,7 @@ class CloudStaticIOClient:
                 remote_path=f"public/{affiliation}/{fire_event_name}/pct_change_dnbr_rbr.tif",
             )
 
-    def upload_rap_estimates(
-        self,
-        rap_estimates,
-        fire_event_name,
-        affiliation
-    ):
+    def upload_rap_estimates(self, rap_estimates, fire_event_name, affiliation):
         with tempfile.TemporaryDirectory() as tmpdir:
             for band_name in rap_estimates.band.to_index():
                 # TODO [#23]: This is the same logic as in upload_cogs. Refactor to avoid duplication
@@ -308,13 +308,13 @@ class CloudStaticIOClient:
             return manifest
 
     def get_derived_products(self, affiliation, fire_event_name):
-        s3_client = self.boto_session.client('s3')
-        paginator = s3_client.get_paginator('list_objects_v2')
+        s3_client = self.boto_session.client("s3")
+        paginator = s3_client.get_paginator("list_objects_v2")
         derived_products = {}
         bucket_prefix = f"public/{affiliation}/{fire_event_name}/"
         for page in paginator.paginate(Bucket=self.bucket_name, Prefix=bucket_prefix):
-            for obj in page['Contents']:
-                full_https_url = BUCKET_HTTPS_PREFIX + '/' + obj['Key']
-                filename = os.path.basename(obj['Key'])
+            for obj in page["Contents"]:
+                full_https_url = BUCKET_HTTPS_PREFIX + "/" + obj["Key"]
+                filename = os.path.basename(obj["Key"])
                 derived_products[filename] = full_https_url
         return derived_products

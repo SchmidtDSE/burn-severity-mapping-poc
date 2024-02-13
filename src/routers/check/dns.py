@@ -7,6 +7,7 @@ import os
 
 router = APIRouter()
 
+
 @router.get("/api/check/dns", tags=["check"], summary="Check DNS resolution")
 def check_dns(logger: Logger = Depends(get_cloud_logger)):
     try:

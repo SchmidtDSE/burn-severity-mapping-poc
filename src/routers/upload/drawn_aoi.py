@@ -9,7 +9,12 @@ from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 
-@router.post("/api/upload/drawn-aoi", tags=["upload"], description="Upload a drawn AOI boundary to cloud storage")
+
+@router.post(
+    "/api/upload/drawn-aoi",
+    tags=["upload"],
+    description="Upload a drawn AOI boundary to cloud storage",
+)
 async def upload_drawn_aoi(
     fire_event_name: str = Form(...),
     affiliation: str = Form(...),
@@ -18,7 +23,10 @@ async def upload_drawn_aoi(
     logger: Logger = Depends(get_cloud_logger),
     __sentry: None = Depends(init_sentry),
 ):
-    sentry_sdk.set_context("upload_drawn_aoi", {"fire_event_name": fire_event_name, "affiliation": affiliation})
+    sentry_sdk.set_context(
+        "upload_drawn_aoi",
+        {"fire_event_name": fire_event_name, "affiliation": affiliation},
+    )
 
     try:
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:

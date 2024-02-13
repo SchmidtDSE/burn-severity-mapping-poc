@@ -11,23 +11,29 @@ from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_se
 from src.lib.query_soil import (
     sdm_get_esa_mapunitid_poly,
     sdm_get_ecoclassid_from_mu_info,
-    edit_get_ecoclass_info
+    edit_get_ecoclass_info,
 )
 from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
+
 
 class QuerySoilPOSTBody(BaseModel):
     geojson: Any
     fire_event_name: str
     affiliation: str
 
-@router.post("/api/fetch/ecoclass", tags=["fetch"], description="Fetch ecoclass data (using Soil Data Mart / Web Soil Survey for Map Unit polygons, and the Ecological Site Description database for ecoclass info)")
+
+@router.post(
+    "/api/fetch/ecoclass",
+    tags=["fetch"],
+    description="Fetch ecoclass data (using Soil Data Mart / Web Soil Survey for Map Unit polygons, and the Ecological Site Description database for ecoclass info)",
+)
 def fetch_ecoclass(
     body: QuerySoilPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
-    logger: Logger = Depends(get_cloud_logger)
+    logger: Logger = Depends(get_cloud_logger),
 ):
     fire_event_name = body.fire_event_name
     geojson = json.loads(body.geojson)
@@ -36,7 +42,7 @@ def fetch_ecoclass(
     sentry_sdk.set_context("analyze_ecoclass", {"request": body})
 
     try:
-            
+
         mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
         mu_polygon_keys = [
             mupolygonkey

@@ -21,7 +21,12 @@ class AnaylzeRapPOSTBody(BaseModel):
     fire_event_name: str
     affiliation: str
 
-@router.post("/api/fetch/rangeland-analysis-platform", tags=["fetch"], description="Fetch Rangeland Analysis Platform (RAP) biomass estimates")
+
+@router.post(
+    "/api/fetch/rangeland-analysis-platform",
+    tags=["fetch"],
+    description="Fetch Rangeland Analysis Platform (RAP) biomass estimates",
+)
 def fetch_rangeland_analysis_platform(
     body: AnaylzeRapPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
@@ -37,8 +42,7 @@ def fetch_rangeland_analysis_platform(
 
     try:
         rap_estimates = rap_get_biomass(
-            boundary_geojson=boundary_geojson,
-            ignition_date=ignition_date
+            boundary_geojson=boundary_geojson, ignition_date=ignition_date
         )
 
         # save the cog to the FTP server
@@ -61,4 +65,3 @@ def fetch_rangeland_analysis_platform(
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
-

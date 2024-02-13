@@ -165,7 +165,9 @@ class Sentinel2Client:
         )
 
         if len(prefire_items) == 0 or len(postfire_items) == 0:
-            raise ValueError('Date ranges insufficient for enough imagery to calculate burn metrics')
+            raise ValueError(
+                "Date ranges insufficient for enough imagery to calculate burn metrics"
+            )
 
         self.prefire_stack = self.arrange_stack(prefire_items)
         self.postfire_stack = self.arrange_stack(postfire_items)

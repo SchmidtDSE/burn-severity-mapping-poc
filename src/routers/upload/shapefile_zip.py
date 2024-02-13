@@ -12,7 +12,12 @@ from src.util.ingest_burn_zip import ingest_esri_zip_file
 
 router = APIRouter()
 
-@router.post("/api/upload/shapefile-zip", tags=["upload"], description="Upload a shapefile zip of a predefined fire event area")
+
+@router.post(
+    "/api/upload/shapefile-zip",
+    tags=["upload"],
+    description="Upload a shapefile zip of a predefined fire event area",
+)
 async def upload_shapefile(
     fire_event_name: str = Form(...),
     affiliation: str = Form(...),
@@ -21,7 +26,10 @@ async def upload_shapefile(
     logger: Logger = Depends(get_cloud_logger),
     __sentry: None = Depends(init_sentry),
 ):
-    sentry_sdk.set_context("upload_shapefile", {"fire_event_name": fire_event_name, "affiliation": affiliation})
+    sentry_sdk.set_context(
+        "upload_shapefile",
+        {"fire_event_name": fire_event_name, "affiliation": affiliation},
+    )
 
     try:
         # Read the file
@@ -40,7 +48,9 @@ async def upload_shapefile(
         ), "Zip must contain exactly one shapefile (with associated files: .shx, .prj and optionally, .dbf)"
         __shp_paths, geojson = valid_shp[0]
 
-        user_uploaded_s3_path = "public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}"
+        user_uploaded_s3_path = (
+            "public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}"
+        )
         # Upload the zip and a geojson to s3
         cloud_static_io_client.upload(
             source_local_path=tmp_zip,
@@ -53,7 +63,9 @@ async def upload_shapefile(
             tmp_geojson = tmp.name
             with open(tmp_geojson, "w") as f:
                 f.write(geojson)
-            boundary_s3_path = f"public/{affiliation}/{fire_event_name}/boundary.geojson"
+            boundary_s3_path = (
+                f"public/{affiliation}/{fire_event_name}/boundary.geojson"
+            )
             cloud_static_io_client.upload(
                 source_local_path=tmp_geojson,
                 remote_path=boundary_s3_path,

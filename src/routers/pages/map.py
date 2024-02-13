@@ -9,6 +9,7 @@ from ..dependencies import get_manifest, get_mapbox_secret
 router = APIRouter()
 templates = Jinja2Templates(directory="src/static")
 
+
 @router.get(
     "/map/{affiliation}/{fire_event_name}/{burn_metric}", response_class=HTMLResponse
 )
@@ -57,7 +58,6 @@ def serve_map(
         tileserver_endpoint
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_tree_url}&nodata=-99&return_mask=true"
     )
-
 
     fire_metadata = manifest[affiliation][fire_event_name]
     fire_metadata_json = json.dumps(fire_metadata)

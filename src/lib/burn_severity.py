@@ -76,7 +76,7 @@ def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
         pd.Index(
             ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"], name="burn_metric"
         ),
-        coords="minimal"
+        coords="minimal",
     )
 
     return burn_stack

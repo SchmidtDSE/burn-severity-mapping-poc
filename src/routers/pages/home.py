@@ -8,6 +8,7 @@ from markdown import markdown
 router = APIRouter()
 templates = Jinja2Templates(directory="src/static")
 
+
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request):
     # Read the markdown file

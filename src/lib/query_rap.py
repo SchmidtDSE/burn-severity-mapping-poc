@@ -5,7 +5,8 @@ import rioxarray as rxr
 import numpy as np
 import json
 
-def rap_get_biomass(ignition_date, boundary_geojson, buffer_distance = 0.01):
+
+def rap_get_biomass(ignition_date, boundary_geojson, buffer_distance=0.01):
 
     boundary_gdf = gpd.GeoDataFrame.from_features(boundary_geojson)
 
@@ -29,17 +30,20 @@ def rap_get_biomass(ignition_date, boundary_geojson, buffer_distance = 0.01):
     # Open the GeoTIFF file as a rioxarray with the window and out_shape parameters
     rap_estimates = rxr.open_rasterio(rap_url, masked=True).rio.isel_window(window)
 
-    # Rename for RAP bands based on README: 
+    # Rename for RAP bands based on README:
     # - Band 1 - annual forb and grass
     # - Band 2 - perennial forb and grass
     # - Band 3 - shrub
     # - Band 4 - tree
     rap_estimates = rap_estimates.assign_coords(
-        band=("band",
-              ["annual_forb_and_grass", "perennial_forb_and_grass", "shrub", "tree"]
+        band=(
+            "band",
+            ["annual_forb_and_grass", "perennial_forb_and_grass", "shrub", "tree"],
         )
     )
-    rap_estimates = rap_estimates.rio.clip(boundary_gdf_buffer.geometry.values, 'EPSG:4326')
+    rap_estimates = rap_estimates.rio.clip(
+        boundary_gdf_buffer.geometry.values, "EPSG:4326"
+    )
 
     # add np.nan where 65535, also based on readme
     rap_estimates = rap_estimates.where(rap_estimates != 65535, np.nan)

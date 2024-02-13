@@ -13,6 +13,7 @@ from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 
+
 class AnaylzeBurnPOSTBody(BaseModel):
     geojson: Any
     derive_boundary: bool
@@ -24,7 +25,11 @@ class AnaylzeBurnPOSTBody(BaseModel):
 # TODO [#5]: Decide on / implement cloud tasks or other async batch
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
-@router.post("/api/analyze/spectral-burn-metrics", tags=["analysis"], description="Derive spectral burn metrics from satellite imagery within a boundary.")
+@router.post(
+    "/api/analyze/spectral-burn-metrics",
+    tags=["analysis"],
+    description="Derive spectral burn metrics from satellite imagery within a boundary.",
+)
 def analyze_spectral_burn_metrics(
     body: AnaylzeBurnPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
@@ -98,7 +103,7 @@ def analyze_spectral_burn_metrics(
                 "derived_boundary": derived_boundary,
             },
         )
-    
+
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")

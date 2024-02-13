@@ -207,9 +207,9 @@ def edit_get_ecoclass_info(ecoclass_id):
             edit_json = json.loads(response.content)
 
             # Add hyperlink to EDIT human readable page
-            edit_json[
-                "hyperlink"
-            ] = f"https://edit.jornada.nmsu.edu/catalogs/esd/{geoUnit}/{ecoclass_id}"
+            edit_json["hyperlink"] = (
+                f"https://edit.jornada.nmsu.edu/catalogs/esd/{geoUnit}/{ecoclass_id}"
+            )
 
             return True, edit_json
         elif response.status_code == 404:

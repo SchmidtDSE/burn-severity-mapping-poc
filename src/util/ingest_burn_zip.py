@@ -5,6 +5,7 @@ import rioxarray as rxr
 import os
 import tempfile
 
+
 def ingest_esri_zip_file(zip_file_path):
     valid_shapefiles = []
     valid_tifs = []
@@ -22,24 +23,33 @@ def ingest_esri_zip_file(zip_file_path):
                     print("Found shapefile: {}".format(file_name))
 
                     # Check if all required files exist
-                    if all(os.path.exists(os.path.join(tmp_dir, shp_base + ext)) for ext in [".shp", ".shx", ".prj"]):
+                    if all(
+                        os.path.exists(os.path.join(tmp_dir, shp_base + ext))
+                        for ext in [".shp", ".shx", ".prj"]
+                    ):
                         # Read the shapefile from the temporary directory
                         valid_shapefile = (
                             os.path.join(tmp_dir, shp_base + ".shp"),
                             os.path.join(tmp_dir, shp_base + ".shx"),
-                            os.path.join(tmp_dir, shp_base + ".prj")
+                            os.path.join(tmp_dir, shp_base + ".prj"),
                         )
 
                         # If .dbf file exists, add it to the tuple
                         if os.path.exists(os.path.join(tmp_dir, shp_base + ".dbf")):
-                            valid_shapefile += (os.path.join(tmp_dir, shp_base + ".dbf"),)
+                            valid_shapefile += (
+                                os.path.join(tmp_dir, shp_base + ".dbf"),
+                            )
 
                         shp_geojson = shp_to_geojson(valid_shapefile[0])
 
                         valid_shapefiles.append((valid_shapefile, shp_geojson))
-                        
+
                     else:
-                        print("Shapefile {} is missing required files (shp, shx, and proj).".format(file_name))
+                        print(
+                            "Shapefile {} is missing required files (shp, shx, and proj).".format(
+                                file_name
+                            )
+                        )
 
             if file_name.endswith(".tif"):
                 print("Found tif file: {}".format(file_name))
@@ -47,7 +57,7 @@ def ingest_esri_zip_file(zip_file_path):
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     # Extract the related files to the temporary directory
                     tif_base = os.path.splitext(file_name)[0]
-                    zip_ref.extract(tif_base + '.tif', path=tmp_dir)
+                    zip_ref.extract(tif_base + ".tif", path=tmp_dir)
 
                     # Read the shapefile from the temporary directory
                     valid_tif = rxr.open_rasterio(os.path.join(tmp_dir, file_name))
@@ -55,6 +65,7 @@ def ingest_esri_zip_file(zip_file_path):
                     valid_tifs.append(valid_tif)
 
     return valid_shapefiles, valid_tifs
+
 
 def shp_to_geojson(shp_file_path):
     gdf = gpd.read_file(shp_file_path).to_crs("EPSG:4326")

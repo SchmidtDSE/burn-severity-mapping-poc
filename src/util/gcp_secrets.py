@@ -1,6 +1,7 @@
 from google.cloud import secretmanager
 import json
 
+
 def get_ssh_secret():
     # GCP project and secret details
     project_id = "dse-nps"
@@ -16,9 +17,12 @@ def get_ssh_secret():
     response = client.access_secret_version(request={"name": name})
 
     # Parse the secret value as a string.
-    ssh_private_key = json.loads(response.payload.data.decode("UTF-8"))['SSH_KEY_ADMIN_PRIVATE']
+    ssh_private_key = json.loads(response.payload.data.decode("UTF-8"))[
+        "SSH_KEY_ADMIN_PRIVATE"
+    ]
 
     return ssh_private_key.replace("\\n", "\n")
+
 
 def get_mapbox_secret():
     # GCP project and secret details

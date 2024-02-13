@@ -10,11 +10,17 @@ from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 
+
 class GetDerivedProductsPOSTBody(BaseModel):
     fire_event_name: str
     affiliation: str
 
-@router.post("/api/list/derived-products", tags=["list"], description="List derived products of a fiven fire event / affiliation combination.")
+
+@router.post(
+    "/api/list/derived-products",
+    tags=["list"],
+    description="List derived products of a fiven fire event / affiliation combination.",
+)
 async def list_derived_products(
     body: GetDerivedProductsPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
@@ -24,7 +30,10 @@ async def list_derived_products(
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
 
-    sentry_sdk.set_context("get_derived_products", {"fire_event_name": fire_event_name, "affiliation": affiliation})
+    sentry_sdk.set_context(
+        "get_derived_products",
+        {"fire_event_name": fire_event_name, "affiliation": affiliation},
+    )
 
     try:
         derived_products = cloud_static_io_client.get_derived_products(
