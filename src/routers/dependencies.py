@@ -31,7 +31,7 @@ def init_sentry(
 ):
     logger.log_text("Initializing Sentry client")
 
-    ## TODO [$65cba09842ca860008e06391]: Move to sentry to environment variable if we keep sentry
+    ## TODO [#28]: Move to sentry to environment variable if we keep sentry
     sentry_sdk.init(
         dsn="https://3660129e232b3c796208a5e46945d838@o4506701219364864.ingest.sentry.io/4506701221199872",
         # Set traces_sample_rate to 1.0 to capture 100%
