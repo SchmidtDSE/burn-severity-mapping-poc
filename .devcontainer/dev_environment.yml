@@ -29,6 +29,7 @@ dependencies:
   - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - uvicorn
   - pip
+  - pytest
   - smart_open
   - sentry-sdk[fastapi]
   - pip:
