@@ -17,4 +17,4 @@ jobs:
         run: docker build -t prod -f .deployment/prod.Dockerfile .
 
       - name: Run tests (override entrypoint to run tests rather than deploy)
-        run: docker run --entrypoint /bin/bash prod -c "conda install -n burn-severity-prod pytest && conda run -n burn-severity-prod pytest"
+        run: docker run --entrypoint /bin/bash prod -c "conda run -n burn-severity-prod pytest"
