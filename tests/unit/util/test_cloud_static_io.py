@@ -6,7 +6,9 @@ from unittest.mock import patch, MagicMock, ANY, call
 @patch("src.util.cloud_static_io.CloudStaticIOClient.update_manifest")
 @patch("src.util.cloud_static_io.CloudStaticIOClient.upload_cogs")
 @patch.object(CloudStaticIOClient, "__init__", return_value=None)
-def test_upload_fire_event(mock_init, mock_upload_cogs, mock_update_manifest):
+def test_upload_fire_event(
+    mock_init, mock_upload_cogs, mock_update_manifest, test_3d_xarray
+):
     # Create an instance of CloudStaticIOClient
     client = CloudStaticIOClient()
 
@@ -14,7 +16,10 @@ def test_upload_fire_event(mock_init, mock_upload_cogs, mock_update_manifest):
     client.logger = MagicMock()
 
     # Define the arguments for upload_fire_event
-    metrics_stack = MagicMock()
+    metrics_stack = test_3d_xarray
+    metrics_stack = metrics_stack.rename({"band": "burn_metric"})
+    metrics_stack["burn_metric"] = ["rbr", "dnbr"]
+
     fire_event_name = "test_event"
     prefire_date_range = "test_prefire_range"
     postfire_date_range = "test_postfire_range"
