@@ -1,6 +1,6 @@
 import pytest
 from src.util.cloud_static_io import CloudStaticIOClient
-from unittest.mock import patch, MagicMock, ANY
+from unittest.mock import patch, MagicMock, ANY, call
 
 
 @patch("src.util.cloud_static_io.CloudStaticIOClient.update_manifest")
@@ -48,9 +48,48 @@ def test_upload_fire_event(mock_init, mock_upload_cogs, mock_update_manifest):
     )
 
 
-# @patch("src.util.cloud_static_io.CloudStaticIOClient.update_manifest")
-# @patch("src.util.cloud_static_io.CloudStaticIOClient.upload")
-# @patch.object(CloudStaticIOClient, "__init__", return_value=None)
-# def test_upload_cogs(
-#     mock_init, mock_upload_cogs, mock_update_manifest
-# ):
+@patch("rioxarray.raster_array.RasterArray.to_raster")
+@patch("rasterio.open")
+@patch("src.util.cloud_static_io.CloudStaticIOClient.upload")
+@patch.object(CloudStaticIOClient, "__init__", return_value=None)
+def test_upload_cogs(
+    mock_init, mock_upload, mock_rio_open, mock_to_raster, test_3d_xarray
+):
+    # Create an instance of CloudStaticIOClient
+    client = CloudStaticIOClient()
+
+    # Mock the logger
+    client.logger = MagicMock()
+
+    # Define the arguments for upload_cogs
+    fire_event_name = "test_event"
+    affiliation = "test_affiliation"
+
+    # Give xarray the `burn_metric` band, with rbr and dnbr as values in `burn_metric`
+    test_3d_xarray = test_3d_xarray.rename({"band": "burn_metric"})
+    test_3d_xarray["burn_metric"] = ["rbr", "dnbr"]
+
+    # Call upload_cogs
+    client.upload_cogs(
+        test_3d_xarray,
+        fire_event_name,
+        affiliation,
+    )
+
+    mock_init.assert_called_once_with()
+    mock_upload.assert_has_calls(
+        [
+            call(
+                source_local_path=ANY,
+                remote_path=f"public/{affiliation}/{fire_event_name}/rbr.tif",
+            ),
+            call(
+                source_local_path=ANY,
+                remote_path=f"public/{affiliation}/{fire_event_name}/dnbr.tif",
+            ),
+            call(
+                source_local_path=ANY,
+                remote_path=f"public/{affiliation}/{fire_event_name}/pct_change_dnbr_rbr.tif",
+            ),
+        ]
+    )
