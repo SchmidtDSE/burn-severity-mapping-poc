@@ -93,3 +93,53 @@ def test_upload_cogs(
             ),
         ]
     )
+
+
+@patch("tempfile.TemporaryDirectory")
+@patch("os.path.join")
+@patch("rasterio.open")
+@patch("rioxarray.raster_array.RasterArray.to_raster")
+@patch("src.util.cloud_static_io.CloudStaticIOClient.upload")
+@patch.object(CloudStaticIOClient, "__init__", return_value=None)
+def test_upload_rap_estimates(
+    mock_init,
+    mock_upload,
+    mock_to_raster,
+    mock_rio_open,
+    mock_os_join,
+    mock_temp_dir,
+    test_3d_xarray,
+):
+    # Create an instance of CloudStaticIOClient
+    client = CloudStaticIOClient()
+
+    # Mock the logger
+    client.logger = MagicMock()
+
+    # Define the arguments for upload_rap_estimates
+    fire_event_name = "test_event"
+    affiliation = "test_affiliation"
+
+    # Give xarray the `band` band, with some band names as values in `band`
+    test_3d_xarray["band"] = ["tree", "shrub"]
+
+    # Call upload_rap_estimates
+    client.upload_rap_estimates(
+        test_3d_xarray,
+        fire_event_name,
+        affiliation,
+    )
+
+    mock_init.assert_called_once_with()
+    mock_upload.assert_has_calls(
+        [
+            call(
+                source_local_path=ANY,
+                remote_path=f"public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_tree.tif",
+            ),
+            call(
+                source_local_path=ANY,
+                remote_path=f"public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_shrub.tif",
+            ),
+        ]
+    )
