@@ -24,6 +24,7 @@ dependencies:
   - sentry-sdk[fastapi]
   - uvicorn
   - pytest
+  - pyarrow
   - pip
   - pip:
       - titiler.core

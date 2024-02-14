@@ -16,10 +16,16 @@ jobs:
       - name: Build Docker image
         run: docker build -t prod -f .deployment/prod.Dockerfile .
 
+      - name: Create Docker container with pytest.ini
+        run: |
+          docker create --name temp_container prod
+          docker cp pytest.ini temp_container:/
+          docker commit temp_container prod:with_pytest_ini
+
       - name: Run tests (override entrypoint to run tests rather than deploy)
         run: |
           docker run \
           --entrypoint /bin/bash \
           -v ${{ github.workspace }}/tests:/tests \
-          prod \
+          prod:with_pytest_ini \
           -c "conda run -n burn-severity-prod pytest -svv /tests"

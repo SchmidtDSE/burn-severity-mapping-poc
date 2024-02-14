@@ -30,6 +30,7 @@ dependencies:
   - uvicorn
   - pip
   - pytest
+  - pyarrow
   - smart_open
   - sentry-sdk[fastapi]
   - pip:
