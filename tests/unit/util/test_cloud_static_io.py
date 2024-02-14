@@ -31,7 +31,8 @@ def test_upload_fire_event(mock_init, mock_upload_cogs, mock_update_manifest):
         derive_boundary,
     )
 
-    # Assert that upload_cogs and update_manifest were called with the correct arguments
+    # Assert that __init__, upload_cogs and update_manifest were called with the correct arguments
+    mock_init.assert_called_once_with()
     mock_upload_cogs.assert_called_once_with(
         metrics_stack=metrics_stack,
         fire_event_name=fire_event_name,
@@ -45,3 +46,11 @@ def test_upload_fire_event(mock_init, mock_upload_cogs, mock_update_manifest):
         affiliation=affiliation,
         derive_boundary=derive_boundary,
     )
+
+
+# @patch("src.util.cloud_static_io.CloudStaticIOClient.update_manifest")
+# @patch("src.util.cloud_static_io.CloudStaticIOClient.upload")
+# @patch.object(CloudStaticIOClient, "__init__", return_value=None)
+# def test_upload_cogs(
+#     mock_init, mock_upload_cogs, mock_update_manifest
+# ):
