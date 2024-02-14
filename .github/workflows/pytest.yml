@@ -18,8 +18,8 @@ jobs:
 
       - name: Run tests (override entrypoint to run tests rather than deploy)
         run: |
-          docker run
-          --entrypoint /bin/bash
-          -v ${{ github.workspace }}/tests:/tests
-          prod
+          docker run \
+          --entrypoint /bin/bash \
+          -v ${{ github.workspace }}/tests:/tests \
+          prod \
           -c "conda run -n burn-severity-prod pytest -svv /tests"
