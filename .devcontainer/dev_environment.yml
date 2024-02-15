@@ -33,6 +33,7 @@ dependencies:
   - pyarrow
   - smart_open
   - sentry-sdk[fastapi]
+  - sphinx
   - pip:
       - titiler.core
       - python-multipart
