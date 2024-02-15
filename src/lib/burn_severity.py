@@ -5,11 +5,14 @@ import pandas as pd
 
 def calc_nbr(band_nir, band_swir):
     """
-    This function takes an input the arrays of the bands from the read_band_image
-    function and returns the Normalized Burn ratio (NBR)
-    input:  band_nir   array (n x m)      array of first band image e.g B8A
-            band_swir   array (n x m)      array of second band image e.g. B12
-    output: nbr     array (n x m)      normalized burn ratio
+    Get the Normalized Burn Ratio (NBR) from the input arrays of NIR and SWIR bands.
+
+    Args:
+        band_nir (xr.DataArray): Array of the first band image (e.g., B8A).
+        band_swir (xr.DataArray): Array of the second band image (e.g., B12).
+
+    Returns:
+        array: Normalized Burn Ratio (NBR).
     """
     nbr = (band_nir - band_swir) / (band_nir + band_swir)
     return nbr
@@ -17,10 +20,14 @@ def calc_nbr(band_nir, band_swir):
 
 def calc_dnbr(nbr_prefire, nbr_postfire):
     """
-    This function takes as input the pre- and post-fire NBR and returns the dNBR
-    input:  nbr_prefire     array (n x m)       pre-fire NBR
-            nbr_postfire     array (n x m)       post-fire NBR
-    output: dnbr     array (n x m)       dNBR
+    Get the difference Normalized Burn Ratio (dNBR) from the pre-fire and post-fire NBR.
+
+    Args:
+        nbr_prefire (xr.DataArray): Pre-fire NBR.
+        nbr_postfire (xr.DataArray): Post-fire NBR.
+
+    Returns:
+        array: Difference Normalized Burn Ratio (dNBR).
     """
     dnbr = nbr_prefire - nbr_postfire
     return dnbr
@@ -28,10 +35,14 @@ def calc_dnbr(nbr_prefire, nbr_postfire):
 
 def calc_rdnbr(dnbr, nbr_prefire):
     """
-    This function takes as input the dNBR and prefire NBR, and returns the relative dNBR
-    input:  dnbr     array (n x m)       dNBR
-            nbr_prefire     array (n x m)       pre-fire NBR
-    output: rdnbr    array (n x m)       relative dNBR
+    Get the relative difference Normalized Burn Ratio (rdNBR) from the dNBR and pre-fire NBR.
+
+    Args:
+        dnbr (xr.DataArray): Difference Normalized Burn Ratio (dNBR).
+        nbr_prefire (xr.DataArray): Pre-fire NBR.
+
+    Returns:
+        array: Relative difference Normalized Burn Ratio (rdNBR).
     """
     rdnbr = dnbr / np.abs(np.sqrt(nbr_prefire))
     return rdnbr
@@ -39,10 +50,14 @@ def calc_rdnbr(dnbr, nbr_prefire):
 
 def calc_rbr(dnbr, nbr_prefire):
     """
-    This function takes as input the dNBR and prefire NBR, and returns the relative burn ratio
-    input:  dnbr     array (n x m)       dNBR
-            nbr_prefire     array (n x m)       pre-fire NBR
-    output: rbr    array (n x m)       relative burn ratio
+    Get the relative burn ratio (rBR) from the dNBR and pre-fire NBR.
+
+    Args:
+        dnbr (xr.DataArray): Difference Normalized Burn Ratio (dNBR).
+        nbr_prefire (xr.DataArray): Pre-fire NBR.
+
+    Returns:
+        array: Relative burn ratio (rBR).
     """
     rbr = dnbr / (nbr_prefire + 1.001)
     return rbr
@@ -50,17 +65,16 @@ def calc_rbr(dnbr, nbr_prefire):
 
 def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
     """
-    This function takes as input the pre- and post-fire NIR and SWIR bands and returns the
-    NBR, dNBR, rDNBR, and rBR
-    input:  prefire_nir     array (n x m)       pre-fire NIR
-            prefire_swir     array (n x m)       pre-fire SWIR
-            postfire_nir     array (n x m)       post-fire NIR
-            postfire_swir     array (n x m)       post-fire SWIR
-    output: nbr_prefire     array (n x m)       normalized burn ratio
-            nbr_postfire     array (n x m)       normalized burn ratio
-            dnbr     array (n x m)       dNBR
-            rdnbr    array (n x m)       relative dNBR
-            rbr    array (n x m)       relative burn ratio
+    Get the NBR, dNBR, rdNBR, and rBR from the pre- and post-fire NIR and SWIR bands.
+
+    Args:
+        prefire_nir (xr.DataArray): Pre-fire NIR.
+        prefire_swir (xr.DataArray): Pre-fire SWIR.
+        postfire_nir (xr.DataArray): Post-fire NIR.
+        postfire_swir (xr.DataArray): Post-fire SWIR.
+
+    Returns:
+        xr.DataArray: Stack of NBR, dNBR, rdNBR, and rBR.
     """
     nbr_prefire = calc_nbr(prefire_nir, prefire_swir)
     nbr_postfire = calc_nbr(postfire_nir, postfire_swir)
@@ -68,9 +82,6 @@ def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
     rdnbr = calc_rdnbr(dnbr, nbr_prefire)
     rbr = calc_rbr(dnbr, nbr_prefire)
 
-    # stack these arrays together, naming them by their source
-    # TODO [#22]: Look into other sources of useful info that come with satellite imagery - cloud cover, defective pixels, etc.
-    # Some of these might help us filter out bad data (especially as it relates to cloud occlusion)
     burn_stack = xr.concat(
         [nbr_prefire, nbr_postfire, dnbr, rdnbr, rbr],
         pd.Index(
@@ -84,11 +95,15 @@ def calc_burn_metrics(prefire_nir, prefire_swir, postfire_nir, postfire_swir):
 
 def classify_burn(array, thresholds):
     """
-    This function reclassifies an array
-    input:  array           xarray.DataArray    input array
-    output: reclass         xarray.DataArray    reclassified array
-    """
+    Reclassify an array based on the given thresholds.
 
+    Args:
+        array (xr.DataArray): Input array.
+        thresholds (dict): Dictionary of thresholds and their corresponding values.
+
+    Returns:
+        xr.DataArray: Reclassified array.
+    """
     reclass = xr.full_like(array, np.nan)
 
     for threshold, value in sorted(thresholds.items()):
