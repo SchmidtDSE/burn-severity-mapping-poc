@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>src.util package &#8212; dse-fire-recovery v0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=f8c80a57"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="src-util-package">
+<h1>src.util package<a class="headerlink" href="#src-util-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-src.util.cloud_static_io">
+<span id="src-util-cloud-static-io-module"></span><h2>src.util.cloud_static_io module<a class="headerlink" href="#module-src.util.cloud_static_io" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.util.cloud_static_io.</span></span><span class="sig-name descname"><span class="pre">CloudStaticIOClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.download">
+<span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remote_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_local_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.download" title="Link to this definition">¶</a></dt>
+<dd><p>Downloads the file from remote s3 server to local.
+Also, by default extracts the file to the specified target_local_path</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.get_derived_products">
+<span class="sig-name descname"><span class="pre">get_derived_products</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.get_derived_products" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.get_manifest">
+<span class="sig-name descname"><span class="pre">get_manifest</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.get_manifest" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.impersonate_service_account">
+<span class="sig-name descname"><span class="pre">impersonate_service_account</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.impersonate_service_account" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.local_fetch_id_token">
+<span class="sig-name descname"><span class="pre">local_fetch_id_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audience</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.local_fetch_id_token" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.update_manifest">
+<span class="sig-name descname"><span class="pre">update_manifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postfire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derive_boundary</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.update_manifest" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.upload">
+<span class="sig-name descname"><span class="pre">upload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_local_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remote_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.upload" title="Link to this definition">¶</a></dt>
+<dd><p>Uploads the source files from local to the s3 server.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.upload_cogs">
+<span class="sig-name descname"><span class="pre">upload_cogs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics_stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.upload_cogs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.upload_fire_event">
+<span class="sig-name descname"><span class="pre">upload_fire_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics_stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postfire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derive_boundary</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.upload_fire_event" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.upload_rap_estimates">
+<span class="sig-name descname"><span class="pre">upload_rap_estimates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rap_estimates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.upload_rap_estimates" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.validate_credentials">
+<span class="sig-name descname"><span class="pre">validate_credentials</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.validate_credentials" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-src.util.gcp_secrets">
+<span id="src-util-gcp-secrets-module"></span><h2>src.util.gcp_secrets module<a class="headerlink" href="#module-src.util.gcp_secrets" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.util.gcp_secrets.get_mapbox_secret">
+<span class="sig-prename descclassname"><span class="pre">src.util.gcp_secrets.</span></span><span class="sig-name descname"><span class="pre">get_mapbox_secret</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.util.gcp_secrets.get_mapbox_secret" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.util.gcp_secrets.get_ssh_secret">
+<span class="sig-prename descclassname"><span class="pre">src.util.gcp_secrets.</span></span><span class="sig-name descname"><span class="pre">get_ssh_secret</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.util.gcp_secrets.get_ssh_secret" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-src.util.ingest_burn_zip">
+<span id="src-util-ingest-burn-zip-module"></span><h2>src.util.ingest_burn_zip module<a class="headerlink" href="#module-src.util.ingest_burn_zip" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.util.ingest_burn_zip.ingest_esri_zip_file">
+<span class="sig-prename descclassname"><span class="pre">src.util.ingest_burn_zip.</span></span><span class="sig-name descname"><span class="pre">ingest_esri_zip_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zip_file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.ingest_burn_zip.ingest_esri_zip_file" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.util.ingest_burn_zip.shp_to_geojson">
+<span class="sig-prename descclassname"><span class="pre">src.util.ingest_burn_zip.</span></span><span class="sig-name descname"><span class="pre">shp_to_geojson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shp_file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.ingest_burn_zip.shp_to_geojson" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-src.util.raster_to_poly">
+<span id="src-util-raster-to-poly-module"></span><h2>src.util.raster_to_poly module<a class="headerlink" href="#module-src.util.raster_to_poly" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.util.raster_to_poly.raster_mask_to_geojson">
+<span class="sig-prename descclassname"><span class="pre">src.util.raster_to_poly.</span></span><span class="sig-name descname"><span class="pre">raster_mask_to_geojson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binary_mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.raster_to_poly.raster_mask_to_geojson" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-src.util">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-src.util" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">dse-fire-recovery</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Nick Gondek, DSE.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/src.util.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

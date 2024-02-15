@@ -22,7 +22,3 @@ Indices and tables
 .. autosummary::
    :toctree: _autosummary
    :recursive:
-
-.. automodule:: src.routers.dependencies
-   :members:
-   :no-index:
