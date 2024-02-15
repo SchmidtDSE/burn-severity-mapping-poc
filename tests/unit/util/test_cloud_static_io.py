@@ -1,6 +1,7 @@
 import pytest
-from src.util.cloud_static_io import CloudStaticIOClient
-from unittest.mock import patch, MagicMock, ANY, call
+from src.util.cloud_static_io import CloudStaticIOClient, BUCKET_HTTPS_PREFIX
+from unittest.mock import patch, MagicMock, ANY, call, mock_open
+from boto3.session import Session
 
 
 @patch("src.util.cloud_static_io.CloudStaticIOClient.update_manifest")
@@ -152,7 +153,7 @@ def test_upload_rap_estimates(
 
 @patch("tempfile.TemporaryDirectory")
 @patch("os.path.join")
-@patch("builtins.open", new_callable=MagicMock)
+@patch("builtins.open", new_callable=mock_open)
 @patch("json.dump")
 @patch.object(CloudStaticIOClient, "upload", return_value=None)
 @patch.object(CloudStaticIOClient, "__init__", return_value=None)
@@ -201,3 +202,90 @@ def test_update_manifest(
         source_local_path=mock_os_join.return_value,
         remote_path="manifest.json",
     )
+
+
+@patch("json.load")
+@patch.object(CloudStaticIOClient, "download", return_value=None)
+@patch("builtins.open", new_callable=mock_open)
+@patch.object(CloudStaticIOClient, "__init__", return_value=None)
+def test_get_manifest(mock_init, mock_open, mock_download, mock_json_load):
+    # Create an instance of CloudStaticIOClient
+    client = CloudStaticIOClient()
+
+    # Mock the logger
+    client.logger = MagicMock()
+
+    # Define the return value for json.load
+    mock_json_load.return_value = {"key": "value"}
+
+    # Call get_manifest
+    result = client.get_manifest()
+
+    # Assert that __init__, download and json.load were called with the correct arguments
+    mock_init.assert_called_once_with()
+    mock_download.assert_called_once()
+    mock_json_load.assert_called_once()
+
+    # Assert that the result is as expected
+    assert result == {"key": "value"}
+
+
+@patch.object(CloudStaticIOClient, "__init__", return_value=None)
+def test_get_derived_products(mock_init):
+    # Define test affiliation and fire event name
+    affiliation = "test_affiliation"
+    fire_event_name = "test_event"
+
+    # Define test pages
+    test_pages = [
+        {
+            "Contents": [
+                {"Key": f"public/{affiliation}/{fire_event_name}/test_file1.tif"}
+            ]
+        },
+        {
+            "Contents": [
+                {"Key": f"public/{affiliation}/{fire_event_name}/test_file2.tif"}
+            ]
+        },
+    ]
+
+    # Define expected derived products
+    expected_derived_products = {
+        "test_file1.tif": BUCKET_HTTPS_PREFIX
+        + "/public/test_affiliation/test_event/test_file1.tif",
+        "test_file2.tif": BUCKET_HTTPS_PREFIX
+        + "/public/test_affiliation/test_event/test_file2.tif",
+    }
+
+    # Mock s3 client and paginator
+    mock_s3_client = MagicMock()
+    mock_paginator = MagicMock()
+
+    # Mock boto_session and its client method
+    mock_boto_session = MagicMock()
+    mock_boto_session.client.return_value = mock_s3_client
+    mock_paginator.paginate.return_value = test_pages
+    mock_s3_client.get_paginator.return_value = mock_paginator
+
+    # Create an instance of CloudStaticIOClient, and give it an s3 client
+    client = CloudStaticIOClient()
+    client.bucket_name = "bucket_name"
+    client.boto_session = mock_boto_session
+
+    # Call get_derived_products
+    derived_products = client.get_derived_products(affiliation, fire_event_name)
+
+    # Assert that boto_session.client was called with "s3"
+    mock_boto_session.client.assert_called_once_with("s3")
+
+    # Assert that get_paginator was called with "list_objects_v2"
+    mock_s3_client.get_paginator.assert_called_once_with("list_objects_v2")
+
+    # Assert that paginate was called with the correct Bucket and Prefix
+    mock_paginator.paginate.assert_called_once_with(
+        Bucket=client.bucket_name, Prefix=f"public/{affiliation}/{fire_event_name}/"
+    )
+
+    # Assert that the returned derived products match the expected derived products
+    assert derived_products == expected_derived_products
