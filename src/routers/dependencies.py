@@ -9,6 +9,12 @@ import os
 
 
 def get_cloud_logger():
+    """
+    Get a logger from the Google Cloud Logging service
+
+    :return: A logger from the Google Cloud Logging service
+    :rtype: Logger
+    """
     logging_client = logging.Client(project="dse-nps")
     log_name = "burn-backend"
     logger = logging_client.logger(log_name)
@@ -17,6 +23,16 @@ def get_cloud_logger():
 
 
 def get_cloud_static_io_client(logger: Logger = Depends(get_cloud_logger)):
+    """
+    Get an instance of CloudStaticIOClient.
+
+    Args:
+        logger (Logger): The logger instance to use for logging.
+
+    Returns:
+        CloudStaticIOClient: An instance of CloudStaticIOClient.
+
+    """
     logger.log_text("Creating CloudStaticIOClient")
     return CloudStaticIOClient("burn-severity-backend", "s3")
 
@@ -25,12 +41,31 @@ def get_manifest(
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     logger: Logger = Depends(get_cloud_logger),
 ):
+    """
+    Get the manifest from the cloud static IO client.
+
+    Parameters:
+    - cloud_static_io_client: The cloud static IO client instance, used to download the manifest from clouds storage.
+    - logger: The logger instance.
+
+    Returns:
+    - The manifest obtained from the cloud static IO client.
+    """
     logger.log_text("Getting manifest")
     manifest = cloud_static_io_client.get_manifest()
     return manifest
 
 
 def init_sentry(logger: Logger = Depends(get_cloud_logger)):
+    """
+    Initializes the Sentry client.
+
+    Args:
+        logger (Logger): The logger object used for logging.
+
+    Returns:
+        None
+    """
     logger.log_text("Initializing Sentry client")
 
     ## TODO: Move to sentry to environment variable if we keep sentry
