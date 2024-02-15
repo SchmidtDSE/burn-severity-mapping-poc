@@ -10,10 +10,10 @@ import os
 
 def get_cloud_logger():
     """
-    Get a logger from the Google Cloud Logging service
+    Returns a Cloud Logging logger instance.
 
-    :return: A logger from the Google Cloud Logging service
-    :rtype: Logger
+    Returns:
+        google.cloud.logging.logger.Logger: The Cloud Logging logger instance.
     """
     logging_client = logging.Client(project="dse-nps")
     log_name = "burn-backend"
@@ -31,7 +31,6 @@ def get_cloud_static_io_client(logger: Logger = Depends(get_cloud_logger)):
 
     Returns:
         CloudStaticIOClient: An instance of CloudStaticIOClient.
-
     """
     logger.log_text("Creating CloudStaticIOClient")
     return CloudStaticIOClient("burn-severity-backend", "s3")
@@ -44,12 +43,12 @@ def get_manifest(
     """
     Get the manifest from the cloud static IO client.
 
-    Parameters:
-    - cloud_static_io_client: The cloud static IO client instance, used to download the manifest from clouds storage.
-    - logger: The logger instance.
+    Args:
+        cloud_static_io_client (CloudStaticIOClient): The cloud static IO client instance, used to download the manifest from clouds storage.
+        logger: The logger instance.
 
     Returns:
-    - The manifest obtained from the cloud static IO client.
+        dict: The manifest from the cloud storage.
     """
     logger.log_text("Getting manifest")
     manifest = cloud_static_io_client.get_manifest()
@@ -84,4 +83,10 @@ def init_sentry(logger: Logger = Depends(get_cloud_logger)):
 
 
 def get_mapbox_secret():
+    """
+    Retrieves the Mapbox secret from GCP.
+
+    Returns:
+        str: The Mapbox secret.
+    """
     return gcp_get_mapbox_secret()
