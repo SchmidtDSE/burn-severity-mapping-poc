@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>src.lib.burn_severity &#8212; dse-fire-recovery v0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <script src="../_static/documentation_options.js?v=f8c80a57"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="src.lib.query_rap" href="src.lib.query_rap.html" />
+    <link rel="prev" title="src.lib" href="src.lib.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-src.lib.burn_severity">
+<span id="src-lib-burn-severity"></span><h1>src.lib.burn_severity<a class="headerlink" href="#module-src.lib.burn_severity" title="Link to this heading">¶</a></h1>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_burn_metrics</span></code>(prefire_nir, prefire_swir, ...)</p></td>
+<td><p>This function takes as input the pre- and post-fire NIR and SWIR bands and returns the NBR, dNBR, rDNBR, and rBR input:  prefire_nir     array (n x m)       pre-fire NIR         prefire_swir     array (n x m)       pre-fire SWIR         postfire_nir     array (n x m)       post-fire NIR         postfire_swir     array (n x m)       post-fire SWIR output: nbr_prefire     array (n x m)       normalized burn ratio         nbr_postfire     array (n x m)       normalized burn ratio         dnbr     array (n x m)       dNBR         rdnbr    array (n x m)       relative dNBR         rbr    array (n x m)       relative burn ratio</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_dnbr</span></code>(nbr_prefire, nbr_postfire)</p></td>
+<td><p>This function takes as input the pre- and post-fire NBR and returns the dNBR input:  nbr_prefire     array (n x m)       pre-fire NBR         nbr_postfire     array (n x m)       post-fire NBR output: dnbr     array (n x m)       dNBR</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_nbr</span></code>(band_nir, band_swir)</p></td>
+<td><p>This function takes an input the arrays of the bands from the read_band_image function and returns the Normalized Burn ratio (NBR) input:  band_nir   array (n x m)      array of first band image e.g B8A         band_swir   array (n x m)      array of second band image e.g. B12 output: nbr     array (n x m)      normalized burn ratio.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_rbr</span></code>(dnbr, nbr_prefire)</p></td>
+<td><p>This function takes as input the dNBR and prefire NBR, and returns the relative burn ratio input:  dnbr     array (n x m)       dNBR         nbr_prefire     array (n x m)       pre-fire NBR output: rbr    array (n x m)       relative burn ratio</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_rdnbr</span></code>(dnbr, nbr_prefire)</p></td>
+<td><p>This function takes as input the dNBR and prefire NBR, and returns the relative dNBR input:  dnbr     array (n x m)       dNBR         nbr_prefire     array (n x m)       pre-fire NBR output: rdnbr    array (n x m)       relative dNBR</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">classify_burn</span></code>(array, thresholds)</p></td>
+<td><p>This function reclassifies an array input:  array           xarray.DataArray    input array output: reclass         xarray.DataArray    reclassified array</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">dse-fire-recovery</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="src.html">src</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="src.app.html">src.app</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="src.lib.html">src.lib</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">src.lib.burn_severity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.lib.query_rap.html">src.lib.query_rap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.lib.query_sentinel.html">src.lib.query_sentinel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.lib.query_soil.html">src.lib.query_soil</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.lib.titiler_algorithms.html">src.lib.titiler_algorithms</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.routers.html">src.routers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.util.html">src.util</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="src.html">src</a><ul>
+  <li><a href="src.lib.html">src.lib</a><ul>
+      <li>Previous: <a href="src.lib.html" title="previous chapter">src.lib</a></li>
+      <li>Next: <a href="src.lib.query_rap.html" title="next chapter">src.lib.query_rap</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Nick Gondek, DSE.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/_autosummary/src.lib.burn_severity.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
