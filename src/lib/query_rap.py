@@ -7,7 +7,25 @@ import json
 
 
 def rap_get_biomass(ignition_date, boundary_geojson, buffer_distance=0.01):
+    """
+    Retrieves biomass estimates from the Rangeland Analysis Platform for a given ignition year and boundary location.
+    RAP provides estimates of biomass for four categories: annual forb and grass, perennial forb and grass, shrub, and tree.
+    http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-biomass/v3/README
+    Data are available from 1986 to 2022, if a pre-1986 date is provided, a ValueError is raised., if a post-2022 date is provided,
+    the 2022 data is used.
 
+    Parameters:
+        ignition_date (str): The ignition date in the format 'YYYY-MM-DD'.
+        boundary_geojson (dict): The boundary geometry in GeoJSON format.
+        buffer_distance (float, optional): The buffer distance around the boundary. Defaults to 0.01.
+
+    Returns:
+        xr.DataArray: Biomass estimates from the RAP dataset.
+
+    Raises:
+        ValueError: If the ignition date is before 1986, where RAP data is not available.
+
+    """
     boundary_gdf = gpd.GeoDataFrame.from_features(boundary_geojson)
 
     # Load boundary geometry (in GeoJSON format)
