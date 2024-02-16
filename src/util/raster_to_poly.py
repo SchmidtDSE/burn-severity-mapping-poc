@@ -9,6 +9,15 @@ import numpy as np
 
 
 def raster_mask_to_geojson(binary_mask):
+    """
+    Converts a binary raster mask to a GeoJSON representation.
+
+    Args:
+        binary_mask (xr.DataArray): Binary mask representing the raster.
+
+    Returns:
+        dict: GeoJSON representation of the mask boundary.
+    """
     mask = binary_mask.values
     transform = binary_mask.rio.transform()
 
