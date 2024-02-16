@@ -12,6 +12,15 @@ router = APIRouter()
 
 
 class GetDerivedProductsPOSTBody(BaseModel):
+    """
+    Represents the request body for the GetDerivedProducts endpoint, which
+    essentially lists the files available for download for a given fire event.
+
+    Attributes:
+        fire_event_name (str): The name of the fire event.
+        affiliation (str): The affiliation of the derived products.
+    """
+
     fire_event_name: str
     affiliation: str
 
@@ -27,6 +36,22 @@ async def list_derived_products(
     __sentry: None = Depends(init_sentry),
     logger: Logger = Depends(get_cloud_logger),
 ):
+    """
+    Retrieves a list of derived products within a given fire event and affiliation. This hits our own
+    backend service to list the available derived products.
+
+    Args:
+        body (GetDerivedProductsPOSTBody): The request body containing the parameters.
+        cloud_static_io_client (CloudStaticIOClient): The client for interacting with the cloud static IO.
+        __sentry (None): The sentry dependency.
+        logger (Logger): The logger for logging messages.
+
+    Returns:
+        JSONResponse: The response containing the derived products.
+
+    Raises:
+        HTTPException: If an error occurs during the retrieval of derived products.
+    """
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
 

@@ -15,7 +15,17 @@ from src.util.cloud_static_io import CloudStaticIOClient
 router = APIRouter()
 
 
-class AnaylzeRapPOSTBody(BaseModel):
+class FetchRapPOSTBody(BaseModel):
+    """
+    Represents the request body for fetching Rangeland Analysis Platform (RAP) data.
+
+    Attributes:
+        geojson (str): The GeoJSON data for the analysis.
+        ignition_date (str): The date of ignition for the fire event.
+        fire_event_name (str): The name of the fire event.
+        affiliation (str): The affiliation associated with the analysis.
+    """
+
     geojson: Any
     ignition_date: str
     fire_event_name: str
@@ -28,11 +38,23 @@ class AnaylzeRapPOSTBody(BaseModel):
     description="Fetch Rangeland Analysis Platform (RAP) biomass estimates",
 )
 def fetch_rangeland_analysis_platform(
-    body: AnaylzeRapPOSTBody,
+    body: FetchRapPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
     logger: Logger = Depends(get_cloud_logger),
 ):
+    """
+    Fetches rangeland data for a given fire event, withing the given boundary.
+
+    Args:
+        body (AnaylzeRapPOSTBody): The request body containing the necessary data for analysis.
+        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service. Defaults to Depends(get_cloud_static_io_client).
+        __sentry (None, optional): The Sentry dependency. Defaults to Depends(init_sentry).
+        logger (Logger, optional): The logger for logging messages. Defaults to Depends(get_cloud_logger).
+
+    Returns:
+        JSONResponse: The response containing the status and message.
+    """
     boundary_geojson = json.loads(body.geojson)
     ignition_date = body.ignition_date
     fire_event_name = body.fire_event_name

@@ -18,7 +18,16 @@ from src.util.cloud_static_io import CloudStaticIOClient
 router = APIRouter()
 
 
-class QuerySoilPOSTBody(BaseModel):
+class FetchEcoclassPOSTBody(BaseModel):
+    """
+    Represents the request body for querying soil data.
+
+    Attributes:
+        geojson (str): The GeoJSON data.
+        fire_event_name (str): The name of the fire event.
+        affiliation (str): The affiliation of the user.
+    """
+
     geojson: Any
     fire_event_name: str
     affiliation: str
@@ -30,11 +39,23 @@ class QuerySoilPOSTBody(BaseModel):
     description="Fetch ecoclass data (using Soil Data Mart / Web Soil Survey for Map Unit polygons, and the Ecological Site Description database for ecoclass info)",
 )
 def fetch_ecoclass(
-    body: QuerySoilPOSTBody,
+    body: FetchEcoclassPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
     logger: Logger = Depends(get_cloud_logger),
 ):
+    """
+    Fetches ecoclass information from EDIT based on the provided parameters.
+
+    Args:
+        body (QuerySoilPOSTBody): The request body containing the necessary parameters.
+        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service. Defaults to Depends(get_cloud_static_io_client).
+        __sentry (None, optional): The sentry dependency. Defaults to Depends(init_sentry).
+        logger (Logger, optional): The logger dependency. Defaults to Depends(get_cloud_logger).
+
+    Returns:
+        tuple: A tuple containing the success message and the HTTP status code.
+    """
     fire_event_name = body.fire_event_name
     geojson = json.loads(body.geojson)
     affiliation = body.affiliation
