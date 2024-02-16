@@ -40,7 +40,16 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="src.routers.check.connectivity.check_connectivity">
 <span class="sig-prename descclassname"><span class="pre">src.routers.check.connectivity.</span></span><span class="sig-name descname"><span class="pre">check_connectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Depends(get_cloud_logger)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.routers.check.connectivity.check_connectivity" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Check the connectivity to <a class="reference external" href="http://example.com">http://example.com</a>.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>logger (Logger): The logger object used for logging.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Tuple[int, str]: A tuple containing the HTTP status code and a message.</p>
+</dd>
+<dt>Raises:</dt><dd><p>HTTPException: If there is an error during the connectivity check.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-src.routers.check.dns">
@@ -48,7 +57,16 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="src.routers.check.dns.check_dns">
 <span class="sig-prename descclassname"><span class="pre">src.routers.check.dns.</span></span><span class="sig-name descname"><span class="pre">check_dns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Depends(get_cloud_logger)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.routers.check.dns.check_dns" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Check the DNS resolution for www.google.com.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>logger (Logger): The logger object for logging messages.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: A dictionary containing the resolved IP address.</p>
+</dd>
+<dt>Raises:</dt><dd><p>HTTPException: If there is an error during the DNS resolution.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-src.routers.check.health">
@@ -56,7 +74,14 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="src.routers.check.health.health">
 <span class="sig-prename descclassname"><span class="pre">src.routers.check.health.</span></span><span class="sig-name descname"><span class="pre">health</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Depends(get_cloud_logger)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.routers.check.health.health" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Ping pong!</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>logger (Logger): The logger object for logging messages.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Tuple[str, int]: A tuple containing the response message and status code.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-src.routers.check.sentry_error">
@@ -64,7 +89,14 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="src.routers.check.sentry_error.trigger_error">
 <em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.routers.check.sentry_error.</span></span><span class="sig-name descname"><span class="pre">trigger_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Depends(get_cloud_logger)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.routers.check.sentry_error.trigger_error" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Triggers a division by zero error for Sentry to catch.</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>logger (Logger): The logger object used for logging.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ZeroDivisionError: If a division by zero occurs (it definitely will).</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-src.routers.check">

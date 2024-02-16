@@ -1,4 +1,4 @@
-src.util.gcp\_secrets
+﻿src.util.gcp\_secrets
 =====================
 
 .. automodule:: src.util.gcp_secrets
@@ -14,7 +14,6 @@ src.util.gcp\_secrets
    .. autosummary::
    
       get_mapbox_secret
-      get_ssh_secret
    
    
 

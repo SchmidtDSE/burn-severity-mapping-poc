@@ -13,8 +13,6 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="src.lib.titiler_algorithms" href="src.lib.titiler_algorithms.html" />
-    <link rel="prev" title="src.lib.query_sentinel" href="src.lib.query_sentinel.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -37,20 +35,20 @@
 <p class="rubric">Functions</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">edit_get_ecoclass_info</span></code>(ecoclass_id)</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../src.lib.html#src.lib.query_soil.edit_get_ecoclass_info" title="src.lib.query_soil.edit_get_ecoclass_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edit_get_ecoclass_info</span></code></a>(ecoclass_id)</p></td>
+<td><p>Retrieves information about an EcoClass from the EDIT database.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sdm_create_aoi</span></code>(geojson)</p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../src.lib.html#src.lib.query_soil.sdm_create_aoi" title="src.lib.query_soil.sdm_create_aoi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sdm_create_aoi</span></code></a>(geojson)</p></td>
+<td><p>DEPRECATED: <cite>sdm_get_esa_mapunitid_poly</cite> circumvents the need for creating an AOI within the SDM service.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sdm_get_available_interpretations</span></code>(aoi_smd_id)</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../src.lib.html#src.lib.query_soil.sdm_get_available_interpretations" title="src.lib.query_soil.sdm_get_available_interpretations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sdm_get_available_interpretations</span></code></a>(aoi_smd_id)</p></td>
+<td><p>Retrieves the available interpretations for a given AOI ID from the SDM service.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sdm_get_ecoclassid_from_mu_info</span></code>(mu_polygon_keys)</p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../src.lib.html#src.lib.query_soil.sdm_get_ecoclassid_from_mu_info" title="src.lib.query_soil.sdm_get_ecoclassid_from_mu_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sdm_get_ecoclassid_from_mu_info</span></code></a>(mu_polygon_keys)</p></td>
+<td><p>Retrieves the ecological site information from the SDM endpoint based on the provided map unit polygon keys.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sdm_get_esa_mapunitid_poly</span></code>(geojson[, ...])</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../src.lib.html#src.lib.query_soil.sdm_get_esa_mapunitid_poly" title="src.lib.query_soil.sdm_get_esa_mapunitid_poly"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sdm_get_esa_mapunitid_poly</span></code></a>(geojson[, ...])</p></td>
+<td><p>Retrieves the map unit polygons from the SDM endpoint based on the provided GeoJSON geometry.</p></td>
 </tr>
 </tbody>
 </table>
@@ -73,33 +71,11 @@
 
 
 <h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="src.html">src</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="src.app.html">src.app</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="src.lib.html">src.lib</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="src.lib.burn_severity.html">src.lib.burn_severity</a></li>
-<li class="toctree-l3"><a class="reference internal" href="src.lib.query_rap.html">src.lib.query_rap</a></li>
-<li class="toctree-l3"><a class="reference internal" href="src.lib.query_sentinel.html">src.lib.query_sentinel</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">src.lib.query_soil</a></li>
-<li class="toctree-l3"><a class="reference internal" href="src.lib.titiler_algorithms.html">src.lib.titiler_algorithms</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="src.routers.html">src.routers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="src.util.html">src.util</a></li>
-</ul>
-</li>
-</ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-  <li><a href="src.html">src</a><ul>
-  <li><a href="src.lib.html">src.lib</a><ul>
-      <li>Previous: <a href="src.lib.query_sentinel.html" title="previous chapter">src.lib.query_sentinel</a></li>
-      <li>Next: <a href="src.lib.titiler_algorithms.html" title="next chapter">src.lib.titiler_algorithms</a></li>
-  </ul></li>
-  </ul></li>
   </ul></li>
 </ul>
 </div>

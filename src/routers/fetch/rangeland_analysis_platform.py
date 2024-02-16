@@ -48,7 +48,7 @@ def fetch_rangeland_analysis_platform(
 
     Args:
         body (AnaylzeRapPOSTBody): The request body containing the necessary data for analysis.
-        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service. Defaults to Depends(get_cloud_static_io_client).
+        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service. FastAPI handles this as a dependency injection.
         __sentry (None, optional): Sentry client, just needs to be initialized. FastAPI handles this as a dependency injection.
         logger (Logger, optional): Google cloud logger. FastAPI handles this as a dependency injection.
 

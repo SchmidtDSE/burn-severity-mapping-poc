@@ -285,27 +285,82 @@ the date ranges themselves (but it will definitely be an issue if the date range
 <dl class="py function">
 <dt class="sig sig-object py" id="src.lib.query_soil.edit_get_ecoclass_info">
 <span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">edit_get_ecoclass_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ecoclass_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.edit_get_ecoclass_info" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves information about an EcoClass from the EDIT database.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>ecoclass_id (str): The ID of the EcoClass to retrieve.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple: A tuple containing a boolean value indicating the success of the retrieval</dt><dd><p>and a dictionary containing the retrieved EcoClass information.</p>
+</dd>
+</dl>
+</dd>
+<dt>Raises:</dt><dd><p>Exception: If there is an error in retrieving the EcoClass information from the EDIT database.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.lib.query_soil.sdm_create_aoi">
 <span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">sdm_create_aoi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geojson</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.sdm_create_aoi" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>DEPRECATED: <cite>sdm_get_esa_mapunitid_poly</cite> circumvents the need for creating an AOI within the SDM service.</p>
+<p>Create an Area of Interest (AOI) within the Soil Data Mart (SDM) using the given GeoJSON.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>geojson (dict): The GeoJSON object containing the AOI geometry. This assumes a single
+feature in the GeoJSON, a polygon.</p>
+</dd>
+<dt>Returns:</dt><dd><p>requests.Response or None: The response object if the AOI creation is successful,
+None otherwise. The response object contains the AOI ID, which can be used to query
+for available interpretations within SDM.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.lib.query_soil.sdm_get_available_interpretations">
 <span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">sdm_get_available_interpretations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aoi_smd_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.sdm_get_available_interpretations" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves the available interpretations for a given AOI ID from the SDM service.</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>aoi_smd_id (str): The ID of the AOI.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list or None: A list of available interpretations if successful, None otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.lib.query_soil.sdm_get_ecoclassid_from_mu_info">
 <span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">sdm_get_ecoclassid_from_mu_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_polygon_keys</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.sdm_get_ecoclassid_from_mu_info" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves the ecological site information from the SDM endpoint based on the provided map unit polygon keys. This is
+essentially a direct query to the SDM endpoint to retrieve the <cite>ecoclassid</cite>. This <cite>ecoclassid</cite> is used to query the
+EDIT database for ecological site information, such as dominant cover species. This query page
+(<a class="reference external" href="https://sdmdataaccess.sc.egov.usda.gov/Query.aspx">https://sdmdataaccess.sc.egov.usda.gov/Query.aspx</a>) can be used to test out queries interactively,
+which is how this query was constructed.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>mu_polygon_keys (list): The list of map unit polygon keys to filter the ecological site information.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pandas.DataFrame: The ecological site information as a DataFrame, or None if an error occurs.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.lib.query_soil.sdm_get_esa_mapunitid_poly">
 <span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">sdm_get_esa_mapunitid_poly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geojson</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff_increment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.sdm_get_esa_mapunitid_poly" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves the map unit polygons from the SDM endpoint based on the provided GeoJSON geometry.
+These Map Unit polygons are used to query for ecological site information within the EDIT database.
+SDM endpoint occasionally refuses traffic, so this function will backoff and retry if necessary in a linear fashion.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>geojson (dict): The GeoJSON geometry to filter the map unit polygons.
+backoff_max (int, optional): The maximum backoff value in seconds. Defaults to 200.
+backoff_value (int, optional): The current backoff value in seconds. Defaults to 0.
+backoff_increment (int, optional): The increment value for backoff in seconds. Defaults to 25.</p>
+</dd>
+<dt>Returns:</dt><dd><p>geopandas.GeoDataFrame: The map unit polygons as a GeoDataFrame, or None if an error occurs.</p>
+</dd>
+<dt>Raises:</dt><dd><p>Exception: If the SDM endpoint refuses traffic and the backoff max is reached.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-src.lib.titiler_algorithms">
@@ -385,7 +440,20 @@ mapping of field names to [<cite>FieldInfo</cite>][pydantic.fields.FieldInfo].</
 <dl class="py function">
 <dt class="sig sig-object py" id="src.lib.titiler_algorithms.convert_to_rgb">
 <span class="sig-prename descclassname"><span class="pre">src.lib.titiler_algorithms.</span></span><span class="sig-name descname"><span class="pre">convert_to_rgb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">classified</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#src.lib.titiler_algorithms.convert_to_rgb" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Convert a classified image to RGB format, essentially creating a false-color image. This is used
+extensively by Titiler to create the final image that is returned to the user, upon a tile request.
+We will likely do this on the front-end in v1.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>classified (np.ndarray): The classified image.
+mask (np.ndarray): The mask indicating which pixels to include in the final image.
+color (str): The color to use for the RGB image. Must be one of “red”, “green”, or “blue”.</p>
+</dd>
+<dt>Returns:</dt><dd><p>np.ndarray: The RGB image.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If an invalid color is provided.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-src.lib">
