@@ -60,8 +60,8 @@ def fetch_ecoclass(
         n_within_edit = 0
 
         for ecoclass_id in ecoclass_ids:
-            edit_success, edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
-            if edit_success:
+            edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
+            if edit_ecoclass_json:
                 n_within_edit += 1
                 logger.log_text(f"Success: {ecoclass_id} exists within EDIT backend")
                 edit_ecoclass_df_row_dict = edit_ecoclass_json["generalInformation"][

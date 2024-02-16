@@ -10,7 +10,6 @@ import xml.etree.ElementTree as ET
 import tempfile
 import urllib
 from shapely.ops import transform
-import sentry_sdk
 
 SDM_ENDPOINT_TABULAR = "https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest"
 SDM_ENDPOINT_SPATIAL = (
@@ -20,6 +19,20 @@ EDIT_ECOCLASS_ENDPOINT = "https://edit.jornada.nmsu.edu/services/descriptions"
 
 
 def sdm_create_aoi(geojson):
+    """
+    DEPRECATED: `sdm_get_esa_mapunitid_poly` circumvents the need for creating an AOI within the SDM service.
+
+    Create an Area of Interest (AOI) within the Soil Data Mart (SDM) using the given GeoJSON.
+
+    Args:
+        geojson (dict): The GeoJSON object containing the AOI geometry. This assumes a single
+        feature in the GeoJSON, a polygon.
+
+    Returns:
+        requests.Response or None: The response object if the AOI creation is successful,
+        None otherwise. The response object contains the AOI ID, which can be used to query
+        for available interpretations within SDM.
+    """
     try:
         aoi = geojson["features"][0]["geometry"]
 
@@ -39,6 +52,15 @@ def sdm_create_aoi(geojson):
 
 
 def sdm_get_available_interpretations(aoi_smd_id):
+    """
+    Retrieves the available interpretations for a given AOI ID from the SDM service.
+
+    Parameters:
+        aoi_smd_id (str): The ID of the AOI.
+
+    Returns:
+        list or None: A list of available interpretations if successful, None otherwise.
+    """
     try:
         get_available_interpretations_data = {
             "SERVICE": "interpretation",
@@ -53,7 +75,6 @@ def sdm_get_available_interpretations(aoi_smd_id):
         # Check status and print available interpretations
         if response.status_code == 200:
             available_interpretations = response.json()
-            print(available_interpretations)
             return available_interpretations
 
         else:
@@ -65,10 +86,27 @@ def sdm_get_available_interpretations(aoi_smd_id):
         return None
 
 
-# def sdm_get_esa_mapunitid_poly(aoi_smd_id):
 def sdm_get_esa_mapunitid_poly(
     geojson, backoff_max=200, backoff_value=0, backoff_increment=25
 ):
+    """
+    Retrieves the map unit polygons from the SDM endpoint based on the provided GeoJSON geometry.
+    These Map Unit polygons are used to query for ecological site information within the EDIT database.
+    SDM endpoint occasionally refuses traffic, so this function will backoff and retry if necessary in a linear fashion.
+
+    Args:
+        geojson (dict): The GeoJSON geometry to filter the map unit polygons.
+        backoff_max (int, optional): The maximum backoff value in seconds. Defaults to 200.
+        backoff_value (int, optional): The current backoff value in seconds. Defaults to 0.
+        backoff_increment (int, optional): The increment value for backoff in seconds. Defaults to 25.
+
+    Returns:
+        geopandas.GeoDataFrame: The map unit polygons as a GeoDataFrame, or None if an error occurs.
+
+    Raises:
+        Exception: If the SDM endpoint refuses traffic and the backoff max is reached.
+    """
+
     geometry = geojson["features"][0]["geometry"]
     shapely_geom = shape(geometry)
     bounds = shapely_geom.bounds
@@ -145,6 +183,19 @@ def sdm_get_esa_mapunitid_poly(
 
 
 def sdm_get_ecoclassid_from_mu_info(mu_polygon_keys):
+    """
+    Retrieves the ecological site information from the SDM endpoint based on the provided map unit polygon keys. This is
+    essentially a direct query to the SDM endpoint to retrieve the `ecoclassid`. This `ecoclassid` is used to query the
+    EDIT database for ecological site information, such as dominant cover species. This query page
+    (https://sdmdataaccess.sc.egov.usda.gov/Query.aspx) can be used to test out queries interactively,
+    which is how this query was constructed.
+
+    Args:
+        mu_polygon_keys (list): The list of map unit polygon keys to filter the ecological site information.
+
+    Returns:
+        pandas.DataFrame: The ecological site information as a DataFrame, or None if an error occurs.
+    """
     SQL_QUERY = """
         SELECT DISTINCT
             ecoclassid,
@@ -193,7 +244,21 @@ def sdm_get_ecoclassid_from_mu_info(mu_polygon_keys):
 
 
 def edit_get_ecoclass_info(ecoclass_id):
+    """
+    Retrieves information about an EcoClass from the EDIT database.
+
+    Args:
+        ecoclass_id (str): The ID of the EcoClass to retrieve.
+
+    Returns:
+        tuple: A tuple containing a boolean value indicating the success of the retrieval
+               and a dictionary containing the retrieved EcoClass information.
+
+    Raises:
+        Exception: If there is an error in retrieving the EcoClass information from the EDIT database.
+    """
     try:
+        # Get the 1:5 characters of the EcoClass ID to determine the geoUnit, which is essntially just the prefix for the GET request
         geoUnit = ecoclass_id[1:5]
         edit_endpoint_fmt = (
             EDIT_ECOCLASS_ENDPOINT + f"/esd/{geoUnit}/{ecoclass_id}.json"
@@ -211,12 +276,14 @@ def edit_get_ecoclass_info(ecoclass_id):
                 f"https://edit.jornada.nmsu.edu/catalogs/esd/{geoUnit}/{ecoclass_id}"
             )
 
-            return True, edit_json
+            return edit_json
+
         elif response.status_code == 404:
+            # If the EcoClass ID is not found, return None, this is relatively common
+            # and we want to continue processing the other EcoClass IDs
             print(f"EcoClass ID not found within EDIT database: {ecoclass_id}")
-            return False, {
-                "error": f"EcoClass ID not found within EDIT database: {ecoclass_id}"
-            }
+            return None
+
         else:
             print("Error:", response.status_code)
             raise Exception(

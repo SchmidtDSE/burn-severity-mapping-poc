@@ -123,7 +123,22 @@ thresholds (dict): Dictionary of thresholds and their corresponding values.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="src.lib.query_rap.rap_get_biomass">
 <span class="sig-prename descclassname"><span class="pre">src.lib.query_rap.</span></span><span class="sig-name descname"><span class="pre">rap_get_biomass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ignition_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_geojson</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_rap.rap_get_biomass" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves biomass estimates from the Rangeland Analysis Platform for a given ignition year and boundary location.
+RAP provides estimates of biomass for four categories: annual forb and grass, perennial forb and grass, shrub, and tree.
+<a class="reference external" href="http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-biomass/v3/README">http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-biomass/v3/README</a>
+Data are available from 1986 to 2022, if a pre-1986 date is provided, a ValueError is raised., if a post-2022 date is provided,
+the 2022 data is used.</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>ignition_date (str): The ignition date in the format ‘YYYY-MM-DD’.
+boundary_geojson (dict): The boundary geometry in GeoJSON format.
+buffer_distance (float, optional): The buffer distance around the boundary. Defaults to 0.01.</p>
+</dd>
+<dt>Returns:</dt><dd><p>xr.DataArray: Biomass estimates from the RAP dataset.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If the ignition date is before 1986, where RAP data is not available.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-src.lib.query_sentinel">
@@ -135,52 +150,132 @@ thresholds (dict): Dictionary of thresholds and their corresponding values.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.arrange_stack">
 <span class="sig-name descname"><span class="pre">arrange_stack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.arrange_stack" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Arrange and process (reduce the time dimension, according to <cite>reduce_time_range</cite>) a stack of Sentinel items.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>items (list): List of Sentinel items to stack.
+resolution (int): Resolution of the stacked data.</p>
+</dd>
+<dt>Returns:</dt><dd><p>stack (xarray.DataArray): Stacked and processed Sentinel data, in our desired CRS, clipped to the boundary.</p>
+</dd>
+<dt>Raises:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.calc_burn_metrics">
 <span class="sig-name descname"><span class="pre">calc_burn_metrics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.calc_burn_metrics" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calculates burn metrics using prefire and postfire Sentinel satellite data.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>metrics_stack (xarray.DataArray): Stack of burn metrics, wiht bands of nir and swir,</dt><dd><p>named according to self.band_nir and self.band_swir.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.classify">
 <span class="sig-name descname"><span class="pre">classify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thresholds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">burn_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dnbr'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.classify" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.clip_metrics_stack_to_boundary">
-<span class="sig-name descname"><span class="pre">clip_metrics_stack_to_boundary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.clip_metrics_stack_to_boundary" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Classify the metrics stack based on the given thresholds and threshold source. Note that,
+in v0, we are not actually calling this classify method, we are classifing at runtime using
+titiler’s algorithms (<cite>src.lib.titiler_algorithms</cite>). After classification, we save the
+classification to the <cite>derived_classifications</cite> attribute of the Sentinel2Client.</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>thresholds (list): List of threshold values.
+threshold_source (str): Source of the thresholds.
+burn_metric (str): Metric to be used for classification (default: “dnbr”).</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.derive_boundary">
 <span class="sig-name descname"><span class="pre">derive_boundary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rbr'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.025</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.derive_boundary" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
+This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as <cite>boundary.geojson</cite>
+within the s3 bucket), and we clip the metrics stack to this boundary.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>metric_name (str): Name of the metric layer.
+threshold (float): Threshold value for the metric layer.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.get_items">
 <span class="sig-name descname"><span class="pre">get_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_items</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.get_items" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves items from the Sentinel-2-L2A collection based on the specified date range and optional parameters.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>date_range (tuple): A tuple containing the start and end dates of the desired date range in the format (start_date, end_date).
+from_bbox (bool, optional): Specifies whether to search for items within the bounding box defined by the <cite>bbox</cite> attribute. Defaults to True.
+max_items (int, optional): The maximum number of items to retrieve. Defaults to None, which retrieves all available items.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pystac.ItemCollection: A collection of items matching the specified criteria.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.ingest_barc_classifications">
 <span class="sig-name descname"><span class="pre">ingest_barc_classifications</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">barc_classifications_xarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.ingest_barc_classifications" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Ingests and processes BARC (Burned Area Reflectance Classification) classifications, such that
+they conform to our desired CRS and boundary, same as our derived classifications.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>barc_classifications_xarray (xarray.DataArray): The BARC classifications as an xarray DataArray.</p>
+</dd>
+<dt>Returns:</dt><dd><p>xarray.DataArray: The processed barc classifications.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.query_fire_event">
 <span class="sig-name descname"><span class="pre">query_fire_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postfire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_items</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.query_fire_event" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Queries the fire event by retrieving prefire and postfire items based on the given date ranges.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>prefire_date_range (tuple): A tuple representing the date range for prefire items.
+postfire_date_range (tuple): A tuple representing the date range for postfire items.
+from_bbox (bool, optional): Flag indicating whether to retrieve items from bounding box. Defaults to True.
+max_items (int, optional): Maximum number of items to retrieve. Defaults to None.</p>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>ValueError: If there are insufficient imagery in the date ranges to calculate burn metrics. Note that</dt><dd><p>this might also happen if there are no items in the date range, so it’s not necessarily a problem with
+the date ranges themselves (but it will definitely be an issue if the date range is too narrow for any imagery)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.reduce_time_range">
 <span class="sig-name descname"><span class="pre">reduce_time_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">range_stack</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.reduce_time_range" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Reduces the time range of the given range stack by taking the median along the time dimension.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>range_stack (xarray.DataArray): The range stack to be reduced.</p>
+</dd>
+<dt>Returns:</dt><dd><p>xarray.DataArray: The reduced range stack.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.set_boundary">
 <span class="sig-name descname"><span class="pre">set_boundary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geojson_boundary</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.set_boundary" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sets the boundary for later query to STAC API.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>geojson_boundary (GeoJSON): The boundary of the query area.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
