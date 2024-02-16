@@ -26,6 +26,23 @@ async def upload_shapefile(
     logger: Logger = Depends(get_cloud_logger),
     __sentry: None = Depends(init_sentry),
 ):
+    """
+    Uploads a shapefile to a remote storage location.
+
+    Args:
+        fire_event_name (str): The name of the fire event.
+        affiliation (str): The affiliation of the uploader.
+        file (UploadFile): The shapefile to be uploaded.
+        cloud_static_io_client (CloudStaticIOClient): The client for interacting with the remote storage. FastAPI handles this as a dependency injection.
+        __sentry (None, optional): Sentry client, just needs to be initialized. FastAPI handles this as a dependency injection.
+        logger (Logger, optional): Google cloud logger. FastAPI handles this as a dependency injection.
+
+    Returns:
+        JSONResponse: The response containing the uploaded geojson.
+
+    Raises:
+        HTTPException: If there is an error during the upload process.
+    """
     sentry_sdk.set_context(
         "upload_shapefile",
         {"fire_event_name": fire_event_name, "affiliation": affiliation},

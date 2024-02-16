@@ -42,9 +42,9 @@ async def list_derived_products(
 
     Args:
         body (GetDerivedProductsPOSTBody): The request body containing the parameters.
-        cloud_static_io_client (CloudStaticIOClient): The client for interacting with the cloud static IO.
-        __sentry (None): The sentry dependency.
-        logger (Logger): The logger for logging messages.
+        cloud_static_io_client (CloudStaticIOClient): The client for interacting with the cloud static IO. FastAPI handles this as a dependency injection.
+        __sentry (None, optional): Sentry client, just needs to be initialized. FastAPI handles this as a dependency injection.
+        logger (Logger, optional): Google cloud logger. FastAPI handles this as a dependency injection.
 
     Returns:
         JSONResponse: The response containing the derived products.

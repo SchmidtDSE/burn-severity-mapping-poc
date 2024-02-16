@@ -49,9 +49,9 @@ def fetch_ecoclass(
 
     Args:
         body (QuerySoilPOSTBody): The request body containing the necessary parameters.
-        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service. Defaults to Depends(get_cloud_static_io_client).
-        __sentry (None, optional): The sentry dependency. Defaults to Depends(init_sentry).
-        logger (Logger, optional): The logger dependency. Defaults to Depends(get_cloud_logger).
+        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service. FastAPI handles this as a dependency injection.
+        __sentry (None, optional): Sentry client, just needs to be initialized. FastAPI handles this as a dependency injection.
+        logger (Logger, optional): Google cloud logger. FastAPI handles this as a dependency injection.
 
     Returns:
         tuple: A tuple containing the success message and the HTTP status code.

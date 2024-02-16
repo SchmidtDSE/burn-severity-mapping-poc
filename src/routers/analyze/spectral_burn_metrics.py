@@ -53,9 +53,9 @@ def analyze_spectral_burn_metrics(
 
     Args:
         body (AnaylzeBurnPOSTBody): The request body containing the necessary information for analysis.
-        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service. Defaults to Depends(get_cloud_static_io_client).
-        __sentry (None, optional): The sentry dependency. Defaults to Depends(init_sentry).
-        logger (Logger, optional): The logger dependency. Defaults to Depends(get_cloud_logger).
+        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service.  FastAPI handles this as a dependency injection.
+        __sentry (None, optional): Sentry client, just needs to be initialized. FastAPI handles this as a dependency injection.
+        logger (Logger, optional): Google cloud logger. FastAPI handles this as a dependency injection.
 
     Returns:
         JSONResponse: The response containing the analysis results and derived boundary, if applicable.
