@@ -15,6 +15,18 @@ router = APIRouter()
 
 
 class AnaylzeBurnPOSTBody(BaseModel):
+    """
+    Represents the request body for analyzing burn metrics.
+
+    Attributes:
+        geojson (str): The GeoJSON data in string format.
+        derive_boundary (bool): Flag indicating whether to derive the boundary. If a shapefile is provided, this will be False.
+            If an AOI is drawn, this will be True.
+        date_ranges (dict): The date ranges for analysis.
+        fire_event_name (str): The name of the fire event.
+        affiliation (str): The affiliation of the analysis.
+    """
+
     geojson: Any
     derive_boundary: bool
     date_ranges: dict
@@ -36,6 +48,18 @@ def analyze_spectral_burn_metrics(
     __sentry: None = Depends(init_sentry),
     logger: Logger = Depends(get_cloud_logger),
 ):
+    """
+    Analyzes spectral burn metrics for a given fire event.
+
+    Args:
+        body (AnaylzeBurnPOSTBody): The request body containing the necessary information for analysis.
+        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service. Defaults to Depends(get_cloud_static_io_client).
+        __sentry (None, optional): The sentry dependency. Defaults to Depends(init_sentry).
+        logger (Logger, optional): The logger dependency. Defaults to Depends(get_cloud_logger).
+
+    Returns:
+        JSONResponse: The response containing the analysis results and derived boundary, if applicable.
+    """
     geojson_boundary = json.loads(body.geojson)
 
     date_ranges = body.date_ranges
