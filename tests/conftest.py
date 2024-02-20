@@ -6,6 +6,7 @@ import xarray as xr
 import pickle
 import random
 import json
+import unittest.mock as mock
 
 ### PyStac ItemCollection
 
