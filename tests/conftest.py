@@ -5,6 +5,7 @@ import numpy as np
 import xarray as xr
 import pickle
 import random
+import json
 
 ### PyStac ItemCollection
 
@@ -58,3 +59,20 @@ def test_3d_nan_xarray(test_3d_xarray):
 def test_3d_zero_xarray(test_3d_xarray):
     test_reduced_zero_xarray = xr.full_like(test_3d_xarray, 0)
     return test_reduced_zero_xarray
+
+
+### GeoJSON
+
+
+@pytest.fixture
+def test_geojson():
+    with open("tests/assets/test_boundary_geology.geojson") as f:
+        test_geojson = json.load(f)
+    return test_geojson
+
+
+@pytest.fixture
+def test_geojson_split():
+    with open("tests/assets/test_boundary_geology_split.geojson") as f:
+        test_geojson = json.load(f)
+    return test_geojson
