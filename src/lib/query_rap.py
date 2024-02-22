@@ -41,9 +41,6 @@ def rap_get_biomass(ignition_date, boundary_geojson, buffer_distance=0.01):
 
     rap_url = f"http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-npp/v3/vegetation-npp-v3-{rap_year}.tif"
 
-    # Create a buffer around the boundary
-    boundary_gdf_buffer = boundary_gdf.buffer(buffer_distance)
-
     # Create a window from the buffered boundary
     with rasterio.open(rap_url) as src:
         window = rasterio.windows.from_bounds(minx, miny, maxx, maxy, src.transform)
@@ -62,6 +59,10 @@ def rap_get_biomass(ignition_date, boundary_geojson, buffer_distance=0.01):
             ["annual_forb_and_grass", "perennial_forb_and_grass", "shrub", "tree"],
         )
     )
+
+    # Create a buffer around the boundary
+    boundary_gdf_buffer = boundary_gdf.buffer(buffer_distance)
+
     rap_estimates = rap_estimates.rio.clip(
         boundary_gdf_buffer.geometry.values, "EPSG:4326"
     )

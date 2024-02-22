@@ -13,12 +13,7 @@ def test_rap_get_biomass(mock_open, test_3d_valid_xarray_epsg_4326):
 
     # Duplicate the xarray to add two new bands (just to have four, like RAP)
     rap_estimates = xr.concat([rap_estimates, rap_estimates], dim="band")
-    rap_estimates["band"] = [
-        "annual_forb_and_grass",
-        "perennial_forb_and_grass",
-        "shrub",
-        "tree",
-    ]
+    rap_estimates["band"] = [1, 2, 3, 4]
 
     # Get the bounds
     bounds = rap_estimates.rio.bounds()
