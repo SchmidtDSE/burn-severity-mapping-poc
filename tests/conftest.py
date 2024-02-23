@@ -239,3 +239,13 @@ def test_geojson_split():
     with open("tests/assets/test_boundary_geology_split.geojson") as f:
         test_geojson = json.load(f)
     return test_geojson
+
+
+### Responses
+
+
+@pytest.fixture
+def test_sdm_get_esa_mapunitid_poly_response():
+    with open("tests/assets/test_sdm_get_esa_mapunitid_poly_response.pkl", "rb") as f:
+        test_sdm_get_esa_mapunitid_poly_response = pickle.load(f)
+    return test_sdm_get_esa_mapunitid_poly_response

@@ -115,7 +115,6 @@ def sdm_get_esa_mapunitid_poly(
     top_right = f"{bounds[2]},{bounds[3]}"
 
     # # format the filter as GML2 / XML
-    # filter_GML2_fmt = f"<Filter><BBOX><PropertyName>Geometry</PropertyName><Box srsName='EPSG:4326'><coordinates>{bottom_left} {top_right}</coordinates></Box></BBOX></Filter>"
     filter_fmt = ET.Element("Filter")
     bbox = ET.SubElement(filter_fmt, "BBOX")
     prop_name = ET.SubElement(bbox, "PropertyName")
@@ -174,7 +173,12 @@ def sdm_get_esa_mapunitid_poly(
         if backoff_value < backoff_max:
             backoff_value += backoff_increment
             time.sleep(backoff_value)
-            return sdm_get_esa_mapunitid_poly(geojson, backoff_value=backoff_value)
+            return sdm_get_esa_mapunitid_poly(
+                geojson,
+                backoff_value=backoff_value,
+                backoff_max=backoff_max,
+                backoff_increment=backoff_increment,
+            )
         else:
             raise Exception("SDM Refused Traffic. Backoff max reached.")
     except Exception as e:
