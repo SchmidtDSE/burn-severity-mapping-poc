@@ -5,8 +5,15 @@ import rioxarray as rxr
 import numpy as np
 import json
 
+RAP_URL_YEAR_FSTRING = "http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-npp/v3/vegetation-npp-v3-{year}.tif"
 
-def rap_get_biomass(ignition_date, boundary_geojson, buffer_distance=0.01):
+
+def rap_get_biomass(
+    ignition_date,
+    boundary_geojson,
+    buffer_distance=0.01,
+    rap_url_year_fstring=RAP_URL_YEAR_FSTRING,
+):
     """
     Retrieves biomass estimates from the Rangeland Analysis Platform for a given ignition year and boundary location.
     RAP provides estimates of biomass for four categories: annual forb and grass, perennial forb and grass, shrub, and tree.
@@ -32,21 +39,24 @@ def rap_get_biomass(ignition_date, boundary_geojson, buffer_distance=0.01):
     minx, miny, maxx, maxy = boundary_gdf.total_bounds
 
     # Get the RAP URL
-    rap_year = time.strptime(ignition_date, "%Y-%m-%d").tm_year
-    if rap_year > 2022:
+    year = time.strptime(ignition_date, "%Y-%m-%d").tm_year
+    if year > 2022:
         print("RAP data is only available up to 2022 - falling back to 2022 RAP data")
-        rap_year = 2022
-    elif rap_year < 1986:
+        year = 2022
+    elif year < 1986:
         raise ValueError("RAP data is only available from 1986")
 
-    rap_url = f"http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-npp/v3/vegetation-npp-v3-{rap_year}.tif"
+    # Format the RAP URL with the year to grab the proper tif
+    rap_url_year_fstring = rap_url_year_fstring.format(year=year)
 
     # Create a window from the buffered boundary
-    with rasterio.open(rap_url) as src:
+    with rasterio.open(rap_url_year_fstring) as src:
         window = rasterio.windows.from_bounds(minx, miny, maxx, maxy, src.transform)
 
     # Open the GeoTIFF file as a rioxarray with the window and out_shape parameters
-    rap_estimates = rxr.open_rasterio(rap_url, masked=True).rio.isel_window(window)
+    rap_estimates = rxr.open_rasterio(
+        rap_url_year_fstring, masked=True
+    ).rio.isel_window(window)
 
     # Rename for RAP bands based on README:
     # - Band 1 - annual forb and grass
