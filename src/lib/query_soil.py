@@ -295,5 +295,4 @@ def edit_get_ecoclass_info(ecoclass_id):
             )
 
     except Exception as e:
-        print("Error:", str(e))
-        return None
+        raise Exception(f"Error in EDIT: {str(e)}")
