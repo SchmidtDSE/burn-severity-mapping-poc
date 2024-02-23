@@ -8,7 +8,7 @@ from boto3.session import Session
 @patch("src.util.cloud_static_io.CloudStaticIOClient.upload_cogs")
 @patch.object(CloudStaticIOClient, "__init__", return_value=None)
 def test_upload_fire_event(
-    mock_init, mock_upload_cogs, mock_update_manifest, test_3d_xarray
+    mock_init, mock_upload_cogs, mock_update_manifest, test_3d_valid_xarray_epsg_4326
 ):
     # Create an instance of CloudStaticIOClient
     client = CloudStaticIOClient()
@@ -17,7 +17,7 @@ def test_upload_fire_event(
     client.logger = MagicMock()
 
     # Define the arguments for upload_fire_event
-    metrics_stack = test_3d_xarray
+    metrics_stack = test_3d_valid_xarray_epsg_4326
     metrics_stack = metrics_stack.rename({"band": "burn_metric"})
     metrics_stack["burn_metric"] = ["rbr", "dnbr"]
 
@@ -59,7 +59,11 @@ def test_upload_fire_event(
 @patch.object(CloudStaticIOClient, "upload", return_value=None)
 @patch.object(CloudStaticIOClient, "__init__", return_value=None)
 def test_upload_cogs(
-    mock_init, mock_upload, mock_rio_open, mock_to_raster, test_3d_xarray
+    mock_init,
+    mock_upload,
+    mock_rio_open,
+    mock_to_raster,
+    test_3d_valid_xarray_epsg_4326,
 ):
     # Create an instance of CloudStaticIOClient
     client = CloudStaticIOClient()
@@ -72,12 +76,14 @@ def test_upload_cogs(
     affiliation = "test_affiliation"
 
     # Give xarray the `burn_metric` band, with rbr and dnbr as values in `burn_metric`
-    test_3d_xarray = test_3d_xarray.rename({"band": "burn_metric"})
-    test_3d_xarray["burn_metric"] = ["rbr", "dnbr"]
+    test_3d_valid_xarray_epsg_4326 = test_3d_valid_xarray_epsg_4326.rename(
+        {"band": "burn_metric"}
+    )
+    test_3d_valid_xarray_epsg_4326["burn_metric"] = ["rbr", "dnbr"]
 
     # Call upload_cogs
     client.upload_cogs(
-        test_3d_xarray,
+        test_3d_valid_xarray_epsg_4326,
         fire_event_name,
         affiliation,
     )
@@ -114,7 +120,7 @@ def test_upload_rap_estimates(
     mock_rio_open,
     mock_os_join,
     mock_temp_dir,
-    test_3d_xarray,
+    test_3d_valid_xarray_epsg_4326,
 ):
     # Create an instance of CloudStaticIOClient
     client = CloudStaticIOClient()
@@ -127,11 +133,11 @@ def test_upload_rap_estimates(
     affiliation = "test_affiliation"
 
     # Give xarray the `band` band, with some band names as values in `band`
-    test_3d_xarray["band"] = ["tree", "shrub"]
+    test_3d_valid_xarray_epsg_4326["band"] = ["tree", "shrub"]
 
     # Call upload_rap_estimates
     client.upload_rap_estimates(
-        test_3d_xarray,
+        test_3d_valid_xarray_epsg_4326,
         fire_event_name,
         affiliation,
     )

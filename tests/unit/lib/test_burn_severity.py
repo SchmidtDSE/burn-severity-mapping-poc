@@ -44,25 +44,25 @@ def test_calc_nbr(
     assert result.isnull().all()
 
 
-def test_calc_dnbr(test_3d_xarray):
-    test_nbr_prefire = test_3d_xarray
-    test_nbr_postfire = test_3d_xarray + 0.15
+def test_calc_dnbr(test_3d_valid_xarray_epsg_4326):
+    test_nbr_prefire = test_3d_valid_xarray_epsg_4326
+    test_nbr_postfire = test_3d_valid_xarray_epsg_4326 + 0.15
     result = burn_severity.calc_dnbr(test_nbr_prefire, test_nbr_postfire)
     assert result is not None
     assert result.shape == test_nbr_prefire.shape == test_nbr_postfire.shape
 
 
-def test_calc_rdnbr(test_3d_xarray):
-    test_nbr_prefire = test_3d_xarray
-    test_dnbr = xr.full_like(test_3d_xarray, 0.15)
+def test_calc_rdnbr(test_3d_valid_xarray_epsg_4326):
+    test_nbr_prefire = test_3d_valid_xarray_epsg_4326
+    test_dnbr = xr.full_like(test_3d_valid_xarray_epsg_4326, 0.15)
     result = burn_severity.calc_rdnbr(test_dnbr, test_nbr_prefire)
     assert result is not None
     assert result.shape == test_dnbr.shape == test_nbr_prefire.shape
 
 
-def test_calc_rbr(test_3d_xarray):
-    test_nbr_prefire = test_3d_xarray
-    test_dnbr = xr.full_like(test_3d_xarray, 0.15)
+def test_calc_rbr(test_3d_valid_xarray_epsg_4326):
+    test_nbr_prefire = test_3d_valid_xarray_epsg_4326
+    test_dnbr = xr.full_like(test_3d_valid_xarray_epsg_4326, 0.15)
     result = burn_severity.calc_rbr(test_dnbr, test_nbr_prefire)
     assert result is not None
     assert result.shape == test_nbr_prefire.shape == test_nbr_prefire.shape
