@@ -43,11 +43,10 @@ def construct_dataarray(metadata, values, bands, x, y, epsg, time=None):
 
 
 @pytest.fixture
-def test_stac_items():
-    with open("tests/assets/test_stac_items.json") as f:
-        test_stac_items = pystac.read_file(f.read())
-    return test_stac_items
-
+def test_stac_item_collection():
+    with open("tests/assets/test_stac_item_collection.pkl", "rb") as f:
+        test_stac_item_collection = pickle.load(f)
+    return test_stac_item_collection
 
 ### Coords and time windows
 
