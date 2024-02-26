@@ -97,5 +97,7 @@ def test_query_fire_event(test_geojson, test_stac_item_collection):
         ]
     )
 
+    # Check that the arrange_stack method was called with the correct arguments
+    client.arrange_stack.assert_called_with(test_stac_item_collection)
     assert client.prefire_stack is not None
     assert client.postfire_stack is not None
