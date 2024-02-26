@@ -1,7 +1,7 @@
 # FILEPATH: /workspace/tests/unit/lib/test_query_sentinel.py
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 from src.lib.query_sentinel import Sentinel2Client
 import geopandas as gpd
 from shapely.geometry import Polygon
@@ -70,3 +70,32 @@ def test_reduce_time_range(test_geojson, test_4d_valid_xarray_epsg_4326):
 
     reduced = client.reduce_time_range(test_4d_valid_xarray_epsg_4326)
     assert not "time" in reduced.dims
+
+
+def test_query_fire_event(test_geojson, test_stac_item_collection):
+    # Initialize Sentinel2Client
+    client = Sentinel2Client(test_geojson)
+
+    # Mock the client.get_items() method to return a test item collection
+    client.get_items = MagicMock()
+    client.get_items.return_value = test_stac_item_collection
+
+    # Mock arrange stack method
+    client.arrange_stack = MagicMock()
+
+    # Call the query_fire_event method
+    client.query_fire_event(
+        prefire_date_range=("2020-01-01", "2020-02-01"),
+        postfire_date_range=("2020-03-01", "2020-04-01"),
+    )
+
+    # Check that the get_items method was called with the correct arguments
+    client.get_items.assert_has_calls(
+        [
+            call(("2020-01-01", "2020-02-01"), from_bbox=True, max_items=None),
+            call(("2020-03-01", "2020-04-01"), from_bbox=True, max_items=None),
+        ]
+    )
+
+    assert client.prefire_stack is not None
+    assert client.postfire_stack is not None
