@@ -3,6 +3,7 @@
 import pytest
 from unittest.mock import MagicMock, patch, call
 from src.lib.query_sentinel import Sentinel2Client
+from src.lib.burn_severity import calc_burn_metrics
 import geopandas as gpd
 from shapely.geometry import Polygon
 import xarray as xr
@@ -101,3 +102,56 @@ def test_query_fire_event(test_geojson, test_stac_item_collection):
     client.arrange_stack.assert_called_with(test_stac_item_collection)
     assert client.prefire_stack is not None
     assert client.postfire_stack is not None
+
+
+def test_calc_burn_metrics(test_geojson, test_3d_valid_xarray_epsg_4326):
+    # Initialize Sentinel2Client
+    client = Sentinel2Client(test_geojson)
+
+    # Initialize prefire and postfire stacks
+    client.band_nir = "B8A"
+    client.band_swir = "B12"
+
+    # Init prefire stack
+    test_3d_valid_xarray_epsg_4326["band"] = ["B8A", "B12"]
+    prefire_stack = test_3d_valid_xarray_epsg_4326
+    client.prefire_stack = prefire_stack
+
+    # Init postfire stack
+    postfire_stack = test_3d_valid_xarray_epsg_4326.copy(deep=True)
+    postfire_stack.loc[dict(band=client.band_swir)] += 0.25
+    postfire_stack.loc[dict(band=client.band_nir)] -= 0.25
+    client.postfire_stack = postfire_stack
+
+    # Call the calc_burn_metrics method
+    client.calc_burn_metrics()
+
+    # Check that the metrics stack was created and that it contains the correct metrics
+    assert client.metrics_stack is not None
+    assert all(
+        [
+            metric in client.metrics_stack.burn_metric
+            for metric in ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]
+        ]
+    )
+
+
+def test_derive_boundary(test_geojson, test_3d_valid_xarray_epsg_4326):
+    # Initialize Sentinel2Client
+    client = Sentinel2Client(test_geojson)
+
+    # Initialize metrics stack
+    metrics_stack = test_3d_valid_xarray_epsg_4326.rename({"band": "burn_metric"})
+    metrics_stack["burn_metric"] = ["rbr", "dnbr"]
+    client.metrics_stack = metrics_stack
+
+    # Save the initial boundary
+    initial_boundary = client.geojson_boundary
+
+    # Call the derive_boundary method
+    client.derive_boundary(metric_name="rbr", threshold=0.025)
+
+    # Check that the boundary was updated
+    assert all(
+        (initial_boundary.bounds != client.geojson_boundary.bounds).values[0].tolist()
+    )
