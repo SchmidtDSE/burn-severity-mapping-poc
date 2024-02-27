@@ -194,7 +194,7 @@ class Sentinel2Client:
             xarray.DataArray: The reduced range stack.
         """
 
-        # TODO [$65dd3177b6782d0008007816]: Think about best practice for reducing time dimension pre/post fire
+        # TODO [#30]: Think about best practice for reducing time dimension pre/post fire
         # This will probably get a bit more sophisticated, but for now, just take the median
         # We will probably run into issues of cloud occlusion, and for really long fire events,
         # we might want to look into time-series effects of greenup, drying, etc, in the adjacent
