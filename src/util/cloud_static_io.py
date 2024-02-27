@@ -20,7 +20,38 @@ from google.auth import impersonated_credentials, exceptions
 ## TODO [#26]: Make bucket https a tofu output
 BUCKET_HTTPS_PREFIX = "https://burn-severity-backend.s3.us-east-2.amazonaws.com"
 
+
 class CloudStaticIOClient:
+    """
+    A client class for interacting with cloud storage services like S3, GCS, etc.
+    This uses the `smart_open` library to interact with cloud storage services, in a
+    relatively provider-agnostic way. It also uses the `boto3` library to interact with
+    AWS services, specifically so that we can assume a role in AWS and then use the
+    assumed role credentials to interact with S3.
+
+    Args:
+        bucket_name (str): The name of the bucket in the cloud storage service.
+        provider (str): The provider of the cloud storage service (currently only supports "s3").
+
+    Attributes:
+        env (str): The environment variable for the environment (e.g. "LOCAL", "PROD").
+        role_arn (str): The role ARN for assuming the role with AWS.
+        service_account_email (str): The email address of the service account for GCP,
+            authorized to impersonate the role in AWS.
+        role_session_name (str): The name of the role session. Arbitrary.
+        logger (logging.Logger): The logger for logging messages.
+        sts_client (botocore.client.STS): The STS client for assuming the AWS role using GCP credentials.
+        prefix (str): The prefix for the bucket URL. We get this from tofu, once the bucket is created.
+        iam_credentials (google.auth.impersonated_credentials.Credentials): The impersonated IAM credentials.
+        role_assumed_credentials (dict): The assumed role credentials, once we assume the AWS role.
+        boto_session (boto3.Session): The Boto3 session, using the assumed role credentials, which
+            at long last allows us to interact with S3.
+
+    Raises:
+        Exception: If the provider is not supported.
+
+    """
+
     def __init__(self, bucket_name, provider):
 
         self.env = os.environ.get("ENV")
@@ -35,7 +66,7 @@ class CloudStaticIOClient:
         log_name = "burn-backend"
         self.logger = logging_client.logger(log_name)
 
-        self.sts_client = boto3.client('sts')
+        self.sts_client = boto3.client("sts")
 
         if provider == "s3":
             self.prefix = f"s3://{self.bucket_name}"
@@ -44,12 +75,20 @@ class CloudStaticIOClient:
 
         self.iam_credentials = None
         self.role_assumed_credentials = None
-        self.s3_session = None
         self.validate_credentials()
 
-        self.logger.log_text(f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}")
+        self.logger.log_text(
+            f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}"
+        )
 
     def impersonate_service_account(self):
+        """
+        Impersonates a service account by creating impersonated credentials, using the
+        service account email provided in initialization.
+
+        Returns:
+            None
+        """
         # Load the credentials of the user
         source_credentials, project = google.auth.default()
 
@@ -61,13 +100,28 @@ class CloudStaticIOClient:
             source_credentials=source_credentials,
             target_principal=self.service_account_email,
             target_scopes=target_scopes,
-            lifetime=3600
+            lifetime=3600,
         )
 
         # Refresh the client
         self.iam_credentials = iam_credentials
 
     def local_fetch_id_token(self, audience):
+        """
+        Fetches an ID token from the Google IAM service. This is used to authenticate
+        with AWS STS, when we are running in the local environment. On GCP, we use the
+        `google.auth` library to fetch the ID token since we are already authenticated
+        with the service account we need.
+
+        Args:
+            audience (str): The audience for the ID token.
+
+        Returns:
+            str: The fetched ID token.
+
+        Raises:
+            exceptions.DefaultCredentialsError: If the ID token fetch fails.
+        """
         if not self.iam_credentials or not self.iam_credentials.valid:
             # Refresh the credentials
             self.iam_credentials.refresh(gcp_requests.Request())
@@ -88,12 +142,26 @@ class CloudStaticIOClient:
         return response.json()["token"]
 
     def validate_credentials(self):
+        """
+        Validates the credentials by checking if the role assumed credentials are expired or not.
+        If expired or not available, it retrieves the OIDC token and assumes the role with web identity.
+        Sets the assumed credentials in the boto3 session for further use. If the environment is local,
+        it also impersonates the service account to get the credentials, otherwise we assume google.auth
+        will handle the credentials for us if we're on GCP.
 
-        if not self.role_assumed_credentials or (self.role_assumed_credentials['Expiration'].timestamp() - time.time() < 300):
+        Raises:
+            ValueError: If failed to retrieve OIDC token.
+
+        Returns:
+            None
+        """
+        if not self.role_assumed_credentials or (
+            self.role_assumed_credentials["Expiration"].timestamp() - time.time() < 300
+        ):
             oidc_token = None
             request = gcp_requests.Request()
 
-            if self.env == 'LOCAL':
+            if self.env == "LOCAL":
                 if not self.iam_credentials or self.iam_credentials.expired:
                     self.impersonate_service_account()
                 self.iam_credentials.refresh(request)
@@ -107,22 +175,29 @@ class CloudStaticIOClient:
             sts_response = self.sts_client.assume_role_with_web_identity(
                 RoleArn=self.role_arn,
                 RoleSessionName=self.role_session_name,
-                WebIdentityToken=oidc_token
+                WebIdentityToken=oidc_token,
             )
 
-            self.role_assumed_credentials = sts_response['Credentials']
+            self.role_assumed_credentials = sts_response["Credentials"]
 
             self.boto_session = boto3.Session(
-                aws_access_key_id=self.role_assumed_credentials['AccessKeyId'],
-                aws_secret_access_key=self.role_assumed_credentials['SecretAccessKey'],
-                aws_session_token=self.role_assumed_credentials['SessionToken'],
-                region_name='us-east-2'
+                aws_access_key_id=self.role_assumed_credentials["AccessKeyId"],
+                aws_secret_access_key=self.role_assumed_credentials["SecretAccessKey"],
+                aws_session_token=self.role_assumed_credentials["SessionToken"],
+                region_name="us-east-2",
             )
 
     def download(self, remote_path, target_local_path):
         """
         Downloads the file from remote s3 server to local.
-        Also, by default extracts the file to the specified target_local_path
+
+        Args:
+            remote_path (str): The path of the file on the remote server.
+            target_local_path (str): The path where the file will be downloaded to.
+
+        Raises:
+            Exception: If there is an error during the download process.
+
         """
         self.validate_credentials()
         try:
@@ -138,7 +213,7 @@ class CloudStaticIOClient:
             with smart_open.open(
                 f"{self.prefix}/{remote_path}",
                 "rb",
-                transport_params={"client": self.boto_session.client('s3')},
+                transport_params={"client": self.boto_session.client("s3")},
             ) as remote_file:
                 with open(target_local_path, "wb") as local_file:
                     local_file.write(remote_file.read())
@@ -149,6 +224,13 @@ class CloudStaticIOClient:
     def upload(self, source_local_path, remote_path):
         """
         Uploads the source files from local to the s3 server.
+
+        Args:
+            source_local_path (str): The local path of the source file to be uploaded.
+            remote_path (str): The remote path where the file will be uploaded to.
+
+        Raises:
+            Exception: If there is an error during the upload process.
         """
         self.validate_credentials()
         try:
@@ -161,7 +243,7 @@ class CloudStaticIOClient:
                 with smart_open.open(
                     f"{self.prefix}/{remote_path}",
                     "wb",
-                    transport_params={"client": self.boto_session.client('s3')},
+                    transport_params={"client": self.boto_session.client("s3")},
                 ) as remote_file:
                     remote_file.write(local_file.read())
             print("upload completed")
@@ -175,6 +257,19 @@ class CloudStaticIOClient:
         fire_event_name,
         affiliation,
     ):
+        """
+        Uploads COGs (Cloud-Optimized GeoTIFFs) to a remote location, according to
+        `public/{affiliation}/{fire_event_name}/{band_name}.tif`. Also adds
+        overviews to the COGs for faster loading at lower zoom levels.
+
+        Args:
+            metrics_stack (xarray.DataArray): Stack of metrics data.
+            fire_event_name (str): Name of the fire event.
+            affiliation (str): Affiliation of the data.
+
+        Returns:
+            None
+        """
         with tempfile.TemporaryDirectory() as tmpdir:
             for band_name in metrics_stack.burn_metric.to_index():
                 # Save the band as a local COG
@@ -209,12 +304,20 @@ class CloudStaticIOClient:
                 remote_path=f"public/{affiliation}/{fire_event_name}/pct_change_dnbr_rbr.tif",
             )
 
-    def upload_rap_estimates(
-        self,
-        rap_estimates,
-        fire_event_name,
-        affiliation
-    ):
+    def upload_rap_estimates(self, rap_estimates, fire_event_name, affiliation):
+        """
+        Uploads RAP estimates to a remote location, according to
+        f"public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_{band_name}.tif".
+        Also adds overviews to the COGs for faster loading at lower zoom levels.
+
+        Args:
+            rap_estimates (xarray.DataArray): RAP estimates data.
+            fire_event_name (str): Name of the fire event.
+            affiliation (str): Affiliation of the data.
+
+        Returns:
+            None
+        """
         with tempfile.TemporaryDirectory() as tmpdir:
             for band_name in rap_estimates.band.to_index():
                 # TODO [#23]: This is the same logic as in upload_cogs. Refactor to avoid duplication
@@ -243,6 +346,21 @@ class CloudStaticIOClient:
         affiliation,
         derive_boundary,
     ):
+        """
+        Updates the manifest with the given fire event information for the specified affiliation. If the fire event
+        already exists in the manifest, it will be overwritten.
+
+        Args:
+            fire_event_name (str): The name of the fire event.
+            bounds (tuple): The bounds of the fire event.
+            prefire_date_range (tuple): The prefire date range of the fire event.
+            postfire_date_range (tuple): The postfire date range of the fire event.
+            affiliation (str): The affiliation for which the manifest is being updated.
+            derive_boundary (bool): Flag indicating whether to derive the boundary.
+
+        Returns:
+            None
+        """
         with tempfile.TemporaryDirectory() as tmpdir:
             manifest = self.get_manifest()
 
@@ -281,6 +399,20 @@ class CloudStaticIOClient:
         affiliation,
         derive_boundary,
     ):
+        """
+        Uploads a fire event to the cloud storage location (uploads COGs and updates the manifest.json file).
+
+        Args:
+            metrics_stack (xr.DataArray): The metrics stack containing the fire event data.
+            fire_event_name (str): The name of the fire event.
+            prefire_date_range (tuple): The date range before the fire event.
+            postfire_date_range (tuple): The date range after the fire event.
+            affiliation (str): The affiliation of the fire event.
+            derive_boundary (bool): Whether to derive the boundary of the fire event.
+
+        Returns:
+            None
+        """
         self.logger.log_text(f"Uploading fire event {fire_event_name}")
 
         self.upload_cogs(
@@ -301,6 +433,12 @@ class CloudStaticIOClient:
         )
 
     def get_manifest(self):
+        """
+        Retrieves the manifest file from the cloud storage.
+
+        Returns:
+            dict: The contents of the manifest file.
+        """
         with tempfile.TemporaryDirectory() as tmpdir:
             self.download("manifest.json", tmpdir + "tmp_manifest.json")
             self.logger.log_text(f"Got manifest.json")
@@ -308,13 +446,25 @@ class CloudStaticIOClient:
             return manifest
 
     def get_derived_products(self, affiliation, fire_event_name):
-        s3_client = self.boto_session.client('s3')
-        paginator = s3_client.get_paginator('list_objects_v2')
+        """
+        Retrieves the derived products associated with a specific affiliation and fire event. We basically
+        assume anything within the folder for a given affiliation and fire event is a derived product. Valyes
+        returned are public HTTPS URLs.
+
+        Args:
+            affiliation (str): The affiliation of the derived products.
+            fire_event_name (str): The name of the fire event.
+
+        Returns:
+            dict: A dictionary containing the filenames as keys and the corresponding full HTTPS URLs as values.
+        """
+        s3_client = self.boto_session.client("s3")
+        paginator = s3_client.get_paginator("list_objects_v2")
         derived_products = {}
         bucket_prefix = f"public/{affiliation}/{fire_event_name}/"
         for page in paginator.paginate(Bucket=self.bucket_name, Prefix=bucket_prefix):
-            for obj in page['Contents']:
-                full_https_url = BUCKET_HTTPS_PREFIX + '/' + obj['Key']
-                filename = os.path.basename(obj['Key'])
+            for obj in page["Contents"]:
+                full_https_url = BUCKET_HTTPS_PREFIX + "/" + obj["Key"]
+                filename = os.path.basename(obj["Key"])
                 derived_products[filename] = full_https_url
         return derived_products

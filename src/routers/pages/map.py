@@ -9,6 +9,7 @@ from ..dependencies import get_manifest, get_mapbox_secret
 router = APIRouter()
 templates = Jinja2Templates(directory="src/static")
 
+
 @router.get(
     "/map/{affiliation}/{fire_event_name}/{burn_metric}", response_class=HTMLResponse
 )
@@ -20,6 +21,23 @@ def serve_map(
     manifest: dict = Depends(get_manifest),
     mapbox_token: str = Depends(get_mapbox_secret),
 ):
+    """
+    Serves the map page for the given fire event / affiliation and burn metric. Note that this is
+    pretty hard-coded to the current structure of the S3 bucket and the tileserver endpoint, and will
+    more than likely be deprecated for v1 when we serve these maps from the frontend using the tiff
+    itself.
+
+    Args:
+        request (Request): The HTTP request object.
+        fire_event_name (str): The name of the fire event.
+        burn_metric (str): The burn metric.
+        affiliation (str): The affiliation.
+        manifest (dict, optional): The manifest dictionary. Defaults to Depends(get_manifest).
+        mapbox_token (str, optional): The Mapbox token. Defaults to Depends(get_mapbox_secret).
+
+    Returns:
+        TemplateResponse: The template response for the map page.
+    """
 
     tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
     # tileserver_endpoint = "http://localhost:5050"
@@ -57,7 +75,6 @@ def serve_map(
         tileserver_endpoint
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_tree_url}&nodata=-99&return_mask=true"
     )
-
 
     fire_metadata = manifest[affiliation][fire_event_name]
     fire_metadata_json = json.dumps(fire_metadata)

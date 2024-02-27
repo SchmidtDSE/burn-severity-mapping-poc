@@ -9,7 +9,12 @@ from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 
-@router.post("/api/upload/drawn-aoi", tags=["upload"], description="Upload a drawn AOI boundary to cloud storage")
+
+@router.post(
+    "/api/upload/drawn-aoi",
+    tags=["upload"],
+    description="Upload a drawn AOI boundary to cloud storage",
+)
 async def upload_drawn_aoi(
     fire_event_name: str = Form(...),
     affiliation: str = Form(...),
@@ -18,7 +23,27 @@ async def upload_drawn_aoi(
     logger: Logger = Depends(get_cloud_logger),
     __sentry: None = Depends(init_sentry),
 ):
-    sentry_sdk.set_context("upload_drawn_aoi", {"fire_event_name": fire_event_name, "affiliation": affiliation})
+    """
+    Uploads a drawn area of interest (AOI) in GeoJSON format to the cloud storage.
+
+    Args:
+        fire_event_name (str): The name of the fire event.
+        affiliation (str): The affiliation of the user.
+        geojson (str): The GeoJSON representation of the drawn AOI.
+        cloud_static_io_client (CloudStaticIOClient): The client for interacting with the cloud storage. FastAPI handles this as a dependency injection.
+        __sentry (None, optional): Sentry client, just needs to be initialized. FastAPI handles this as a dependency injection.
+        logger (Logger, optional): Google cloud logger. FastAPI handles this as a dependency injection.
+
+    Returns:
+        JSONResponse: The response containing the uploaded GeoJSON.
+
+    Raises:
+        HTTPException: If there is an error during the upload process.
+    """
+    sentry_sdk.set_context(
+        "upload_drawn_aoi",
+        {"fire_event_name": fire_event_name, "affiliation": affiliation},
+    )
 
     try:
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:

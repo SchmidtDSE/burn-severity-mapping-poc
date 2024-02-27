@@ -7,28 +7,64 @@ from src.util.cloud_static_io import CloudStaticIOClient
 from src.util.gcp_secrets import get_mapbox_secret as gcp_get_mapbox_secret
 import os
 
+
 def get_cloud_logger():
+    """
+    Returns a Cloud Logging logger instance.
+
+    Returns:
+        google.cloud.logging.logger.Logger: The Cloud Logging logger instance.
+    """
     logging_client = logging.Client(project="dse-nps")
     log_name = "burn-backend"
     logger = logging_client.logger(log_name)
 
     return logger
 
+
 def get_cloud_static_io_client(logger: Logger = Depends(get_cloud_logger)):
+    """
+    Get an instance of CloudStaticIOClient.
+
+    Args:
+        logger (Logger): The logger instance to use for logging.
+
+    Returns:
+        CloudStaticIOClient: An instance of CloudStaticIOClient.
+    """
     logger.log_text("Creating CloudStaticIOClient")
-    return CloudStaticIOClient('burn-severity-backend', "s3")
+    return CloudStaticIOClient("burn-severity-backend", "s3")
+
 
 def get_manifest(
-        cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
-        logger: Logger = Depends(get_cloud_logger)
+    cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
+    logger: Logger = Depends(get_cloud_logger),
 ):
+    """
+    Get the manifest from the cloud static IO client.
+
+    Args:
+        cloud_static_io_client (CloudStaticIOClient): The cloud static IO client instance, used to download the manifest from clouds storage.
+        logger: The logger instance.
+
+    Returns:
+        dict: The manifest from the cloud storage.
+    """
     logger.log_text("Getting manifest")
     manifest = cloud_static_io_client.get_manifest()
     return manifest
 
-def init_sentry(
-        logger: Logger = Depends(get_cloud_logger)
-):
+
+def init_sentry(logger: Logger = Depends(get_cloud_logger)):
+    """
+    Initializes the Sentry client.
+
+    Args:
+        logger (Logger): The logger object used for logging.
+
+    Returns:
+        None
+    """
     logger.log_text("Initializing Sentry client")
 
     ## TODO [#28]: Move to sentry to environment variable if we keep sentry
@@ -42,8 +78,15 @@ def init_sentry(
         # We recommend adjusting this value in production.
         profiles_sample_rate=1.0,
     )
-    sentry_sdk.set_context("env", {"env": os.getenv('ENV')})
+    sentry_sdk.set_context("env", {"env": os.getenv("ENV")})
     logger.log_text("Sentry initialized")
 
+
 def get_mapbox_secret():
+    """
+    Retrieves the Mapbox secret from GCP.
+
+    Returns:
+        str: The Mapbox secret.
+    """
     return gcp_get_mapbox_secret()

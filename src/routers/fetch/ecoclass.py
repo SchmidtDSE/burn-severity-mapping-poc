@@ -11,24 +11,51 @@ from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_se
 from src.lib.query_soil import (
     sdm_get_esa_mapunitid_poly,
     sdm_get_ecoclassid_from_mu_info,
-    edit_get_ecoclass_info
+    edit_get_ecoclass_info,
 )
 from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 
-class QuerySoilPOSTBody(BaseModel):
+
+class FetchEcoclassPOSTBody(BaseModel):
+    """
+    Represents the request body for querying soil data.
+
+    Attributes:
+        geojson (str): The GeoJSON data.
+        fire_event_name (str): The name of the fire event.
+        affiliation (str): The affiliation of the user.
+    """
+
     geojson: Any
     fire_event_name: str
     affiliation: str
 
-@router.post("/api/fetch/ecoclass", tags=["fetch"], description="Fetch ecoclass data (using Soil Data Mart / Web Soil Survey for Map Unit polygons, and the Ecological Site Description database for ecoclass info)")
+
+@router.post(
+    "/api/fetch/ecoclass",
+    tags=["fetch"],
+    description="Fetch ecoclass data (using Soil Data Mart / Web Soil Survey for Map Unit polygons, and the Ecological Site Description database for ecoclass info)",
+)
 def fetch_ecoclass(
-    body: QuerySoilPOSTBody,
+    body: FetchEcoclassPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
-    logger: Logger = Depends(get_cloud_logger)
+    logger: Logger = Depends(get_cloud_logger),
 ):
+    """
+    Fetches ecoclass information from EDIT based on the provided parameters.
+
+    Args:
+        body (QuerySoilPOSTBody): The request body containing the necessary parameters.
+        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service. FastAPI handles this as a dependency injection.
+        __sentry (None, optional): Sentry client, just needs to be initialized. FastAPI handles this as a dependency injection.
+        logger (Logger, optional): Google cloud logger. FastAPI handles this as a dependency injection.
+
+    Returns:
+        tuple: A tuple containing the success message and the HTTP status code.
+    """
     fire_event_name = body.fire_event_name
     geojson = json.loads(body.geojson)
     affiliation = body.affiliation
@@ -36,7 +63,7 @@ def fetch_ecoclass(
     sentry_sdk.set_context("analyze_ecoclass", {"request": body})
 
     try:
-            
+
         mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
         mu_polygon_keys = [
             mupolygonkey
@@ -54,8 +81,8 @@ def fetch_ecoclass(
         n_within_edit = 0
 
         for ecoclass_id in ecoclass_ids:
-            edit_success, edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
-            if edit_success:
+            edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
+            if edit_ecoclass_json:
                 n_within_edit += 1
                 logger.log_text(f"Success: {ecoclass_id} exists within EDIT backend")
                 edit_ecoclass_df_row_dict = edit_ecoclass_json["generalInformation"][

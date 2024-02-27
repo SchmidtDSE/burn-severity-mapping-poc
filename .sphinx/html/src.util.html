@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>src.util package &#8212; dse-fire-recovery v0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=f8c80a57"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="src-util-package">
+<h1>src.util package<a class="headerlink" href="#src-util-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-src.util.cloud_static_io">
+<span id="src-util-cloud-static-io-module"></span><h2>src.util.cloud_static_io module<a class="headerlink" href="#module-src.util.cloud_static_io" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.util.cloud_static_io.</span></span><span class="sig-name descname"><span class="pre">CloudStaticIOClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A client class for interacting with cloud storage services like S3, GCS, etc.
+This uses the <cite>smart_open</cite> library to interact with cloud storage services, in a
+relatively provider-agnostic way. It also uses the <cite>boto3</cite> library to interact with
+AWS services, specifically so that we can assume a role in AWS and then use the
+assumed role credentials to interact with S3.</p>
+<dl>
+<dt>Args:</dt><dd><p>bucket_name (str): The name of the bucket in the cloud storage service.
+provider (str): The provider of the cloud storage service (currently only supports “s3”).</p>
+</dd>
+<dt>Attributes:</dt><dd><p>env (str): The environment variable for the environment (e.g. “LOCAL”, “PROD”).
+role_arn (str): The role ARN for assuming the role with AWS.
+service_account_email (str): The email address of the service account for GCP,</p>
+<blockquote>
+<div><p>authorized to impersonate the role in AWS.</p>
+</div></blockquote>
+<p>role_session_name (str): The name of the role session. Arbitrary.
+logger (logging.Logger): The logger for logging messages.
+sts_client (botocore.client.STS): The STS client for assuming the AWS role using GCP credentials.
+prefix (str): The prefix for the bucket URL. We get this from tofu, once the bucket is created.
+iam_credentials (google.auth.impersonated_credentials.Credentials): The impersonated IAM credentials.
+role_assumed_credentials (dict): The assumed role credentials, once we assume the AWS role.
+boto_session (boto3.Session): The Boto3 session, using the assumed role credentials, which</p>
+<blockquote>
+<div><p>at long last allows us to interact with S3.</p>
+</div></blockquote>
+</dd>
+<dt>Raises:</dt><dd><p>Exception: If the provider is not supported.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.download">
+<span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remote_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_local_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.download" title="Link to this definition">¶</a></dt>
+<dd><p>Downloads the file from remote s3 server to local.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>remote_path (str): The path of the file on the remote server.
+target_local_path (str): The path where the file will be downloaded to.</p>
+</dd>
+<dt>Raises:</dt><dd><p>Exception: If there is an error during the download process.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.get_derived_products">
+<span class="sig-name descname"><span class="pre">get_derived_products</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.get_derived_products" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieves the derived products associated with a specific affiliation and fire event. We basically
+assume anything within the folder for a given affiliation and fire event is a derived product. Valyes
+returned are public HTTPS URLs.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>affiliation (str): The affiliation of the derived products.
+fire_event_name (str): The name of the fire event.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: A dictionary containing the filenames as keys and the corresponding full HTTPS URLs as values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.get_manifest">
+<span class="sig-name descname"><span class="pre">get_manifest</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.get_manifest" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieves the manifest file from the cloud storage.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>dict: The contents of the manifest file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.impersonate_service_account">
+<span class="sig-name descname"><span class="pre">impersonate_service_account</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.impersonate_service_account" title="Link to this definition">¶</a></dt>
+<dd><p>Impersonates a service account by creating impersonated credentials, using the
+service account email provided in initialization.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.local_fetch_id_token">
+<span class="sig-name descname"><span class="pre">local_fetch_id_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audience</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.local_fetch_id_token" title="Link to this definition">¶</a></dt>
+<dd><p>Fetches an ID token from the Google IAM service. This is used to authenticate
+with AWS STS, when we are running in the local environment. On GCP, we use the
+<cite>google.auth</cite> library to fetch the ID token since we are already authenticated
+with the service account we need.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>audience (str): The audience for the ID token.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: The fetched ID token.</p>
+</dd>
+<dt>Raises:</dt><dd><p>exceptions.DefaultCredentialsError: If the ID token fetch fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.update_manifest">
+<span class="sig-name descname"><span class="pre">update_manifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postfire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derive_boundary</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.update_manifest" title="Link to this definition">¶</a></dt>
+<dd><p>Updates the manifest with the given fire event information for the specified affiliation. If the fire event
+already exists in the manifest, it will be overwritten.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>fire_event_name (str): The name of the fire event.
+bounds (tuple): The bounds of the fire event.
+prefire_date_range (tuple): The prefire date range of the fire event.
+postfire_date_range (tuple): The postfire date range of the fire event.
+affiliation (str): The affiliation for which the manifest is being updated.
+derive_boundary (bool): Flag indicating whether to derive the boundary.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.upload">
+<span class="sig-name descname"><span class="pre">upload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_local_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remote_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.upload" title="Link to this definition">¶</a></dt>
+<dd><p>Uploads the source files from local to the s3 server.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>source_local_path (str): The local path of the source file to be uploaded.
+remote_path (str): The remote path where the file will be uploaded to.</p>
+</dd>
+<dt>Raises:</dt><dd><p>Exception: If there is an error during the upload process.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.upload_cogs">
+<span class="sig-name descname"><span class="pre">upload_cogs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics_stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.upload_cogs" title="Link to this definition">¶</a></dt>
+<dd><p>Uploads COGs (Cloud-Optimized GeoTIFFs) to a remote location, according to
+<cite>public/{affiliation}/{fire_event_name}/{band_name}.tif</cite>. Also adds
+overviews to the COGs for faster loading at lower zoom levels.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>metrics_stack (xarray.DataArray): Stack of metrics data.
+fire_event_name (str): Name of the fire event.
+affiliation (str): Affiliation of the data.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.upload_fire_event">
+<span class="sig-name descname"><span class="pre">upload_fire_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics_stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postfire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derive_boundary</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.upload_fire_event" title="Link to this definition">¶</a></dt>
+<dd><p>Uploads a fire event to the cloud storage location (uploads COGs and updates the manifest.json file).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>metrics_stack (xr.DataArray): The metrics stack containing the fire event data.
+fire_event_name (str): The name of the fire event.
+prefire_date_range (tuple): The date range before the fire event.
+postfire_date_range (tuple): The date range after the fire event.
+affiliation (str): The affiliation of the fire event.
+derive_boundary (bool): Whether to derive the boundary of the fire event.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.upload_rap_estimates">
+<span class="sig-name descname"><span class="pre">upload_rap_estimates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rap_estimates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fire_event_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affiliation</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.upload_rap_estimates" title="Link to this definition">¶</a></dt>
+<dd><p>Uploads RAP estimates to a remote location, according to
+f”public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_{band_name}.tif”.
+Also adds overviews to the COGs for faster loading at lower zoom levels.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>rap_estimates (xarray.DataArray): RAP estimates data.
+fire_event_name (str): Name of the fire event.
+affiliation (str): Affiliation of the data.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.util.cloud_static_io.CloudStaticIOClient.validate_credentials">
+<span class="sig-name descname"><span class="pre">validate_credentials</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.util.cloud_static_io.CloudStaticIOClient.validate_credentials" title="Link to this definition">¶</a></dt>
+<dd><p>Validates the credentials by checking if the role assumed credentials are expired or not.
+If expired or not available, it retrieves the OIDC token and assumes the role with web identity.
+Sets the assumed credentials in the boto3 session for further use. If the environment is local,
+it also impersonates the service account to get the credentials, otherwise we assume google.auth
+will handle the credentials for us if we’re on GCP.</p>
+<dl class="simple">
+<dt>Raises:</dt><dd><p>ValueError: If failed to retrieve OIDC token.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-src.util.gcp_secrets">
+<span id="src-util-gcp-secrets-module"></span><h2>src.util.gcp_secrets module<a class="headerlink" href="#module-src.util.gcp_secrets" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.util.gcp_secrets.get_mapbox_secret">
+<span class="sig-prename descclassname"><span class="pre">src.util.gcp_secrets.</span></span><span class="sig-name descname"><span class="pre">get_mapbox_secret</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.util.gcp_secrets.get_mapbox_secret" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieves the Mapbox API key from Google Cloud Secret Manager. This assumes you are
+authenticated locally with <cite>gcloud auth application-default login</cite>.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>str: The Mapbox API key.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.util.ingest_burn_zip">
+<span id="src-util-ingest-burn-zip-module"></span><h2>src.util.ingest_burn_zip module<a class="headerlink" href="#module-src.util.ingest_burn_zip" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.util.ingest_burn_zip.ingest_esri_zip_file">
+<span class="sig-prename descclassname"><span class="pre">src.util.ingest_burn_zip.</span></span><span class="sig-name descname"><span class="pre">ingest_esri_zip_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zip_file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.ingest_burn_zip.ingest_esri_zip_file" title="Link to this definition">¶</a></dt>
+<dd><p>Ingests an ESRI zip file containing shapefiles and tif files. This assumes that there are a set of
+shapefiles and tif files in the zip file. The shapefiles are expected to be in the form of a .shp, .shx, and .prj file,
+with a .dbf file being optional.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>zip_file_path (str): The path to the ESRI zip file.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple: A tuple containing two lists - valid_shapefiles and valid_tifs.</dt><dd><ul class="simple">
+<li><p>valid_shapefiles: A list of tuples, where each tuple contains the paths to the valid shapefiles and their corresponding GeoJSON representation.</p></li>
+<li><p>valid_tifs: A list of valid tif files.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.util.ingest_burn_zip.shp_to_geojson">
+<span class="sig-prename descclassname"><span class="pre">src.util.ingest_burn_zip.</span></span><span class="sig-name descname"><span class="pre">shp_to_geojson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shp_file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.ingest_burn_zip.shp_to_geojson" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a shapefile to GeoJSON format, assuming we know the CRS
+of the shapefile based on its helper files.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>shp_file_path (str): The file path of the shapefile.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: The GeoJSON representation of the shapefile.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.util.raster_to_poly">
+<span id="src-util-raster-to-poly-module"></span><h2>src.util.raster_to_poly module<a class="headerlink" href="#module-src.util.raster_to_poly" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.util.raster_to_poly.raster_mask_to_geojson">
+<span class="sig-prename descclassname"><span class="pre">src.util.raster_to_poly.</span></span><span class="sig-name descname"><span class="pre">raster_mask_to_geojson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binary_mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.util.raster_to_poly.raster_mask_to_geojson" title="Link to this definition">¶</a></dt>
+<dd><p>Converts a binary raster mask to a GeoJSON representation.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>binary_mask (xr.DataArray): Binary mask representing the raster.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: GeoJSON representation of the mask boundary.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.util">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-src.util" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">dse-fire-recovery</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Nick Gondek, DSE.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/src.util.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

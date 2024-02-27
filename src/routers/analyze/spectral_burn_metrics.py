@@ -13,7 +13,20 @@ from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 
+
 class AnaylzeBurnPOSTBody(BaseModel):
+    """
+    Represents the request body for analyzing burn metrics.
+
+    Attributes:
+        geojson (str): The GeoJSON data in string format.
+        derive_boundary (bool): Flag indicating whether to derive the boundary. If a shapefile is provided, this will be False.
+            If an AOI is drawn, this will be True.
+        date_ranges (dict): The date ranges for analysis.
+        fire_event_name (str): The name of the fire event.
+        affiliation (str): The affiliation of the analysis.
+    """
+
     geojson: Any
     derive_boundary: bool
     date_ranges: dict
@@ -24,13 +37,29 @@ class AnaylzeBurnPOSTBody(BaseModel):
 # TODO [#5]: Decide on / implement cloud tasks or other async batch
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
-@router.post("/api/analyze/spectral-burn-metrics", tags=["analysis"], description="Derive spectral burn metrics from satellite imagery within a boundary.")
+@router.post(
+    "/api/analyze/spectral-burn-metrics",
+    tags=["analysis"],
+    description="Derive spectral burn metrics from satellite imagery within a boundary.",
+)
 def analyze_spectral_burn_metrics(
     body: AnaylzeBurnPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
     logger: Logger = Depends(get_cloud_logger),
 ):
+    """
+    Analyzes spectral burn metrics for a given fire event.
+
+    Args:
+        body (AnaylzeBurnPOSTBody): The request body containing the necessary information for analysis.
+        cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service.  FastAPI handles this as a dependency injection.
+        __sentry (None, optional): Sentry client, just needs to be initialized. FastAPI handles this as a dependency injection.
+        logger (Logger, optional): Google cloud logger. FastAPI handles this as a dependency injection.
+
+    Returns:
+        JSONResponse: The response containing the analysis results and derived boundary, if applicable.
+    """
     geojson_boundary = json.loads(body.geojson)
 
     date_ranges = body.date_ranges
@@ -98,7 +127,7 @@ def analyze_spectral_burn_metrics(
                 "derived_boundary": derived_boundary,
             },
         )
-    
+
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")

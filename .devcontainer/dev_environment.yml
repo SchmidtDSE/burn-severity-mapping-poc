@@ -29,8 +29,11 @@ dependencies:
   - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - uvicorn
   - pip
+  - pytest
+  - pyarrow
   - smart_open
   - sentry-sdk[fastapi]
+  - sphinx
   - pip:
       - titiler.core
       - python-multipart

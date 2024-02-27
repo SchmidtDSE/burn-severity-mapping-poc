@@ -8,11 +8,12 @@ from ..dependencies import get_mapbox_secret, get_manifest
 router = APIRouter()
 templates = Jinja2Templates(directory="src/static")
 
+
 @router.get("/directory", response_class=HTMLResponse)
 def directory(
     request: Request,
     manifest: dict = Depends(get_manifest),
-    mapbox_token: str = Depends(get_mapbox_secret)
+    mapbox_token: str = Depends(get_mapbox_secret),
 ):
     manifest_json = json.dumps(manifest)
     cloud_run_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
@@ -22,6 +23,6 @@ def directory(
             "request": request,
             "manifest": manifest_json,
             "mapbox_token": mapbox_token,
-            "cloud_run_endpoint": cloud_run_endpoint
-        }
+            "cloud_run_endpoint": cloud_run_endpoint,
+        },
     )

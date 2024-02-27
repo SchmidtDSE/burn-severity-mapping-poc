@@ -55,6 +55,15 @@ class Sentinel2Client:
         print("Initialized Sentinel2Client with bounds: {}".format(self.bbox))
 
     def set_boundary(self, geojson_boundary):
+        """
+        Sets the boundary for later query to STAC API.
+
+        Args:
+            geojson_boundary (GeoJSON): The boundary of the query area.
+
+        Returns:
+            None
+        """
         boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
         # TODO [#7]: Generalize Sentinel2Client to accept any CRS
         # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
@@ -71,6 +80,17 @@ class Sentinel2Client:
         ]
 
     def get_items(self, date_range, from_bbox=True, max_items=None):
+        """
+        Retrieves items from the Sentinel-2-L2A collection based on the specified date range and optional parameters.
+
+        Args:
+            date_range (tuple): A tuple containing the start and end dates of the desired date range in the format (start_date, end_date).
+            from_bbox (bool, optional): Specifies whether to search for items within the bounding box defined by the `bbox` attribute. Defaults to True.
+            max_items (int, optional): The maximum number of items to retrieve. Defaults to None, which retrieves all available items.
+
+        Returns:
+            pystac.ItemCollection: A collection of items matching the specified criteria.
+        """
         date_range_fmt = "{}/{}".format(date_range[0], date_range[1])
 
         # TODO [#14]: Cloud cover response to smoke
@@ -95,6 +115,16 @@ class Sentinel2Client:
         return items
 
     def ingest_barc_classifications(self, barc_classifications_xarray):
+        """
+        Ingests and processes BARC (Burned Area Reflectance Classification) classifications, such that
+        they conform to our desired CRS and boundary, same as our derived classifications.
+
+        Args:
+            barc_classifications_xarray (xarray.DataArray): The BARC classifications as an xarray DataArray.
+
+        Returns:
+            xarray.DataArray: The processed barc classifications.
+        """
         barc_classifications = barc_classifications_xarray.rio.reproject(
             dst_crs=self.crs, nodata=0
         )
@@ -109,11 +139,20 @@ class Sentinel2Client:
         return barc_classifications
 
     def arrange_stack(self, items, resolution=20):
-        # TODO [#13]: More appropriate error handling - seperate legit from expected
-        # Right now, many of the requests to STAC are wrapped in try/excepts at the top level, to
-        # ensure no problems with timeouts and whatnot, which was an artifact of early development,
-        # but this is problematic now that we use form submission
+        """
+        Arrange and process (reduce the time dimension, according to `reduce_time_range`) a stack of Sentinel items.
 
+        Args:
+            items (list): List of Sentinel items to stack.
+            resolution (int): Resolution of the stacked data.
+
+        Returns:
+            stack (xarray.DataArray): Stacked and processed Sentinel data, in our desired CRS, clipped to the boundary.
+
+        Raises:
+            None
+
+        """
         # Get CRS from first item (this isn't inferred by stackstac, for some reason)
         stac_endpoint_crs = items[0].properties["proj:epsg"]
 
@@ -145,17 +184,42 @@ class Sentinel2Client:
         return stack
 
     def reduce_time_range(self, range_stack):
+        """
+        Reduces the time range of the given range stack by taking the median along the time dimension.
+
+        Args:
+            range_stack (xarray.DataArray): The range stack to be reduced.
+
+        Returns:
+            xarray.DataArray: The reduced range stack.
+        """
+
+        # TODO: Think about best practice for reducing time dimension pre/post fire
         # This will probably get a bit more sophisticated, but for now, just take the median
         # We will probably run into issues of cloud occlusion, and for really long fire events,
         # we might want to look into time-series effects of greenup, drying, etc, in the adjacent
         # non-burned areas so attempt to isolate fire effects vs exogenous seasonal stuff. Ultimately,
         # we just want a decent reducer to squash the time dim, so median works for now.
-
         return range_stack.median(dim="time")
 
     def query_fire_event(
         self, prefire_date_range, postfire_date_range, from_bbox=True, max_items=None
     ):
+        """
+        Queries the fire event by retrieving prefire and postfire items based on the given date ranges.
+
+        Args:
+            prefire_date_range (tuple): A tuple representing the date range for prefire items.
+            postfire_date_range (tuple): A tuple representing the date range for postfire items.
+            from_bbox (bool, optional): Flag indicating whether to retrieve items from bounding box. Defaults to True.
+            max_items (int, optional): Maximum number of items to retrieve. Defaults to None.
+
+        Raises:
+            ValueError: If there are insufficient imagery in the date ranges to calculate burn metrics. Note that
+                this might also happen if there are no items in the date range, so it's not necessarily a problem with
+                the date ranges themselves (but it will definitely be an issue if the date range is too narrow for any imagery)
+
+        """
         # Get items for pre and post fire range
         prefire_items = self.get_items(
             prefire_date_range, from_bbox=from_bbox, max_items=max_items
@@ -165,12 +229,21 @@ class Sentinel2Client:
         )
 
         if len(prefire_items) == 0 or len(postfire_items) == 0:
-            raise ValueError('Date ranges insufficient for enough imagery to calculate burn metrics')
+            raise ValueError(
+                "Date ranges insufficient for enough imagery to calculate burn metrics"
+            )
 
         self.prefire_stack = self.arrange_stack(prefire_items)
         self.postfire_stack = self.arrange_stack(postfire_items)
 
     def calc_burn_metrics(self):
+        """
+        Calculates burn metrics using prefire and postfire Sentinel satellite data.
+
+        Returns:
+            metrics_stack (xarray.DataArray): Stack of burn metrics, wiht bands of nir and swir,
+                named according to self.band_nir and self.band_swir.
+        """
         self.metrics_stack = calc_burn_metrics(
             prefire_nir=self.prefire_stack.sel(band=self.band_nir),
             prefire_swir=self.prefire_stack.sel(band=self.band_swir),
@@ -179,6 +252,20 @@ class Sentinel2Client:
         )
 
     def classify(self, thresholds, threshold_source, burn_metric="dnbr"):
+        """
+        Classify the metrics stack based on the given thresholds and threshold source. Note that,
+        in v0, we are not actually calling this classify method, we are classifing at runtime using
+        titiler's algorithms (`src.lib.titiler_algorithms`). After classification, we save the
+        classification to the `derived_classifications` attribute of the Sentinel2Client.
+
+        Parameters:
+            thresholds (list): List of threshold values.
+            threshold_source (str): Source of the thresholds.
+            burn_metric (str): Metric to be used for classification (default: "dnbr").
+
+        Returns:
+            None
+        """
         new_classification = classify_burn(
             self.metrics_stack.sel(burn_metric=burn_metric), thresholds=thresholds
         )
@@ -202,6 +289,18 @@ class Sentinel2Client:
             )
 
     def derive_boundary(self, metric_name="rbr", threshold=0.025):
+        """
+        Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
+        This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as `boundary.geojson`
+        within the s3 bucket), and we clip the metrics stack to this boundary.
+
+        Args:
+            metric_name (str): Name of the metric layer.
+            threshold (float): Threshold value for the metric layer.
+
+        Returns:
+            None
+        """
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
         # Threshold the metric layer to get a binary boundary
@@ -233,9 +332,6 @@ class Sentinel2Client:
         boundary_geojson = raster_mask_to_geojson(boundary_xr)
 
         self.set_boundary(boundary_geojson)
-        self.clip_metrics_stack_to_boundary()
-
-    def clip_metrics_stack_to_boundary(self):
         self.metrics_stack = self.metrics_stack.rio.clip(
             self.geojson_boundary.geometry.values, self.geojson_boundary.crs
         )
