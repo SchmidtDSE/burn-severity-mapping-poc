@@ -13,7 +13,7 @@ output "s3_from_gcp_role_arn" {
     value       = module.static_io.s3_from_gcp_role_arn
 }
 
-output "gcp_cloud_run_uuid" {
+output "gcp_burn_backend_service_account_unique_id" {
     description = "The UUID of the Cloud Run burn-backend service"
-    value       = module.burn_backend.burn_backend_server_uuid
+    value       = module.burn_backend.gcp_burn_backend_service_account_unique_id
 }

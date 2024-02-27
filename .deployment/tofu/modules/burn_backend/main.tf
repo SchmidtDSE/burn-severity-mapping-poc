@@ -240,7 +240,7 @@ resource "google_service_account" "github_actions" {
 # Create the IAM service account for the Cloud Run service
 resource "google_service_account" "burn-backend-service" {
   account_id   = "burn-backend-service-${terraform.workspace}"
-  display_name = "Cloud Run Service Account for burn backend"
+  display_name = "Cloud Run Service Account for burn backend - ${terraform.workspace}"
   description  = "This service account is used by the Cloud Run service to access GCP Secrets Manager and authenticate with OIDC for AWS S3 access"
   project      = "dse-nps"
 }
