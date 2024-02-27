@@ -36,7 +36,8 @@ locals {
   aws_region = data.aws_region.current.name
   # oidc_provider_domain_url = "https://accounts.google.com"
   oidc_provider_domain_url = "accounts.google.com"
-  gcp_cloud_run_client_id = "117526146749746854545" ## This is the ClientID of the cloud run instance, and can't be output from terraform!
+  ## This is the ClientID of the cloud run service account, and can't be output from terraform!
+  gcp_cloud_run_client_id = "${terraform.workspace}" == "prod" ? "117526146749746854545" : "101023653831248304550"
 }
 
 # Initialize the modules
