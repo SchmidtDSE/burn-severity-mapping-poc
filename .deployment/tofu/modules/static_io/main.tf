@@ -2,7 +2,7 @@
 
 # Then, the s3 bucket for the server
 resource "aws_s3_bucket" "burn-severity-backend" {
-  bucket = "burn-severity-backend" 
+  bucket = "burn-severity-backend-${terraform.workspace}" 
 }
 
 resource "aws_s3_bucket_versioning" "burn-severity-backend" {
@@ -289,7 +289,7 @@ data "aws_iam_policy_document" "session_policy" {
 
 # Create the IAM role with both the assume-role and the session policy.
 resource "aws_iam_role" "aws_s3_from_gcp" {
-  name               = "aws_s3_from_gcp"
+  name               = "aws_s3_from_gcp_${terraform.workspace}"
   assume_role_policy = data.aws_iam_policy_document.oidc_assume_role_policy.json
   
   # Inline policy for session 

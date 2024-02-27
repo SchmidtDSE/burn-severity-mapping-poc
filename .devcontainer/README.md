@@ -46,7 +46,27 @@ gcloud auth application-default login
 
 _Note_: This SSO auth process must be performed peridically, as the authentication token generated are short-lived (important, as the scope of this auth is broad for provisioning resources and could be used by nefarious actors). So, if you run into an credentials-related issue running any `tofu` command, you may need to re-auth. Both will provide you a URL to login via SSO. You can accept all defaults.
 
-Once this is done, run:
+#### Dev / Prod split
+
+To ensure that we can safely develop in a live environment, without breaking existing functionality, we split dev and prod environments using tofu's `workspace`s.
+
+To select the `prod` environment:
+
+```
+tofu workspace select default
+```
+
+To select the `dev` environment:
+
+```
+tofu workspace select dev
+```
+
+By doing this, we avoid having to duplicate tofu source files, such that the deployments are more or less identical between environments.
+
+#### Creating / updating deployments
+
+Once you've selected a workspace and configured sso for both aws and gcloud:
 
 ```
 tofu init

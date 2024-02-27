@@ -24,7 +24,14 @@ jobs:
           project_id: "dse-nps"
           service_account: "github-actions-service-account@dse-nps.iam.gserviceaccount.com"
 
+      - name: Set environment variable for branch name
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
       - name: Build and Deploy
         run: |
           gcloud builds submit --config .deployment/cloudbuild.yml
-          gcloud beta run deploy tf-rest-burn-severity --image us-central1-docker.pkg.dev/dse-nps/burn-backend/prod --platform managed --region us-central1
+          if [ "${{ env.BRANCH_NAME }}" = "master" ]; then
+            gcloud beta run deploy tf-rest-burn-severity-prod --image us-central1-docker.pkg.dev/dse-nps/burn-backend/prod --platform managed --region us-central1
+          else
+            gcloud beta run deploy tf-rest-burn-severity-dev --image us-central1-docker.pkg.dev/dse-nps/burn-backend/dev --platform managed --region us-central1
+          fi
