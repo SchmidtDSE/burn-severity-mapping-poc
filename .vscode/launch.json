@@ -1,19 +1,14 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python: FastAPI",
-            "type": "python",
-            "request": "launch",
-            "module": "uvicorn",
-            "args": [
-                "app:app",
-                "--host=0.0.0.0",
-                "--port=5050",
-                "--reload"
-            ],
-            "justMyCode": true,
-            "envFile": "/workspace/.devcontainer/.env"
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: FastAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["src.app:app", "--host=0.0.0.0", "--port=5050", "--reload"],
+      "justMyCode": true,
+      "envFile": "/workspace/.devcontainer/.env"
+    }
+  ]
 }

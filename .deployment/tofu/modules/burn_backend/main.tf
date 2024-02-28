@@ -1,7 +1,7 @@
 
 # Create a VPC access connector, to let the Cloud Run service access the AWS Transfer server
 resource "google_vpc_access_connector" "burn_backend_vpc_connector" {
-  name          = "vpc-burn2023" # just to match aws naming reqs
+  name          = "vpc-burn2023-${terraform.workspace}" # just to match aws naming reqs
   # network       = google_compute_network.burn_backend_network.id
   subnet {
     name = google_compute_subnetwork.burn_backend_subnetwork.name
@@ -12,7 +12,7 @@ resource "google_vpc_access_connector" "burn_backend_vpc_connector" {
 }
 
 resource "google_compute_subnetwork" "burn_backend_subnetwork" {
-  name          = "run-subnetwork"
+  name          = "run-subnetwork-${terraform.workspace}"
   ip_cidr_range = "10.2.0.0/28"
   region        = "us-central1"
   network       = google_compute_network.burn_backend_network.id
@@ -20,26 +20,26 @@ resource "google_compute_subnetwork" "burn_backend_subnetwork" {
 }
 
 resource "google_compute_network" "burn_backend_network" {
-  name                    = "burn-backend-run-network"
+  name                    = "burn-backend-run-network-${terraform.workspace}"
   auto_create_subnetworks = false
 }
 
 # Create a Cloud Router
 resource "google_compute_router" "burn_backend_router" {
-  name    = "burn-backend-router"
+  name    = "burn-backend-router-${terraform.workspace}"
   network = google_compute_network.burn_backend_network.name
   region  = "us-central1"
 }
 
 # Reserve a static IP address
 resource "google_compute_address" "burn_backend_static_ip" {
-  name   = "burn-backend-static-ip"
+  name   = "burn-backend-static-ip-${terraform.workspace}"
   region = "us-central1"
 }
 
 # Set up Cloud NAT
 resource "google_compute_router_nat" "burn_backend_nat" {
-  name   = "burn-backend-nat"
+  name   = "burn-backend-nat-${terraform.workspace}"
   router = google_compute_router.burn_backend_router.name
   region = "us-central1"
 
@@ -98,7 +98,7 @@ resource "google_compute_router_nat" "burn_backend_nat" {
 
 # Create a Cloud Run service for burn-backend services
 resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
-  name     = "tf-rest-burn-severity"
+  name     = "tf-rest-burn-severity-${terraform.workspace}"
   location = "us-central1"
 
   template {
@@ -111,12 +111,17 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
         value = "CLOUD"
       }
       env {
-        name  = "SFTP_SERVER_ENDPOINT"
-        value = var.sftp_server_endpoint
+        name  = "S3_FROM_GCP_ROLE_ARN"
+        value = var.s3_from_gcp_role_arn
       }
       env {
-        name  = "SFTP_ADMIN_USERNAME"
-        value = var.sftp_admin_username
+        name  = "S3_BUCKET_NAME"
+        value = var.s3_bucket_name
+      }
+      ## TODO [#24]: self-referential endpoint, will be solved by refactoring out titiler and/or making fully static
+      env {
+        name  = "GCP_CLOUD_RUN_ENDPOINT"
+        value = "${terraform.workspace}" == "prod" ? "https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app" : "https://tf-rest-burn-severity-dev-ohi6r6qs2a-uc.a.run.appz"
       }
       env {
         name  = "CPL_VSIL_CURL_ALLOWED_EXTENSIONS"
@@ -193,14 +198,14 @@ resource "google_cloud_run_service_iam_member" "public" {
 
 # Create the IAM workload identity pool and provider to auth GitHub Actions
 resource "google_iam_workload_identity_pool" "pool" {
-  workload_identity_pool_id = "github-actions"
+  workload_identity_pool_id = "github-actions-${terraform.workspace}"
   display_name = "Github Actions Pool"
   description  = "Workload identity pool for GitHub actions"
 }
 
 resource "google_iam_workload_identity_pool_provider" "oidc" {
   depends_on = [google_iam_workload_identity_pool.pool]
-  workload_identity_pool_provider_id = "oidc-provider"
+  workload_identity_pool_provider_id = "oidc-provider-${terraform.workspace}"
   workload_identity_pool_id          = google_iam_workload_identity_pool.pool.workload_identity_pool_id
 
   display_name = "GitHub OIDC Provider"
@@ -225,9 +230,12 @@ resource "google_service_account_iam_binding" "workload_identity_user" {
   ]
 }
 
+## TODO [#20]: Harcoded project string and others - now that tofu outputs are setup up, make more general
+## Will be helpful as we move to other projects and environments
+
 # Create the IAM service account for GitHub Actions
 resource "google_service_account" "github_actions" {
-  account_id  = "github-actions-service-account"
+  account_id  = "github-actions-sa-${terraform.workspace}"
   display_name = "Github Actions Service Account"
   description = "This service account is used by GitHub Actions"
   project     = "dse-nps"
@@ -235,9 +243,9 @@ resource "google_service_account" "github_actions" {
 
 # Create the IAM service account for the Cloud Run service
 resource "google_service_account" "burn-backend-service" {
-  account_id   = "burn-backend-service"
-  display_name = "Cloud Run Service Account for burn backend"
-  description  = "This service account is used by the Cloud Run service to access GCP Secrets Manager"
+  account_id   = "burn-backend-service-${terraform.workspace}"
+  display_name = "Cloud Run Service Account for burn backend - ${terraform.workspace}"
+  description  = "This service account is used by the Cloud Run service to access GCP Secrets Manager and authenticate with OIDC for AWS S3 access"
   project      = "dse-nps"
 }
 
@@ -250,6 +258,12 @@ resource "google_project_iam_member" "secret_accessor" {
 resource "google_project_iam_member" "log_writer" {
   project = "dse-nps"
   role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
+}
+
+resource "google_project_iam_member" "oidc_token_creator" {
+  project = "dse-nps"
+  role    = "roles/iam.serviceAccountTokenCreator"
   member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
 }
 
@@ -286,7 +300,7 @@ resource "google_project_iam_member" "artifact_registry_writer" {
 
 # Create an Artifact Registry repo for the container image
 resource "google_artifact_registry_repository" "burn-backend" {
-  repository_id = "burn-backend"
+  repository_id = "burn-backend-${terraform.workspace}"
   format        = "DOCKER"
   location      = "us-central1"
 }

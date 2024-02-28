@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Available Data and Maps (DSE Burn Severity V0)</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%221em%22 font-size=%2280%22>🌿</text></svg>"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
+    />
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  </head>
+  <style>
+    .indicator-img {
+      width: 50px;
+      height: 50px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(1, 1fr);
+      grid-gap: 20px;
+    }
+
+    .grid-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #ccc;
+      padding: 20px;
+    }
+
+    .select-area {
+      flex: 0 0 30%;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-right: 10px;
+    }
+
+    .map-area {
+      flex: 0 0 70%;
+      border: 1px solid #ccc;
+      padding: 10px;
+      min-height: 700px;
+    }
+
+    #map {
+      height: 675px;
+      width: 100%;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <div class="select-area">
+        <select id="affiliationDropdown">
+          <option value="">Select Affiliation</option>
+        </select>
+        <select id="fireNameDropdown">
+          <option value="">Select Fire Name</option>
+        </select>
+        <div id="fireInfo"></div>
+        <p>
+          <ul style="list-style: none">
+            <li><a id="map-rbr" href="" style="font-size: 16px; display: none;"><strong>Interactive Map of Relative Burn Ratio (RBR)</strong></a></li>
+            <li><a id="map-dnbr" href="" style="font-size: 16px; display: none"><strong>Interactive Map of Delta Normalized Burn Ratio (dNBR)</strong></a></li>
+          </ul>
+        </p>
+        <ul id="products-list"></ul>
+        <div id="info-loading" style="display: none">
+          <img class="indicator-img" src="/static/upload/spinner.gif" />
+        </div>
+      </div>
+      <div class="map-area">
+        <div class="location-search">
+          <input
+            type="text"
+            id="location-input"
+            placeholder="Enter a location"
+          />
+          <button id="location-button">Go</button>
+        </div>
+        <div id="map"></div>
+      </div>
+    </div>
+    <script>
+        // Fetch the produced products
+        var cloudRunEndpoint = "{{ cloud_run_endpoint }}";
+        function getProducts(cloudRunEndpoint, affiliation, fireEventName) {
+            postData = JSON.stringify({
+                fire_event_name: $("#fireNameDropdown").val(),
+                affiliation: $("#affiliationDropdown").val(),
+            })
+
+            // If all four requests are successful, get the map url and all derived products
+            var derivedProductsResponse = $.ajax({
+            url: "/api/list/derived-products",
+            type: "post",
+            dataType: "json",
+            contentType: "application/json",
+            data: postData,
+            success: function (response) {
+                return response;
+            },
+            error: function (error) {
+                console.error(error);
+                alert("Failed to get derived products.");
+            },
+        });
+        var mapRbrUrl = `${cloudRunEndpoint}/map/${affiliation}/${fireEventName}/rbr`;
+        var mapDnbrUrl = `${cloudRunEndpoint}/map/${affiliation}/${fireEventName}/dnbr`;
+
+        return new Promise (function (resolve, reject) {
+            $.when(derivedProductsResponse).done(function (products) {
+                // Fetch the boundary geojson and display it on the map
+                var productsDiv = $("#products-list");
+                var productListItem = $("<ul></ul>");
+                Object.entries(products).forEach(function ([
+                    productType,
+                    productUrl,
+                ]) {
+                    var productElement = $("<li><a></a></li>");
+                    productElement.find("a").text(productType);
+                    productElement.find("a").attr("href", productUrl);
+                    productListItem.append(productElement);
+                });
+                productsDiv.append(productListItem);
+
+                // Add map url to the `map-id` div
+                $("#map-rbr").attr("href", mapRbrUrl);
+                $("#map-dnbr").attr("href", mapDnbrUrl);
+                console.log(products)
+                boundaryGeojsonUrl = products['boundary.geojson'];
+                resolve(boundaryGeojsonUrl);
+            }).fail(function (error) {
+                console.error(error);
+                alert("Failed to get derived products.");
+                reject(error);
+            });
+        });
+      }
+
+      function formatFireInfo(json) {
+          var obj = JSON.parse(json);
+
+          var bounds = '<li><strong>Bounds:</strong> ' + obj.bounds.join(', ') + '</li>';
+          var prefireDateRange = '<li><strong>Prefire Date Range:</strong> ' + obj.prefire_date_range.join(' to ') + '</li>';
+          var postfireDateRange = '<li><strong>Postfire Date Range:</strong> ' + obj.postfire_date_range.join(' to ') + '</li>';
+          var lastUpdated = '<li><strong>Last Updated:</strong> ' + obj.last_updated + '</li>';
+          var deriveBoundary = '<li><strong>Derive Boundary:</strong> ' + (obj.derive_boundary ? 'Yes' : 'No') + '</li>';
+
+          return '<ul>' + bounds + prefireDateRange + postfireDateRange + lastUpdated + deriveBoundary + '</ul>';
+      }
+
+        var manifest = JSON.parse({{manifest | tojson | safe}});
+        var mapboxToken = "{{ mapbox_token }}";
+        var backendUrl = "https://your-backend-url";
+
+        var boundaryLayer = null; // Keep a reference to the boundary layer
+
+          // Initialize the map
+          var map = L.map("map").setView([39.7749, -100.4194], 5);
+
+          // Create panes
+          map.createPane("basemaps");
+          map.getPane("basemaps").style.zIndex = 2;
+          map.createPane("boundary");
+          map.getPane("boundary").style.zIndex = 5;
+
+          // Add a tile layer to the map
+          L.tileLayer(
+              `https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`,
+              {
+                  maxZoom: 19,
+                  attribution: "© Mapbox",
+                  pane: "basemaps",
+                  tileSize: 512,
+                  zoomOffset: -1,
+              }
+          ).addTo(map);
+
+        // Populate affiliation dropdown
+        for (var affiliation in manifest) {
+            $("#affiliationDropdown").append(new Option(affiliation, affiliation));
+        }
+
+        // When an affiliation is selected
+        $("#affiliationDropdown").change(function () {
+            var selectedAffiliation = $(this).val();
+
+            // Clear and populate fire name dropdown
+            $("#fireNameDropdown")
+            .empty()
+            .append(new Option("Select Fire Name", ""));
+            for (var fireName in manifest[selectedAffiliation]) {
+            $("#fireNameDropdown").append(new Option(fireName, fireName));
+            }
+        });
+
+        // When a fire name is selected
+        $("#fireNameDropdown").change(function () {
+            $("#products-list").empty();
+            $("#fireInfo").empty();
+            $("#map-rbr").hide();
+            $("#map-dnbr").hide();
+
+            if (boundaryLayer) {
+                map.removeLayer(boundaryLayer);
+            }
+            $("#info-loading").show()
+
+            var selectedAffiliation = $("#affiliationDropdown").val();
+            var selectedFireName = $(this).val();
+
+            var boundaryGeojsonUrl = getProducts(cloudRunEndpoint, selectedAffiliation, selectedFireName).then(
+                function (boundaryGeojsonUrl) {
+                    fetch(boundaryGeojsonUrl)
+                        .then(response => response.json())
+                        .then(boundaryGeojson => {
+                            $("#info-loading").hide()
+                            $("#map-rbr").show();
+                            $("#map-dnbr").show();
+
+                            boundaryLayer = L.geoJSON(boundaryGeojson, {
+                                pane: "boundary",
+                                style: function (feature) {
+                                    return {
+                                        color: "red",
+                                        weight: 2,
+                                        opacity: 1,
+                                        fillOpacity: 0.1,
+                                    };
+                                },
+                            })
+                            boundaryLayer.addTo(map);
+                            map.fitBounds(boundaryLayer.getBounds());
+                            // Display fire info
+                            $("#fireInfo").html(formatFireInfo(JSON.stringify(manifest[selectedAffiliation][selectedFireName])));
+                        })
+                        .catch(error => console.error('Error:', error));
+                    });
+                });
+    </script>
+  </body>
+</html>

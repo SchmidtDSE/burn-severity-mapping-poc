@@ -27,29 +27,31 @@ provider "google" {
 }
 
 data "google_project" "project" {}
-
-# Get the one secret we need - ssh key
-data "google_secret_manager_secret_version" "burn_sftp_ssh_keys" {
-  secret = "burn_sftp_ssh_keys"
-}
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
 
 locals {
-  ssh_pairs = jsondecode(data.google_secret_manager_secret_version.burn_sftp_ssh_keys.secret_data)
   google_project_number = data.google_project.project.number
+  aws_account_id = data.aws_caller_identity.current.account_id
+  aws_region = data.aws_region.current.name
+  # oidc_provider_domain_url = "https://accounts.google.com"
+  oidc_provider_domain_url = "accounts.google.com"
+  # gcp_cloud_run_client_id = "${terraform.workspace}" == "prod" ? "117526146749746854545" : "101023653831248304550"
 }
 
-
 # Initialize the modules
-module "sftp" {
-  source = "./modules/sftp"
-  ssh_pairs = local.ssh_pairs
+module "static_io" {
+  source = "./modules/static_io"
   google_project_number = local.google_project_number
+  gcp_service_account_s3_email = module.burn_backend.gcp_service_account_s3_email
+  gcp_cloud_run_client_id = module.burn_backend.gcp_burn_backend_service_account_unique_id
+  aws_account_id = local.aws_account_id
+  oidc_provider_domain_url = local.oidc_provider_domain_url
 }
 
 module "burn_backend" {
   source = "./modules/burn_backend"
-  ssh_pairs = local.ssh_pairs
   google_project_number = local.google_project_number
-  sftp_server_endpoint = module.sftp.sftp_server_endpoint
-  sftp_admin_username = module.sftp.sftp_admin_username
+  s3_from_gcp_role_arn = module.static_io.s3_from_gcp_role_arn
+  s3_bucket_name = module.static_io.s3_bucket_name
 }

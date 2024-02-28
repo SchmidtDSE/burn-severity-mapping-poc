@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>src.lib package &#8212; dse-fire-recovery v0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=f8c80a57"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="src-lib-package">
+<h1>src.lib package<a class="headerlink" href="#src-lib-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-src.lib.burn_severity">
+<span id="src-lib-burn-severity-module"></span><h2>src.lib.burn_severity module<a class="headerlink" href="#module-src.lib.burn_severity" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.burn_severity.calc_burn_metrics">
+<span class="sig-prename descclassname"><span class="pre">src.lib.burn_severity.</span></span><span class="sig-name descname"><span class="pre">calc_burn_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefire_nir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefire_swir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postfire_nir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postfire_swir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.burn_severity.calc_burn_metrics" title="Link to this definition">¶</a></dt>
+<dd><p>Get the NBR, dNBR, rdNBR, and rBR from the pre- and post-fire NIR and SWIR bands.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>prefire_nir (xr.DataArray): Pre-fire NIR.
+prefire_swir (xr.DataArray): Pre-fire SWIR.
+postfire_nir (xr.DataArray): Post-fire NIR.
+postfire_swir (xr.DataArray): Post-fire SWIR.</p>
+</dd>
+<dt>Returns:</dt><dd><p>xr.DataArray: Stack of NBR, dNBR, rdNBR, and rBR.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.burn_severity.calc_dnbr">
+<span class="sig-prename descclassname"><span class="pre">src.lib.burn_severity.</span></span><span class="sig-name descname"><span class="pre">calc_dnbr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nbr_prefire</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbr_postfire</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.burn_severity.calc_dnbr" title="Link to this definition">¶</a></dt>
+<dd><p>Get the difference Normalized Burn Ratio (dNBR) from the pre-fire and post-fire NBR.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>nbr_prefire (xr.DataArray): Pre-fire NBR.
+nbr_postfire (xr.DataArray): Post-fire NBR.</p>
+</dd>
+<dt>Returns:</dt><dd><p>array: Difference Normalized Burn Ratio (dNBR).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.burn_severity.calc_nbr">
+<span class="sig-prename descclassname"><span class="pre">src.lib.burn_severity.</span></span><span class="sig-name descname"><span class="pre">calc_nbr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">band_nir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_swir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.burn_severity.calc_nbr" title="Link to this definition">¶</a></dt>
+<dd><p>Get the Normalized Burn Ratio (NBR) from the input arrays of NIR and SWIR bands.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>band_nir (xr.DataArray): Array of the first band image (e.g., B8A).
+band_swir (xr.DataArray): Array of the second band image (e.g., B12).</p>
+</dd>
+<dt>Returns:</dt><dd><p>array: Normalized Burn Ratio (NBR).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.burn_severity.calc_rbr">
+<span class="sig-prename descclassname"><span class="pre">src.lib.burn_severity.</span></span><span class="sig-name descname"><span class="pre">calc_rbr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dnbr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbr_prefire</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.burn_severity.calc_rbr" title="Link to this definition">¶</a></dt>
+<dd><p>Get the relative burn ratio (rBR) from the dNBR and pre-fire NBR.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>dnbr (xr.DataArray): Difference Normalized Burn Ratio (dNBR).
+nbr_prefire (xr.DataArray): Pre-fire NBR.</p>
+</dd>
+<dt>Returns:</dt><dd><p>array: Relative burn ratio (rBR).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.burn_severity.calc_rdnbr">
+<span class="sig-prename descclassname"><span class="pre">src.lib.burn_severity.</span></span><span class="sig-name descname"><span class="pre">calc_rdnbr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dnbr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbr_prefire</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.burn_severity.calc_rdnbr" title="Link to this definition">¶</a></dt>
+<dd><p>Get the relative difference Normalized Burn Ratio (rdNBR) from the dNBR and pre-fire NBR.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>dnbr (xr.DataArray): Difference Normalized Burn Ratio (dNBR).
+nbr_prefire (xr.DataArray): Pre-fire NBR.</p>
+</dd>
+<dt>Returns:</dt><dd><p>array: Relative difference Normalized Burn Ratio (rdNBR).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.burn_severity.classify_burn">
+<span class="sig-prename descclassname"><span class="pre">src.lib.burn_severity.</span></span><span class="sig-name descname"><span class="pre">classify_burn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresholds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.burn_severity.classify_burn" title="Link to this definition">¶</a></dt>
+<dd><p>Reclassify an array based on the given thresholds.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>array (xr.DataArray): Input array.
+thresholds (dict): Dictionary of thresholds and their corresponding values.</p>
+</dd>
+<dt>Returns:</dt><dd><p>xr.DataArray: Reclassified array.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.lib.query_rap">
+<span id="src-lib-query-rap-module"></span><h2>src.lib.query_rap module<a class="headerlink" href="#module-src.lib.query_rap" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.query_rap.rap_get_biomass">
+<span class="sig-prename descclassname"><span class="pre">src.lib.query_rap.</span></span><span class="sig-name descname"><span class="pre">rap_get_biomass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ignition_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_geojson</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_rap.rap_get_biomass" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieves biomass estimates from the Rangeland Analysis Platform for a given ignition year and boundary location.
+RAP provides estimates of biomass for four categories: annual forb and grass, perennial forb and grass, shrub, and tree.
+<a class="reference external" href="http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-biomass/v3/README">http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-biomass/v3/README</a>
+Data are available from 1986 to 2022, if a pre-1986 date is provided, a ValueError is raised., if a post-2022 date is provided,
+the 2022 data is used.</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>ignition_date (str): The ignition date in the format ‘YYYY-MM-DD’.
+boundary_geojson (dict): The boundary geometry in GeoJSON format.
+buffer_distance (float, optional): The buffer distance around the boundary. Defaults to 0.01.</p>
+</dd>
+<dt>Returns:</dt><dd><p>xr.DataArray: Biomass estimates from the RAP dataset.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If the ignition date is before 1986, where RAP data is not available.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.lib.query_sentinel">
+<span id="src-lib-query-sentinel-module"></span><h2>src.lib.query_sentinel module<a class="headerlink" href="#module-src.lib.query_sentinel" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.lib.query_sentinel.</span></span><span class="sig-name descname"><span class="pre">Sentinel2Client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geojson_boundary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">barc_classifications</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EPSG:4326'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_nir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'B8A'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">band_swir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'B12'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.arrange_stack">
+<span class="sig-name descname"><span class="pre">arrange_stack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.arrange_stack" title="Link to this definition">¶</a></dt>
+<dd><p>Arrange and process (reduce the time dimension, according to <cite>reduce_time_range</cite>) a stack of Sentinel items.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>items (list): List of Sentinel items to stack.
+resolution (int): Resolution of the stacked data.</p>
+</dd>
+<dt>Returns:</dt><dd><p>stack (xarray.DataArray): Stacked and processed Sentinel data, in our desired CRS, clipped to the boundary.</p>
+</dd>
+<dt>Raises:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.calc_burn_metrics">
+<span class="sig-name descname"><span class="pre">calc_burn_metrics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.calc_burn_metrics" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates burn metrics using prefire and postfire Sentinel satellite data.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>metrics_stack (xarray.DataArray): Stack of burn metrics, wiht bands of nir and swir,</dt><dd><p>named according to self.band_nir and self.band_swir.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.classify">
+<span class="sig-name descname"><span class="pre">classify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thresholds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">burn_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dnbr'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.classify" title="Link to this definition">¶</a></dt>
+<dd><p>Classify the metrics stack based on the given thresholds and threshold source. Note that,
+in v0, we are not actually calling this classify method, we are classifing at runtime using
+titiler’s algorithms (<cite>src.lib.titiler_algorithms</cite>). After classification, we save the
+classification to the <cite>derived_classifications</cite> attribute of the Sentinel2Client.</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>thresholds (list): List of threshold values.
+threshold_source (str): Source of the thresholds.
+burn_metric (str): Metric to be used for classification (default: “dnbr”).</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.derive_boundary">
+<span class="sig-name descname"><span class="pre">derive_boundary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rbr'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.025</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.derive_boundary" title="Link to this definition">¶</a></dt>
+<dd><p>Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
+This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as <cite>boundary.geojson</cite>
+within the s3 bucket), and we clip the metrics stack to this boundary.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>metric_name (str): Name of the metric layer.
+threshold (float): Threshold value for the metric layer.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.get_items">
+<span class="sig-name descname"><span class="pre">get_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_items</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.get_items" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieves items from the Sentinel-2-L2A collection based on the specified date range and optional parameters.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>date_range (tuple): A tuple containing the start and end dates of the desired date range in the format (start_date, end_date).
+from_bbox (bool, optional): Specifies whether to search for items within the bounding box defined by the <cite>bbox</cite> attribute. Defaults to True.
+max_items (int, optional): The maximum number of items to retrieve. Defaults to None, which retrieves all available items.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pystac.ItemCollection: A collection of items matching the specified criteria.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.ingest_barc_classifications">
+<span class="sig-name descname"><span class="pre">ingest_barc_classifications</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">barc_classifications_xarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.ingest_barc_classifications" title="Link to this definition">¶</a></dt>
+<dd><p>Ingests and processes BARC (Burned Area Reflectance Classification) classifications, such that
+they conform to our desired CRS and boundary, same as our derived classifications.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>barc_classifications_xarray (xarray.DataArray): The BARC classifications as an xarray DataArray.</p>
+</dd>
+<dt>Returns:</dt><dd><p>xarray.DataArray: The processed barc classifications.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.query_fire_event">
+<span class="sig-name descname"><span class="pre">query_fire_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postfire_date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_items</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.query_fire_event" title="Link to this definition">¶</a></dt>
+<dd><p>Queries the fire event by retrieving prefire and postfire items based on the given date ranges.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>prefire_date_range (tuple): A tuple representing the date range for prefire items.
+postfire_date_range (tuple): A tuple representing the date range for postfire items.
+from_bbox (bool, optional): Flag indicating whether to retrieve items from bounding box. Defaults to True.
+max_items (int, optional): Maximum number of items to retrieve. Defaults to None.</p>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>ValueError: If there are insufficient imagery in the date ranges to calculate burn metrics. Note that</dt><dd><p>this might also happen if there are no items in the date range, so it’s not necessarily a problem with
+the date ranges themselves (but it will definitely be an issue if the date range is too narrow for any imagery)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.reduce_time_range">
+<span class="sig-name descname"><span class="pre">reduce_time_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">range_stack</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.reduce_time_range" title="Link to this definition">¶</a></dt>
+<dd><p>Reduces the time range of the given range stack by taking the median along the time dimension.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>range_stack (xarray.DataArray): The range stack to be reduced.</p>
+</dd>
+<dt>Returns:</dt><dd><p>xarray.DataArray: The reduced range stack.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.lib.query_sentinel.Sentinel2Client.set_boundary">
+<span class="sig-name descname"><span class="pre">set_boundary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geojson_boundary</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_sentinel.Sentinel2Client.set_boundary" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the boundary for later query to STAC API.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>geojson_boundary (GeoJSON): The boundary of the query area.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-src.lib.query_soil">
+<span id="src-lib-query-soil-module"></span><h2>src.lib.query_soil module<a class="headerlink" href="#module-src.lib.query_soil" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.query_soil.edit_get_ecoclass_info">
+<span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">edit_get_ecoclass_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ecoclass_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.edit_get_ecoclass_info" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieves information about an EcoClass from the EDIT database.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>ecoclass_id (str): The ID of the EcoClass to retrieve.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple: A tuple containing a boolean value indicating the success of the retrieval</dt><dd><p>and a dictionary containing the retrieved EcoClass information.</p>
+</dd>
+</dl>
+</dd>
+<dt>Raises:</dt><dd><p>Exception: If there is an error in retrieving the EcoClass information from the EDIT database.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.query_soil.sdm_create_aoi">
+<span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">sdm_create_aoi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geojson</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.sdm_create_aoi" title="Link to this definition">¶</a></dt>
+<dd><p>DEPRECATED: <cite>sdm_get_esa_mapunitid_poly</cite> circumvents the need for creating an AOI within the SDM service.</p>
+<p>Create an Area of Interest (AOI) within the Soil Data Mart (SDM) using the given GeoJSON.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>geojson (dict): The GeoJSON object containing the AOI geometry. This assumes a single
+feature in the GeoJSON, a polygon.</p>
+</dd>
+<dt>Returns:</dt><dd><p>requests.Response or None: The response object if the AOI creation is successful,
+None otherwise. The response object contains the AOI ID, which can be used to query
+for available interpretations within SDM.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.query_soil.sdm_get_available_interpretations">
+<span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">sdm_get_available_interpretations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aoi_smd_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.sdm_get_available_interpretations" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieves the available interpretations for a given AOI ID from the SDM service.</p>
+<dl class="simple">
+<dt>Parameters:</dt><dd><p>aoi_smd_id (str): The ID of the AOI.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list or None: A list of available interpretations if successful, None otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.query_soil.sdm_get_ecoclassid_from_mu_info">
+<span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">sdm_get_ecoclassid_from_mu_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_polygon_keys</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.sdm_get_ecoclassid_from_mu_info" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieves the ecological site information from the SDM endpoint based on the provided map unit polygon keys. This is
+essentially a direct query to the SDM endpoint to retrieve the <cite>ecoclassid</cite>. This <cite>ecoclassid</cite> is used to query the
+EDIT database for ecological site information, such as dominant cover species. This query page
+(<a class="reference external" href="https://sdmdataaccess.sc.egov.usda.gov/Query.aspx">https://sdmdataaccess.sc.egov.usda.gov/Query.aspx</a>) can be used to test out queries interactively,
+which is how this query was constructed.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>mu_polygon_keys (list): The list of map unit polygon keys to filter the ecological site information.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pandas.DataFrame: The ecological site information as a DataFrame, or None if an error occurs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.query_soil.sdm_get_esa_mapunitid_poly">
+<span class="sig-prename descclassname"><span class="pre">src.lib.query_soil.</span></span><span class="sig-name descname"><span class="pre">sdm_get_esa_mapunitid_poly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geojson</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff_increment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.query_soil.sdm_get_esa_mapunitid_poly" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieves the map unit polygons from the SDM endpoint based on the provided GeoJSON geometry.
+These Map Unit polygons are used to query for ecological site information within the EDIT database.
+SDM endpoint occasionally refuses traffic, so this function will backoff and retry if necessary in a linear fashion.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>geojson (dict): The GeoJSON geometry to filter the map unit polygons.
+backoff_max (int, optional): The maximum backoff value in seconds. Defaults to 200.
+backoff_value (int, optional): The current backoff value in seconds. Defaults to 0.
+backoff_increment (int, optional): The increment value for backoff in seconds. Defaults to 25.</p>
+</dd>
+<dt>Returns:</dt><dd><p>geopandas.GeoDataFrame: The map unit polygons as a GeoDataFrame, or None if an error occurs.</p>
+</dd>
+<dt>Raises:</dt><dd><p>Exception: If the SDM endpoint refuses traffic and the backoff max is reached.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.lib.titiler_algorithms">
+<span id="src-lib-titiler-algorithms-module"></span><h2>src.lib.titiler_algorithms module<a class="headerlink" href="#module-src.lib.titiler_algorithms" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.CensorAndScale">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.lib.titiler_algorithms.</span></span><span class="sig-name descname"><span class="pre">CensorAndScale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_nbands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nbands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresholds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.titiler_algorithms.CensorAndScale" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAlgorithm</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.CensorAndScale.color">
+<span class="sig-name descname"><span class="pre">color</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.CensorAndScale.color" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.CensorAndScale.model_computed_fields">
+<span class="sig-name descname"><span class="pre">model_computed_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ComputedFieldInfo</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.CensorAndScale.model_computed_fields" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of computed field names and their corresponding <cite>ComputedFieldInfo</cite> objects.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.CensorAndScale.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'allow'}</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.CensorAndScale.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.CensorAndScale.model_fields">
+<span class="sig-name descname"><span class="pre">model_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">FieldInfo</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'color':</span> <span class="pre">FieldInfo(annotation=str,</span> <span class="pre">required=False,</span> <span class="pre">default='red'),</span> <span class="pre">'input_nbands':</span> <span class="pre">FieldInfo(annotation=Union[int,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'output_dtype':</span> <span class="pre">FieldInfo(annotation=Union[str,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'output_max':</span> <span class="pre">FieldInfo(annotation=Union[Sequence,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'output_min':</span> <span class="pre">FieldInfo(annotation=Union[Sequence,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'output_nbands':</span> <span class="pre">FieldInfo(annotation=Union[int,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'thresholds':</span> <span class="pre">FieldInfo(annotation=dict,</span> <span class="pre">required=True)}</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.CensorAndScale.model_fields" title="Link to this definition">¶</a></dt>
+<dd><p>Metadata about the fields defined on the model,
+mapping of field names to [<cite>FieldInfo</cite>][pydantic.fields.FieldInfo].</p>
+<p>This replaces <cite>Model.__fields__</cite> from Pydantic V1.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.CensorAndScale.thresholds">
+<span class="sig-name descname"><span class="pre">thresholds</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.CensorAndScale.thresholds" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.Classify">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.lib.titiler_algorithms.</span></span><span class="sig-name descname"><span class="pre">Classify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_nbands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nbands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresholds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lib.titiler_algorithms.Classify" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAlgorithm</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.Classify.color">
+<span class="sig-name descname"><span class="pre">color</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.Classify.color" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.Classify.model_computed_fields">
+<span class="sig-name descname"><span class="pre">model_computed_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ComputedFieldInfo</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.Classify.model_computed_fields" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary of computed field names and their corresponding <cite>ComputedFieldInfo</cite> objects.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.Classify.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'allow'}</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.Classify.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.Classify.model_fields">
+<span class="sig-name descname"><span class="pre">model_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">FieldInfo</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'color':</span> <span class="pre">FieldInfo(annotation=str,</span> <span class="pre">required=False,</span> <span class="pre">default='red'),</span> <span class="pre">'input_nbands':</span> <span class="pre">FieldInfo(annotation=Union[int,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'output_dtype':</span> <span class="pre">FieldInfo(annotation=Union[str,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'output_max':</span> <span class="pre">FieldInfo(annotation=Union[Sequence,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'output_min':</span> <span class="pre">FieldInfo(annotation=Union[Sequence,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'output_nbands':</span> <span class="pre">FieldInfo(annotation=Union[int,</span> <span class="pre">NoneType],</span> <span class="pre">required=False),</span> <span class="pre">'thresholds':</span> <span class="pre">FieldInfo(annotation=dict,</span> <span class="pre">required=True)}</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.Classify.model_fields" title="Link to this definition">¶</a></dt>
+<dd><p>Metadata about the fields defined on the model,
+mapping of field names to [<cite>FieldInfo</cite>][pydantic.fields.FieldInfo].</p>
+<p>This replaces <cite>Model.__fields__</cite> from Pydantic V1.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.Classify.thresholds">
+<span class="sig-name descname"><span class="pre">thresholds</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#src.lib.titiler_algorithms.Classify.thresholds" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lib.titiler_algorithms.convert_to_rgb">
+<span class="sig-prename descclassname"><span class="pre">src.lib.titiler_algorithms.</span></span><span class="sig-name descname"><span class="pre">convert_to_rgb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">classified</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#src.lib.titiler_algorithms.convert_to_rgb" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a classified image to RGB format, essentially creating a false-color image. This is used
+extensively by Titiler to create the final image that is returned to the user, upon a tile request.
+We will likely do this on the front-end in v1.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>classified (np.ndarray): The classified image.
+mask (np.ndarray): The mask indicating which pixels to include in the final image.
+color (str): The color to use for the RGB image. Must be one of “red”, “green”, or “blue”.</p>
+</dd>
+<dt>Returns:</dt><dd><p>np.ndarray: The RGB image.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If an invalid color is provided.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.lib">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-src.lib" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">dse-fire-recovery</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Nick Gondek, DSE.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/src.lib.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

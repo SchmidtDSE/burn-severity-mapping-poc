@@ -2,7 +2,7 @@ name: Track TODOs as Issues
 on:
   push:
     branches:
-     - dev
+      - dev
 
 jobs:
   todos:
