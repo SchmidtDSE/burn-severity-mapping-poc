@@ -235,7 +235,7 @@ class CloudStaticIOClient:
         self.validate_credentials()
         try:
             print(
-                f"uploading to {self.bucket_name} [(remote path: {remote_path});(source local path: {source_local_path})]"
+                f"uploading to {self.s3_bucket_name} [(remote path: {remote_path});(source local path: {source_local_path})]"
             )
 
             # Upload file from local to S3
