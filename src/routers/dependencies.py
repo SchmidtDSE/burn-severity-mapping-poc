@@ -33,7 +33,8 @@ def get_cloud_static_io_client(logger: Logger = Depends(get_cloud_logger)):
         CloudStaticIOClient: An instance of CloudStaticIOClient.
     """
     logger.log_text("Creating CloudStaticIOClient")
-    return CloudStaticIOClient("burn-severity-backend", "s3")
+    s3_bucket_name = os.getenv("S3_BUCKET_NAME")
+    return CloudStaticIOClient(s3_bucket_name, "s3")
 
 
 def get_manifest(

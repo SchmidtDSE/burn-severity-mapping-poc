@@ -241,7 +241,7 @@ def test_get_derived_products(mock_init):
     # Define test affiliation and fire event name
     affiliation = "test_affiliation"
     fire_event_name = "test_event"
-
+    s3_bucket_name = "test_bucket"
     # Define test pages
     test_pages = [
         {
@@ -256,14 +256,6 @@ def test_get_derived_products(mock_init):
         },
     ]
 
-    # Define expected derived products
-    expected_derived_products = {
-        "test_file1.tif": BUCKET_HTTPS_PREFIX
-        + "/public/test_affiliation/test_event/test_file1.tif",
-        "test_file2.tif": BUCKET_HTTPS_PREFIX
-        + "/public/test_affiliation/test_event/test_file2.tif",
-    }
-
     # Mock s3 client and paginator
     mock_s3_client = MagicMock()
     mock_paginator = MagicMock()
@@ -276,7 +268,10 @@ def test_get_derived_products(mock_init):
 
     # Create an instance of CloudStaticIOClient, and give it an s3 client
     client = CloudStaticIOClient()
-    client.bucket_name = "bucket_name"
+    client.s3_bucket_name = s3_bucket_name
+    client.https_prefix = BUCKET_HTTPS_PREFIX.format(
+        s3_bucket_name=client.s3_bucket_name
+    )
     client.boto_session = mock_boto_session
 
     # Call get_derived_products
@@ -290,8 +285,15 @@ def test_get_derived_products(mock_init):
 
     # Assert that paginate was called with the correct Bucket and Prefix
     mock_paginator.paginate.assert_called_once_with(
-        Bucket=client.bucket_name, Prefix=f"public/{affiliation}/{fire_event_name}/"
+        Bucket=client.s3_bucket_name, Prefix=f"public/{affiliation}/{fire_event_name}/"
     )
 
     # Assert that the returned derived products match the expected derived products
+    expected_derived_products = {
+        "test_file1.tif": client.https_prefix
+        + "/public/test_affiliation/test_event/test_file1.tif",
+        "test_file2.tif": client.https_prefix
+        + "/public/test_affiliation/test_event/test_file2.tif",
+    }
+
     assert derived_products == expected_derived_products
