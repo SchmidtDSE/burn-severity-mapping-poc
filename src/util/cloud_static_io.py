@@ -90,7 +90,7 @@ class CloudStaticIOClient:
             None
         """
         # Load the credentials of the user
-        source_credentials, project = google.auth.default()
+        source_credentials, __project = google.auth.default()
 
         # Define the scopes of the impersonated credentials
         target_scopes = ["https://www.googleapis.com/auth/cloud-platform"]

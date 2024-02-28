@@ -66,7 +66,7 @@ async def upload_shapefile(
         __shp_paths, geojson = valid_shp[0]
 
         user_uploaded_s3_path = (
-            "public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}"
+            f"public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}"
         )
         # Upload the zip and a geojson to s3
         cloud_static_io_client.upload(

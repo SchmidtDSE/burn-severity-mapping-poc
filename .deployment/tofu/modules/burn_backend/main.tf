@@ -121,7 +121,7 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
       ## TODO [#24]: self-referential endpoint, will be solved by refactoring out titiler and/or making fully static
       env {
         name  = "GCP_CLOUD_RUN_ENDPOINT"
-        value = "https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app"
+        value = "${terraform.workspace}" == "prod" ? "https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app" : "https://tf-rest-burn-severity-dev-ohi6r6qs2a-uc.a.run.appz"
       }
       env {
         name  = "CPL_VSIL_CURL_ALLOWED_EXTENSIONS"
