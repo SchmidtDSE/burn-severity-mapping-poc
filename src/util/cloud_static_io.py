@@ -17,8 +17,7 @@ from google.auth.transport import requests as gcp_requests
 from google.oauth2 import id_token
 from google.auth import impersonated_credentials, exceptions
 
-## TODO [#26]: Make bucket https a tofu output
-BUCKET_HTTPS_PREFIX = "https://burn-severity-backend.s3.us-east-2.amazonaws.com"
+BUCKET_HTTPS_PREFIX = "https://{s3_bucket_name}.s3.us-east-2.amazonaws.com"
 
 
 class CloudStaticIOClient:
@@ -52,14 +51,15 @@ class CloudStaticIOClient:
 
     """
 
-    def __init__(self, bucket_name, provider):
+    def __init__(self, s3_bucket_name, provider):
 
         self.env = os.environ.get("ENV")
         self.role_arn = os.environ.get("S3_FROM_GCP_ROLE_ARN")
         self.service_account_email = os.environ.get("GCP_SERVICE_ACCOUNT_S3_EMAIL")
         self.role_session_name = "burn-backend-session"
 
-        self.bucket_name = bucket_name
+        self.s3_bucket_name = s3_bucket_name
+        self.https_prefix = BUCKET_HTTPS_PREFIX.format(s3_bucket_name=s3_bucket_name)
 
         # Set up logging
         logging_client = cloud_logging.Client(project="dse-nps")
@@ -69,7 +69,7 @@ class CloudStaticIOClient:
         self.sts_client = boto3.client("sts")
 
         if provider == "s3":
-            self.prefix = f"s3://{self.bucket_name}"
+            self.s3_prefix = f"s3://{self.s3_bucket_name}"
         else:
             raise Exception(f"Provider {provider} not supported")
 
@@ -78,7 +78,7 @@ class CloudStaticIOClient:
         self.validate_credentials()
 
         self.logger.log_text(
-            f"Initialized CloudStaticIOClient for {self.bucket_name} with provider {provider}"
+            f"Initialized CloudStaticIOClient for {self.s3_bucket_name} with provider {provider}"
         )
 
     def impersonate_service_account(self):
@@ -90,7 +90,7 @@ class CloudStaticIOClient:
             None
         """
         # Load the credentials of the user
-        source_credentials, project = google.auth.default()
+        source_credentials, __project = google.auth.default()
 
         # Define the scopes of the impersonated credentials
         target_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -211,7 +211,7 @@ class CloudStaticIOClient:
 
             # Download from remote s3 server to local
             with smart_open.open(
-                f"{self.prefix}/{remote_path}",
+                f"{self.s3_prefix}/{remote_path}",
                 "rb",
                 transport_params={"client": self.boto_session.client("s3")},
             ) as remote_file:
@@ -235,13 +235,13 @@ class CloudStaticIOClient:
         self.validate_credentials()
         try:
             print(
-                f"uploading to {self.bucket_name} [(remote path: {remote_path});(source local path: {source_local_path})]"
+                f"uploading to {self.s3_bucket_name} [(remote path: {remote_path});(source local path: {source_local_path})]"
             )
 
             # Upload file from local to S3
             with open(source_local_path, "rb") as local_file:
                 with smart_open.open(
-                    f"{self.prefix}/{remote_path}",
+                    f"{self.s3_prefix}/{remote_path}",
                     "wb",
                     transport_params={"client": self.boto_session.client("s3")},
                 ) as remote_file:
@@ -461,10 +461,12 @@ class CloudStaticIOClient:
         s3_client = self.boto_session.client("s3")
         paginator = s3_client.get_paginator("list_objects_v2")
         derived_products = {}
-        bucket_prefix = f"public/{affiliation}/{fire_event_name}/"
-        for page in paginator.paginate(Bucket=self.bucket_name, Prefix=bucket_prefix):
+        intra_bucket_prefix = f"public/{affiliation}/{fire_event_name}/"
+        for page in paginator.paginate(
+            Bucket=self.s3_bucket_name, Prefix=intra_bucket_prefix
+        ):
             for obj in page["Contents"]:
-                full_https_url = BUCKET_HTTPS_PREFIX + "/" + obj["Key"]
+                full_https_url = self.https_prefix + "/" + obj["Key"]
                 filename = os.path.basename(obj["Key"])
                 derived_products[filename] = full_https_url
         return derived_products
