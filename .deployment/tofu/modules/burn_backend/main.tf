@@ -114,6 +114,10 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
         name  = "S3_FROM_GCP_ROLE_ARN"
         value = var.s3_from_gcp_role_arn
       }
+      env {
+        name  = "S3_BUCKET_NAME"
+        value = var.s3_bucket_name
+      }
       ## TODO [#24]: self-referential endpoint, will be solved by refactoring out titiler and/or making fully static
       env {
         name  = "GCP_CLOUD_RUN_ENDPOINT"

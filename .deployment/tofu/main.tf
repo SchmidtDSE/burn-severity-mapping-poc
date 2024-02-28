@@ -53,4 +53,5 @@ module "burn_backend" {
   source = "./modules/burn_backend"
   google_project_number = local.google_project_number
   s3_from_gcp_role_arn = module.static_io.s3_from_gcp_role_arn
+  s3_bucket_name = module.static_io.s3_bucket_name
 }

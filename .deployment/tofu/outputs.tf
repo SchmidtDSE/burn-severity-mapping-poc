@@ -17,3 +17,8 @@ output "gcp_burn_backend_service_account_unique_id" {
     description = "The UUID of the Cloud Run burn-backend service"
     value       = module.burn_backend.gcp_burn_backend_service_account_unique_id
 }
+
+output "s3_bucket_name" {
+    description = "The name of the S3 bucket"
+    value       = module.static_io.s3_bucket_name
+}
