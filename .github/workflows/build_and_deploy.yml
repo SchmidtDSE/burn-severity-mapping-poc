@@ -4,7 +4,6 @@ on:
     branches:
       - master
       - dev
-      - dev-prod-split
 
 jobs:
   setup-build-deploy:
