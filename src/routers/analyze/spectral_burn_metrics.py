@@ -8,7 +8,7 @@ import sentry_sdk
 import json
 
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
-from src.lib.query_sentinel import Sentinel2Client
+from src.lib.query_sentinel import Sentinel2Client, NoFireBoundaryDetectedError
 from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
@@ -125,6 +125,15 @@ def analyze_spectral_burn_metrics(
                 "message": f"Cogs uploaded for {fire_event_name}",
                 "fire_event_name": fire_event_name,
                 "derived_boundary": derived_boundary,
+            },
+        )
+
+    except NoFireBoundaryDetectedError as e:
+        logger.log_text(f"No Fire Boundary Detected for fire event {fire_event_name}")
+        return JSONResponse(
+            status_code=204,
+            content={
+                "message": f"No Fire Boundary Detected for fire event {fire_event_name}"
             },
         )
 

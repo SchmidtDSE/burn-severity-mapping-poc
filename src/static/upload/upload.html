@@ -482,6 +482,7 @@
 
         $.when(upload)
           .done(function (uploadResponse) {
+
             // Get the GeoJSON, either from drawn AOI or uploaded shapefile
             var AOI = JSON.parse(uploadResponse.geojson);
 
@@ -550,10 +551,25 @@
                 $("#burn-analysis-loading").hide();
                 alert("Burn analysis failed");
               },
+              statusCode: {
+                204: function () {
+                  alert("No fire boundary detected within the AOI. Please try again by refreshing the page.");
+                  $("#burn-analysis-loading").hide();
+                  $("#burn-analysis-success").hide();
+                  $("#upload-loading").hide();
+                  $("#upload-success").hide();
+                  $("#ecoclass-analysis-loading").hide();
+                  $("#ecoclass-analysis-success").hide();
+                  $("#rap-analysis-loading").hide();
+                  $("#rap-analysis-success").hide();
+                  $('#products-loading').hide();
+                },
+              },
             });
 
             // Make a request to analyze the ecoclassification, if analysis is successful
             $.when(analyzeBurn).done(function (analysisResponse) {
+
               // Add the derived boundary to map, if we're deriving the boundary
               if (deriveBoundary) {
                 var derivedBoundaryGeojson = JSON.parse(

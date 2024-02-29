@@ -20,6 +20,10 @@ from src.util.cloud_static_io import CloudStaticIOClient
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 
 
+class NoFireBoundaryDetectedError(BaseException):
+    pass
+
+
 class Sentinel2Client:
     def __init__(
         self,
@@ -330,6 +334,11 @@ class Sentinel2Client:
         # not a built-in method... must have more complications than I realize currently.
 
         boundary_geojson = raster_mask_to_geojson(boundary_xr)
+
+        if not boundary_geojson:
+            raise NoFireBoundaryDetectedError(
+                "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
+            )
 
         self.set_boundary(boundary_geojson)
         self.metrics_stack = self.metrics_stack.rio.clip(
