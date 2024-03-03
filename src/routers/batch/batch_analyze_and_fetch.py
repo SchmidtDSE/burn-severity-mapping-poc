@@ -7,8 +7,15 @@ from pydantic import BaseModel
 from logging import Logger
 from typing import Any
 import json
+from google.cloud import tasks_v2
+from src.routers.analyze.spectral_burn_metrics import (
+    main as analyze_spectral_burn_metrics,
+)
+from src.routers.fetch.ecoclass import main as fetch_ecoclass
+import datetime
 
 router = APIRouter()
+
 
 class BatchAnalyzeAndFetchPOSTBody(BaseModel):
     """
@@ -29,6 +36,8 @@ class BatchAnalyzeAndFetchPOSTBody(BaseModel):
     time_buffer_days: int
     fire_event_name: str
     affiliation: str
+    derive_boundary: bool = False
+
 
 @router.post("/batch/analyze_and_fetch")
 def analyze_and_fetch(
@@ -47,12 +56,53 @@ def analyze_and_fetch(
         ignition_date = body.ignition_date
         containment_date = body.containment_date
         time_buffer_days = body.time_buffer_days
+        derive_boundary = body.derive_boundary
 
-        
+        # convert time buffer days to timedelta, adjust, and convert back to string
+        time_buffer_days = datetime.timedelta(days=time_buffer_days)
+        prefire_range = [
+            (ignition_date - time_buffer_days).strftime("%m/%d/%Y"),
+            (ignition_date).strftime("%m/%d/%Y"),
+        ]
+        postfire_range = [
+            (containment_date).strftime("%m/%d/%Y"),
+            (containment_date + time_buffer_days).strftime("%m/%d/%Y"),
+        ]
+        date_ranges = {
+            "prefire": prefire_range,
+            "postfire": postfire_range,
+        }
+
+        ## TODO: Should probably define a class for batch analysis and fetch
+        analyze_spectral_burn_metrics(
+            geojson_boundary=geojson_boundary,
+            date_ranges=date_ranges,
+            fire_event_name=fire_event_name,
+            affiliation=affiliation,
+            derive_boundary=derive_boundary,
+            logger=logger,
+            cloud_static_io_client=cloud_static_io_client,
+        )
+
+        fetch_ecoclass(
+            fire_event_name=fire_event_name,
+            geojson_boundary=geojson_boundary,
+            affiliation=affiliation,
+            cloud_static_io_client=cloud_static_io_client,
+            logger=logger,
+        )
 
     except NoFireBoundaryDetectedError as e:
         logger.warning("No fire boundary detected")
+        return JSONResponse(
+            status_code=204,
+            content={"message": "No fire boundary detected", "error": str(e)},
+        )
+
     except Exception as e:
         sentry.capture_exception(e)
         logger.error("An error occurred while analyzing and fetching Sentinel-2 data")
-        raise e
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while analyzing and fetching for fire event {fire_event_name}",
+        )

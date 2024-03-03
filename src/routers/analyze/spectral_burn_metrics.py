@@ -60,6 +60,7 @@ def analyze_spectral_burn_metrics(
     Returns:
         JSONResponse: The response containing the analysis results and derived boundary, if applicable.
     """
+    sentry_sdk.set_context("fire-event", {"request": body})
     geojson_boundary = json.loads(body.geojson)
 
     date_ranges = body.date_ranges
@@ -68,7 +69,27 @@ def analyze_spectral_burn_metrics(
     derive_boundary = body.derive_boundary
     derived_boundary = None
 
-    sentry_sdk.set_context("fire-event", {"request": body})
+    return main(
+        geojson_boundary,
+        date_ranges,
+        fire_event_name,
+        affiliation,
+        derive_boundary,
+        logger,
+        cloud_static_io_client,
+    )
+
+
+def main(
+    geojson_boundary,
+    date_ranges,
+    fire_event_name,
+    affiliation,
+    derive_boundary,
+    logger,
+    cloud_static_io_client,
+):
+
     logger.log_text(f"Received analyze-fire-event request for {fire_event_name}")
 
     try:
