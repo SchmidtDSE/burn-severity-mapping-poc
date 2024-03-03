@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from logging import Logger
 from typing import Any
 import json
-from google.cloud import tasks_v2
 from src.routers.analyze.spectral_burn_metrics import (
     main as analyze_spectral_burn_metrics,
 )
@@ -90,6 +89,13 @@ def analyze_and_fetch(
             affiliation=affiliation,
             cloud_static_io_client=cloud_static_io_client,
             logger=logger,
+        )
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": f"Analyze and fetch job has been completed successfully for fire event {fire_event_name}"
+            },
         )
 
     except NoFireBoundaryDetectedError as e:
