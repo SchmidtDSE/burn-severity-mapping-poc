@@ -135,7 +135,7 @@ def main(
     ## TODO: Should probably define a class for batch analysis and fetch
 
     job_status = {
-        "submitted": submission_time,
+        "submitted": str(submission_time),
         "fire_event_name": fire_event_name,
         "affiliation": affiliation,
         "upload": {},
@@ -160,8 +160,9 @@ def main(
 
     except Exception as e:
         logger.log_text(
-            f"An error occurred while uploading the geojson boundary for fire event {fire_event_name}: {e}"
+            f"An error occurred while uploading the geojson boundary for fire event {fire_event_name}: {str(e)}"
         )
+        job_status["upload"]["error"] = str(e)
 
     time_elapsed = datetime.datetime.now() - submission_time
     job_status["upload"]["time_elapsed"] = str(time_elapsed)
@@ -181,9 +182,9 @@ def main(
 
     except Exception as e:
         logger.log_text(
-            f"An error occurred while analyzing spectral burn metrics for fire event {fire_event_name}: {e}"
+            f"An error occurred while analyzing spectral burn metrics for fire event {fire_event_name}: {str(e)}"
         )
-        job_status["analyze_spectral_metrics"]["error"] = e
+        job_status["analyze_spectral_metrics"]["error"] = str(e)
 
     time_elapsed = datetime.datetime.now() - upload_done_time
     job_status["analyze_spectral_metrics"]["time_elapsed"] = str(time_elapsed)
@@ -201,9 +202,9 @@ def main(
 
     except Exception as e:
         logger.log_text(
-            f"An error occurred while fetching ecoclass data for fire event {fire_event_name}: {e}"
+            f"An error occurred while fetching ecoclass data for fire event {fire_event_name}: {str(e)}"
         )
-        job_status["fetch_ecoclass"]["error"] = e
+        job_status["fetch_ecoclass"]["error"] = str(e)
 
     time_elapsed = datetime.datetime.now() - analysis_done_time
     job_status["fetch_ecoclass"]["time_elapsed"] = str(time_elapsed)
@@ -221,18 +222,19 @@ def main(
 
     except Exception as e:
         logger.log_text(
-            f"An error occurred while fetching rangeland analysis platform data for fire event {fire_event_name}: {e}"
+            f"An error occurred while fetching rangeland analysis platform data for fire event {fire_event_name}: {str(e)}"
         )
-        job_status["fetch_rap"]["error"] = e
+        job_status["fetch_rap"]["error"] = str(e)
 
     time_elapsed = datetime.datetime.now() - fetch_ecoclass_done_time
     job_status["fetch_rap"]["time_elapsed"] = str(time_elapsed)
     fetch_rap_done_time = datetime.datetime.now()
 
-    total_time_elapsed = datetime.datetime.now() - submission_time
+    total_time_elapsed = str(datetime.datetime.now() - submission_time)
     logger.log_text(
         f"Batch analyze and fetch job status for fire event {fire_event_name} in {total_time_elapsed}: {job_status}"
     )
+    job_status["total_time_elapsed"] = total_time_elapsed
 
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
         tmp_json = f.name
