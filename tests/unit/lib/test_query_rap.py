@@ -36,7 +36,7 @@ def test_rap_get_biomass_success(test_3d_valid_xarray_epsg_4326):
         2020,
         square_geojson,
         buffer_distance=1,
-        rap_url_year_fstring="tests/assets/test_rap_small_{year}.tif",
+        rap_url_year_fstring="tests/assets/test_rap_small_{ignition_year}.tif",
     )
     # Add assertions to check the result
 
