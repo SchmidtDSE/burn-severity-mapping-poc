@@ -10,7 +10,7 @@ RAP_URL_YEAR_FSTRING = "http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-np
 
 def rap_get_biomass(
     ignition_date,
-    boundary_geojson,
+    geojson_boundary,
     buffer_distance=0.01,
     rap_url_year_fstring=RAP_URL_YEAR_FSTRING,
 ):
@@ -23,7 +23,7 @@ def rap_get_biomass(
 
     Parameters:
         ignition_date (str): The ignition date in the format 'YYYY-MM-DD'.
-        boundary_geojson (dict): The boundary geometry in GeoJSON format.
+        geojson_boundary (dict): The boundary geometry in GeoJSON format.
         buffer_distance (float, optional): The buffer distance around the boundary. Defaults to 0.01.
 
     Returns:
@@ -33,7 +33,7 @@ def rap_get_biomass(
         ValueError: If the ignition date is before 1986, where RAP data is not available.
 
     """
-    boundary_gdf = gpd.GeoDataFrame.from_features(boundary_geojson)
+    boundary_gdf = gpd.GeoDataFrame.from_features(geojson_boundary)
 
     # Load boundary geometry (in GeoJSON format)
     minx, miny, maxx, maxy = boundary_gdf.total_bounds

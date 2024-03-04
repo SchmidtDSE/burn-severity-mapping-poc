@@ -16,7 +16,7 @@ from src.routers.analyze.spectral_burn_metrics import (
 from src.routers.fetch.ecoclass import main as fetch_ecoclass
 from src.routers.upload.shapefile_zip import main as upload_shapefile_zip
 from src.routers.upload.drawn_aoi import main as upload_drawn_aoi
-
+from src.routers.fetch.rangeland_analysis_platform import main as fetch_rap
 
 router = APIRouter()
 
@@ -115,6 +115,8 @@ def main(
 ):
 
     # convert time buffer days to timedelta, adjust, and convert back to string
+
+    submission_time = datetime.datetime.now()
     time_buffer_days = datetime.timedelta(days=time_buffer_days)
     prefire_range = [
         (ignition_date - time_buffer_days).strftime("%Y-%m-%d"),
@@ -132,35 +134,91 @@ def main(
 
     ## TODO: Should probably define a class for batch analysis and fetch
 
-    # First upload the geojson to s3
-    with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-        tmp_geojson = tmp.name
-        with open(tmp_geojson, "w") as f:
-            f.write(json.dumps(geojson_boundary))
-        boundary_s3_path = (
-            f"public/{affiliation}/{fire_event_name}/{geojson_name}.geojson"
+    job_status = {
+        "submitted": submission_time,
+        "fire_event_name": fire_event_name,
+        "affiliation": affiliation,
+        "upload": True,
+        "analyze_spectral_metrics": True,
+        "fetch_ecoclass": True,
+        "fetch_rap": True,
+    }
+
+    try:
+        # First upload the geojson to s3
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+            tmp_geojson = tmp.name
+            with open(tmp_geojson, "w") as f:
+                f.write(json.dumps(geojson_boundary))
+            boundary_s3_path = (
+                f"public/{affiliation}/{fire_event_name}/{geojson_name}.geojson"
+            )
+            cloud_static_io_client.upload(
+                source_local_path=tmp_geojson,
+                remote_path=boundary_s3_path,
+            )
+    except Exception as e:
+        logger.log_text(
+            f"An error occurred while uploading the geojson boundary for fire event {fire_event_name}: {e}"
         )
+
+    try:
+        # Then analyze the spectral burn metrics
+        analyze_spectral_burn_metrics(
+            geojson_boundary=geojson_boundary,
+            date_ranges=date_ranges,
+            fire_event_name=fire_event_name,
+            affiliation=affiliation,
+            derive_boundary=derive_boundary,
+            logger=logger,
+            cloud_static_io_client=cloud_static_io_client,
+        )
+
+    except Exception as e:
+        logger.log_text(
+            f"An error occurred while analyzing spectral burn metrics for fire event {fire_event_name}: {e}"
+        )
+        job_status["analyze_spectral_metrics"] = e
+
+    try:
+        # Then first fetch the ecoclass data
+        fetch_ecoclass(
+            fire_event_name=fire_event_name,
+            geojson_boundary=geojson_boundary,
+            affiliation=affiliation,
+            cloud_static_io_client=cloud_static_io_client,
+            logger=logger,
+        )
+
+    except Exception as e:
+        logger.log_text(
+            f"An error occurred while fetching ecoclass data for fire event {fire_event_name}: {e}"
+        )
+        job_status["fetch_ecoclass"] = e
+
+    try:
+        # Last, fetch rangeland analysis platform
+        fetch_rap(
+            geojson_boundary=geojson_boundary,
+            fire_event_name=fire_event_name,
+            affiliation=affiliation,
+            cloud_static_io_client=cloud_static_io_client,
+            logger=logger,
+        )
+
+    except Exception as e:
+        logger.log_text(
+            f"An error occurred while fetching rangeland analysis platform data for fire event {fire_event_name}: {e}"
+        )
+        job_status["fetch_rap"] = e
+
+    logger.log_text(
+        f"Batch analyze and fetch job status for fire event {fire_event_name}: {job_status}"
+    )
+
+    with job_status as f:
+        f.write(job_status)
         cloud_static_io_client.upload(
-            source_local_path=tmp_geojson,
-            remote_path=boundary_s3_path,
+            source_local_path=f.name,
+            remote_path=f"logs/{affiliation}/{fire_event_name}/job_status_{str(submission_time)}.json",
         )
-
-    # Then analyze the spectral burn metrics
-    analyze_spectral_burn_metrics(
-        geojson_boundary=geojson_boundary,
-        date_ranges=date_ranges,
-        fire_event_name=fire_event_name,
-        affiliation=affiliation,
-        derive_boundary=derive_boundary,
-        logger=logger,
-        cloud_static_io_client=cloud_static_io_client,
-    )
-
-    # Then first fetch the ecoclass data
-    fetch_ecoclass(
-        fire_event_name=fire_event_name,
-        geojson_boundary=geojson_boundary,
-        affiliation=affiliation,
-        cloud_static_io_client=cloud_static_io_client,
-        logger=logger,
-    )
