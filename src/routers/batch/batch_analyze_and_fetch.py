@@ -57,6 +57,9 @@ def analyze_and_fetch(
         time_buffer_days = body.time_buffer_days
         derive_boundary = body.derive_boundary
 
+        ignition_date = datetime.datetime.strptime(ignition_date, "%Y-%m-%dT%H:%M:%S%z")
+        containment_date = datetime.datetime.strptime(containment_date, "%Y-%m-%dT%H:%M:%S%z")
+
         main(
             geojson_boundary=geojson_boundary,
             fire_event_name=fire_event_name,
@@ -103,6 +106,7 @@ def main(
     containment_date: datetime.datetime,
     time_buffer_days: int,
 ):
+
     # convert time buffer days to timedelta, adjust, and convert back to string
     time_buffer_days = datetime.timedelta(days=time_buffer_days)
     prefire_range = [
@@ -117,6 +121,7 @@ def main(
         "prefire": prefire_range,
         "postfire": postfire_range,
     }
+
 
     ## TODO: Should probably define a class for batch analysis and fetch
     analyze_spectral_burn_metrics(
