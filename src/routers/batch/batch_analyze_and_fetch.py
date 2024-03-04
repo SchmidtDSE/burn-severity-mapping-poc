@@ -7,11 +7,16 @@ from pydantic import BaseModel
 from logging import Logger
 from typing import Any
 import json
+import datetime
+
 from src.routers.analyze.spectral_burn_metrics import (
     main as analyze_spectral_burn_metrics,
 )
 from src.routers.fetch.ecoclass import main as fetch_ecoclass
-import datetime
+from src.routers.upload.shapefile_zip import main as upload_shapefile_zip
+
+# from src.routers.upload.drawn_aoi import main as upload_drawn_aoi
+
 
 router = APIRouter()
 
