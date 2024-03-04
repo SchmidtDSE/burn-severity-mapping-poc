@@ -5,11 +5,11 @@ import rioxarray as rxr
 import numpy as np
 import json
 
-RAP_URL_YEAR_FSTRING = "http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-npp/v3/vegetation-npp-v3-{year}.tif"
+RAP_URL_YEAR_FSTRING = "http://rangeland.ntsg.umt.edu/data/rap/rap-vegetation-npp/v3/vegetation-npp-v3-{ignition_year}.tif"
 
 
 def rap_get_biomass(
-    ignition_date,
+    ignition_year,
     geojson_boundary,
     buffer_distance=0.01,
     rap_url_year_fstring=RAP_URL_YEAR_FSTRING,
@@ -22,7 +22,7 @@ def rap_get_biomass(
     the 2022 data is used.
 
     Parameters:
-        ignition_date (str): The ignition date in the format 'YYYY-MM-DD'.
+        ignition_year (int): The ignition year.
         geojson_boundary (dict): The boundary geometry in GeoJSON format.
         buffer_distance (float, optional): The buffer distance around the boundary. Defaults to 0.01.
 
@@ -39,15 +39,14 @@ def rap_get_biomass(
     minx, miny, maxx, maxy = boundary_gdf.total_bounds
 
     # Get the RAP URL
-    year = time.strptime(ignition_date, "%Y-%m-%d").tm_year
-    if year > 2022:
+    if ignition_year > 2022:
         print("RAP data is only available up to 2022 - falling back to 2022 RAP data")
-        year = 2022
-    elif year < 1986:
+        ignition_year = 2022
+    elif ignition_year < 1986:
         raise ValueError("RAP data is only available from 1986")
 
     # Format the RAP URL with the year to grab the proper tif
-    rap_url_year_fstring = rap_url_year_fstring.format(year=year)
+    rap_url_year_fstring = rap_url_year_fstring.format(ignition_year=ignition_year)
 
     # Create a window from the buffered boundary
     with rasterio.open(rap_url_year_fstring) as src:

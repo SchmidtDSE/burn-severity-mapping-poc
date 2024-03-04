@@ -118,6 +118,7 @@ def main(
 
     submission_time = datetime.datetime.now()
     time_buffer_days = datetime.timedelta(days=time_buffer_days)
+    ignition_year = ignition_date.year
     prefire_range = [
         (ignition_date - time_buffer_days).strftime("%Y-%m-%d"),
         (ignition_date).strftime("%Y-%m-%d"),
@@ -211,11 +212,12 @@ def main(
     fetch_ecoclass_done_time = datetime.datetime.now()
 
     try:
+        year = ignition_date.year
         # Last, fetch rangeland analysis platform
         fetch_rap(
             geojson_boundary=geojson_boundary,
             fire_event_name=fire_event_name,
-            ignition_date=ignition_date,
+            ignition_year=ignition_year,
             affiliation=affiliation,
             cloud_static_io_client=cloud_static_io_client,
             logger=logger,
