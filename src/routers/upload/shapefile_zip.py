@@ -75,18 +75,6 @@ def main(
     cloud_static_io_client: CloudStaticIOClient,
     logger: Logger,
 ):
-    # Write the content to a temporary file
-    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
-        tmp.write(zip_content)
-        tmp_zip = tmp.name
-
-    valid_shp, __valid_tiff = ingest_esri_zip_file(tmp_zip)
-
-    # For now assert that there is only one shapefile
-    assert (
-        len(valid_shp) == 1
-    ), "Zip must contain exactly one shapefile (with associated files: .shx, .prj and optionally, .dbf)"
-    __shp_paths, geojson = valid_shp[0]
 
     user_uploaded_s3_path = (
         f"public/{affiliation}/{fire_event_name}/user_uploaded_{file.filename}"

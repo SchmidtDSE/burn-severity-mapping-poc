@@ -14,8 +14,7 @@ from src.routers.analyze.spectral_burn_metrics import (
 )
 from src.routers.fetch.ecoclass import main as fetch_ecoclass
 from src.routers.upload.shapefile_zip import main as upload_shapefile_zip
-
-# from src.routers.upload.drawn_aoi import main as upload_drawn_aoi
+from src.routers.upload.drawn_aoi import main as upload_drawn_aoi
 
 
 router = APIRouter()
@@ -128,8 +127,24 @@ def main(
         "prefire": prefire_range,
         "postfire": postfire_range,
     }
+    geojson_name = "drawn_aoi_boundary" if derive_boundary else "boundary"
 
     ## TODO: Should probably define a class for batch analysis and fetch
+
+    # First upload the geojson to s3
+    with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+        tmp_geojson = tmp.name
+        with open(tmp_geojson, "w") as f:
+            f.write(geojson)
+        boundary_s3_path = (
+            f"public/{affiliation}/{fire_event_name}/{geojson_name}.geojson"
+        )
+        cloud_static_io_client.upload(
+            source_local_path=tmp_geojson,
+            remote_path=boundary_s3_path,
+        )
+
+    # Then analyze the spectral burn metrics
     analyze_spectral_burn_metrics(
         geojson_boundary=geojson_boundary,
         date_ranges=date_ranges,
@@ -140,6 +155,7 @@ def main(
         cloud_static_io_client=cloud_static_io_client,
     )
 
+    # Then first fetch the ecoclass data
     fetch_ecoclass(
         fire_event_name=fire_event_name,
         geojson_boundary=geojson_boundary,
