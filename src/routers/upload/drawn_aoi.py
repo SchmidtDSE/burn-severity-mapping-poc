@@ -46,17 +46,33 @@ async def upload_drawn_aoi(
     )
 
     try:
-        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-            tmp_geojson = tmp.name
-            with open(tmp_geojson, "w") as f:
-                f.write(geojson)
-            cloud_static_io_client.upload(
-                source_local_path=tmp_geojson,
-                remote_path=f"public/{affiliation}/{fire_event_name}/drawn_aoi_boundary.geojson",
-            )
+        main(
+            fire_event_name=fire_event_name,
+            affiliation=affiliation,
+            geojson=geojson,
+            cloud_static_io_client=cloud_static_io_client,
+            logger=logger,
+        )
         return JSONResponse(status_code=200, content={"geojson": geojson})
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.log_text(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+
+
+def main(
+    fire_event_name: str,
+    affiliation: str,
+    geojson: str,
+    cloud_static_io_client: CloudStaticIOClient,
+    logger: Logger,
+):
+    with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+        tmp_geojson = tmp.name
+        with open(tmp_geojson, "w") as f:
+            f.write(geojson)
+        cloud_static_io_client.upload(
+            source_local_path=tmp_geojson,
+            remote_path=f"public/{affiliation}/{fire_event_name}/drawn_aoi_boundary.geojson",
+        )

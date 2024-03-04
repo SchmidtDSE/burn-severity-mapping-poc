@@ -61,10 +61,29 @@ def fetch_rangeland_analysis_platform(
     affiliation = body.affiliation
 
     sentry_sdk.set_context("analyze_rap", {"request": body})
+    ignition_year = time.strptime(ignition_date, "%Y-%m-%d").tm_year
 
+    return main(
+        boundary_geojson=boundary_geojson,
+        ignition_year=ignition_year,
+        fire_event_name=fire_event_name,
+        affiliation=affiliation,
+        cloud_static_io_client=cloud_static_io_client,
+        logger=logger,
+    )
+
+
+def main(
+    geojson_boundary: Any,
+    ignition_year: int,
+    fire_event_name: str,
+    affiliation: str,
+    cloud_static_io_client: CloudStaticIOClient,
+    logger: Logger,
+):
     try:
         rap_estimates = rap_get_biomass(
-            boundary_geojson=boundary_geojson, ignition_date=ignition_date
+            geojson_boundary=geojson_boundary, ignition_year=ignition_year
         )
 
         # save the cog to the FTP server

@@ -57,14 +57,26 @@ def fetch_ecoclass(
         tuple: A tuple containing the success message and the HTTP status code.
     """
     fire_event_name = body.fire_event_name
-    geojson = json.loads(body.geojson)
+    geojson_boundary = json.loads(body.geojson)
     affiliation = body.affiliation
 
     sentry_sdk.set_context("analyze_ecoclass", {"request": body})
 
+    main(
+        fire_event_name=fire_event_name,
+        geojson_boundary=geojson_boundary,
+        affiliation=affiliation,
+        cloud_static_io_client=cloud_static_io_client,
+        logger=logger,
+    )
+
+
+def main(
+    fire_event_name, geojson_boundary, affiliation, cloud_static_io_client, logger
+):
     try:
 
-        mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
+        mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson_boundary)
         mu_polygon_keys = [
             mupolygonkey
             for __musym, __nationalmusym, __mukey, mupolygonkey in mapunit_gdf.index
