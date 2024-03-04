@@ -215,6 +215,7 @@ def main(
         fetch_rap(
             geojson_boundary=geojson_boundary,
             fire_event_name=fire_event_name,
+            ignition_date=ignition_date,
             affiliation=affiliation,
             cloud_static_io_client=cloud_static_io_client,
             logger=logger,
@@ -238,7 +239,7 @@ def main(
 
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
         tmp_json = f.name
-        with open(tmp_json, "r") as f:
+        with open(tmp_json, "w") as f:
             f.write(json.dumps(job_status))
         log_s3_path = f"logs/{affiliation}/{fire_event_name}/job_status_{str(submission_time)}.json"
         cloud_static_io_client.upload(
