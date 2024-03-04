@@ -216,9 +216,11 @@ def main(
         f"Batch analyze and fetch job status for fire event {fire_event_name}: {job_status}"
     )
 
-    with job_status as f:
-        f.write(job_status)
+    with NamedTemporaryFile(suffix=".json", delete=False) as f:
+        tmp_json = f.name
+        with open(tmp_json, "r") as f:
+            f.write(json.dumps(job_status))
+        log_s3_path = f"logs/{affiliation}/{fire_event_name}/job_status_{str(submission_time)}.json"
         cloud_static_io_client.upload(
-            source_local_path=f.name,
-            remote_path=f"logs/{affiliation}/{fire_event_name}/job_status_{str(submission_time)}.json",
+            source_local_path=tmp_json, remote_path=log_s3_path
         )
