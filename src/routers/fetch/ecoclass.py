@@ -62,13 +62,21 @@ def fetch_ecoclass(
 
     sentry_sdk.set_context("analyze_ecoclass", {"request": body})
 
-    main(fire_event_name, geojson_boundary, affiliation, cloud_static_io_client, logger)
+    main(
+        fire_event_name=fire_event_name,
+        geojson_boundary=geojson_boundary,
+        affiliation=affiliation,
+        cloud_static_io_client=cloud_static_io_client,
+        logger=logger,
+    )
 
 
-def main(fire_event_name, geojson, affiliation, cloud_static_io_client, logger):
+def main(
+    fire_event_name, geojson_boundary, affiliation, cloud_static_io_client, logger
+):
     try:
 
-        mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
+        mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson_boundary)
         mu_polygon_keys = [
             mupolygonkey
             for __musym, __nationalmusym, __mukey, mupolygonkey in mapunit_gdf.index

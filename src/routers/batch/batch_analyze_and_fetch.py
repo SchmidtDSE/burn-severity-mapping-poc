@@ -8,6 +8,7 @@ from logging import Logger
 from typing import Any
 import json
 import datetime
+import tempfile
 
 from src.routers.analyze.spectral_burn_metrics import (
     main as analyze_spectral_burn_metrics,
@@ -135,7 +136,7 @@ def main(
     with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
         tmp_geojson = tmp.name
         with open(tmp_geojson, "w") as f:
-            f.write(geojson)
+            f.write(json.dumps(geojson_boundary))
         boundary_s3_path = (
             f"public/{affiliation}/{fire_event_name}/{geojson_name}.geojson"
         )
