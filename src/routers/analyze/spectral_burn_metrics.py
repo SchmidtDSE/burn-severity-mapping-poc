@@ -67,7 +67,6 @@ def analyze_spectral_burn_metrics(
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
     derive_boundary = body.derive_boundary
-    derived_boundary = None
 
     return main(
         geojson_boundary,
@@ -91,6 +90,7 @@ def main(
 ):
 
     logger.log_text(f"Received analyze-fire-event request for {fire_event_name}")
+    derived_boundary = None
 
     try:
         # create a Sentinel2Client instance
