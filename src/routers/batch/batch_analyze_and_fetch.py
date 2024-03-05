@@ -41,7 +41,7 @@ class BatchAnalyzeAndFetchPOSTBody(BaseModel):
     derive_boundary: bool = False
 
 
-@router.post("/batch/analyze_and_fetch")
+@router.post("/api/batch/analyze-and-fetch")
 def analyze_and_fetch(
     body: BatchAnalyzeAndFetchPOSTBody,
     sentry: None = Depends(init_sentry),
@@ -113,7 +113,10 @@ def main(
     boundary_source: str,
 ):
 
-    # convert time buffer days to timedelta, adjust, and convert back to string
+    logger.log_text(
+        f"Starting batch analyze and fetch job for fire event {fire_event_name}",
+        {"severity": "DEBUG"},
+    )
 
     submission_time = datetime.datetime.now()
     time_buffer_days = datetime.timedelta(days=time_buffer_days)
@@ -145,6 +148,11 @@ def main(
         "fetch_rap": {},
     }
 
+    logger.log_text(
+        f"Attempting upload -  {fire_event_name}",
+        {"severity": "DEBUG"},
+    )
+
     try:
         # First upload the geojson to s3
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
@@ -168,6 +176,10 @@ def main(
     time_elapsed = datetime.datetime.now() - submission_time
     job_status["upload"]["time_elapsed"] = str(time_elapsed)
     upload_done_time = datetime.datetime.now()
+    logger.log_text(
+        f"Uploaded boundary for fire event {fire_event_name} to {boundary_s3_path} in {str(time_elapsed)}",
+        {"severity": "DEBUG"},
+    )
 
     try:
         # Then analyze the spectral burn metrics
@@ -190,6 +202,10 @@ def main(
     time_elapsed = datetime.datetime.now() - upload_done_time
     job_status["analyze_spectral_metrics"]["time_elapsed"] = str(time_elapsed)
     analysis_done_time = datetime.datetime.now()
+    logger.log_text(
+        f"Analyzed spectral burn metrics for fire event {fire_event_name} in {str(time_elapsed)}",
+        {"severity": "DEBUG"},
+    )
 
     try:
         # Then first fetch the ecoclass data
@@ -210,6 +226,10 @@ def main(
     time_elapsed = datetime.datetime.now() - analysis_done_time
     job_status["fetch_ecoclass"]["time_elapsed"] = str(time_elapsed)
     fetch_ecoclass_done_time = datetime.datetime.now()
+    logger.log_text(
+        f"Fetched ecoclass data for fire event {fire_event_name} in {str(time_elapsed)}",
+        {"severity": "DEBUG"},
+    )
 
     try:
         year = ignition_date.year
@@ -231,7 +251,11 @@ def main(
 
     time_elapsed = datetime.datetime.now() - fetch_ecoclass_done_time
     job_status["fetch_rap"]["time_elapsed"] = str(time_elapsed)
-    fetch_rap_done_time = datetime.datetime.now()
+    __fetch_rap_done_time = datetime.datetime.now()
+    logger.log_text(
+        f"Fetched rangeland analysis platform data for fire event {fire_event_name} in {str(time_elapsed)}",
+        {"severity": "DEBUG"},
+    )
 
     total_time_elapsed = str(datetime.datetime.now() - submission_time)
     logger.log_text(
@@ -247,3 +271,8 @@ def main(
         cloud_static_io_client.upload(
             source_local_path=tmp_json, remote_path=log_s3_path
         )
+
+    logger.log_text(
+        f"Batch analyze and fetch job status for fire event {fire_event_name} has been logged to {log_s3_path} in {str(total_time_elapsed)}",
+        {"severity": "DEBUG"},
+    )
