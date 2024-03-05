@@ -43,7 +43,6 @@ class BatchAnalyzeAndFetchPOSTBody(BaseModel):
     fire_event_name: str
     affiliation: str
     derive_boundary: bool = False
-    boundary_source: str
 
 
 @router.post("/api/batch/analyze-and-fetch")
@@ -63,7 +62,6 @@ def analyze_and_fetch(
         ignition_date = body.ignition_date
         containment_date = body.containment_date
         time_buffer_days = body.time_buffer_days
-        boundary_source = body.boundary_source
         derive_boundary = body.derive_boundary
 
         ignition_date = datetime.datetime.strptime(ignition_date, "%Y-%m-%d %H:%M:%S%z")
@@ -81,7 +79,6 @@ def analyze_and_fetch(
             ignition_date=ignition_date,
             containment_date=containment_date,
             time_buffer_days=time_buffer_days,
-            boundary_source=boundary_source,
         )
 
         return JSONResponse(
@@ -117,7 +114,6 @@ def main(
     ignition_date: datetime.datetime,
     containment_date: datetime.datetime,
     time_buffer_days: int,
-    boundary_source: str,
 ):
 
     logger.info(
@@ -139,9 +135,7 @@ def main(
         "prefire": prefire_range,
         "postfire": postfire_range,
     }
-    geojson_name = (
-        "drawn_aoi_boundary" if derive_boundary else f"{boundary_source}_boundary"
-    )
+    geojson_name = "drawn_aoi_boundary" if derive_boundary else "boundary"
 
     ## TODO [#34]: Should probably define a class for batch analysis and fetch
     job_status = {
