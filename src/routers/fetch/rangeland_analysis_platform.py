@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 import sentry_sdk
 import json
-
+import time
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
 from src.lib.query_rap import (
     rap_get_biomass,
@@ -55,7 +55,7 @@ def fetch_rangeland_analysis_platform(
     Returns:
         JSONResponse: The response containing the status and message.
     """
-    boundary_geojson = json.loads(body.geojson)
+    geojson_boundary = json.loads(body.geojson)
     ignition_date = body.ignition_date
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
@@ -64,7 +64,7 @@ def fetch_rangeland_analysis_platform(
     ignition_year = time.strptime(ignition_date, "%Y-%m-%d").tm_year
 
     return main(
-        boundary_geojson=boundary_geojson,
+        geojson_boundary=geojson_boundary,
         ignition_year=ignition_year,
         fire_event_name=fire_event_name,
         affiliation=affiliation,
