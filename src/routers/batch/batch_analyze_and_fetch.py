@@ -117,7 +117,7 @@ def main(
     boundary_source: str,
 ):
 
-    logger.debug(
+    logger.info(
         f"Starting batch analyze and fetch job for fire event {fire_event_name}",
     )
 
@@ -151,7 +151,7 @@ def main(
         "fetch_rap": {},
     }
 
-    logger.debug(
+    logger.info(
         f"Attempting upload -  {fire_event_name}",
     )
 
@@ -178,7 +178,7 @@ def main(
     time_elapsed = datetime.datetime.now() - submission_time
     job_status["upload"]["time_elapsed"] = str(time_elapsed)
     upload_done_time = datetime.datetime.now()
-    logger.debug(
+    logger.info(
         f"Uploaded boundary for fire event {fire_event_name} to {boundary_s3_path} in {str(time_elapsed)}",
     )
 
@@ -203,7 +203,7 @@ def main(
     time_elapsed = datetime.datetime.now() - upload_done_time
     job_status["analyze_spectral_metrics"]["time_elapsed"] = str(time_elapsed)
     analysis_done_time = datetime.datetime.now()
-    logger.debug(
+    logger.info(
         f"Analyzed spectral burn metrics for fire event {fire_event_name} in {str(time_elapsed)}",
     )
 
@@ -226,7 +226,7 @@ def main(
     time_elapsed = datetime.datetime.now() - analysis_done_time
     job_status["fetch_ecoclass"]["time_elapsed"] = str(time_elapsed)
     fetch_ecoclass_done_time = datetime.datetime.now()
-    logger.debug(
+    logger.info(
         f"Fetched ecoclass data for fire event {fire_event_name} in {str(time_elapsed)}",
     )
 
@@ -251,12 +251,12 @@ def main(
     time_elapsed = datetime.datetime.now() - fetch_ecoclass_done_time
     job_status["fetch_rap"]["time_elapsed"] = str(time_elapsed)
     __fetch_rap_done_time = datetime.datetime.now()
-    logger.debug(
+    logger.info(
         f"Fetched rangeland analysis platform data for fire event {fire_event_name} in {str(time_elapsed)}",
     )
 
     total_time_elapsed = str(datetime.datetime.now() - submission_time)
-    logger.debug(
+    logger.info(
         f"Batch analyze and fetch job status for fire event {fire_event_name} in {total_time_elapsed}: {job_status}"
     )
     job_status["total_time_elapsed"] = total_time_elapsed
@@ -270,6 +270,6 @@ def main(
             source_local_path=tmp_json, remote_path=log_s3_path
         )
 
-    logger.debug(
+    logger.info(
         f"Batch analyze and fetch job status for fire event {fire_event_name} has been logged to {log_s3_path} in {str(total_time_elapsed)}",
     )
