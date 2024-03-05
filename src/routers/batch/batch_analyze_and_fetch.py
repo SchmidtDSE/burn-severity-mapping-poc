@@ -62,9 +62,9 @@ def analyze_and_fetch(
         time_buffer_days = body.time_buffer_days
         derive_boundary = body.derive_boundary
 
-        ignition_date = datetime.datetime.strptime(ignition_date, "%Y-%m-%dT%H:%M:%S%z")
+        ignition_date = datetime.datetime.strptime(ignition_date, "%Y-%m-%d %H:%M:%S%z")
         containment_date = datetime.datetime.strptime(
-            containment_date, "%Y-%m-%dT%H:%M:%S%z"
+            containment_date, "%Y-%m-%d %H:%M:%S%z"
         )
 
         main(
