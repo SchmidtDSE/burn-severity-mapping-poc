@@ -14,8 +14,6 @@ from src.routers.analyze.spectral_burn_metrics import (
     main as analyze_spectral_burn_metrics,
 )
 from src.routers.fetch.ecoclass import main as fetch_ecoclass
-from src.routers.upload.shapefile_zip import main as upload_shapefile_zip
-from src.routers.upload.drawn_aoi import main as upload_drawn_aoi
 from src.routers.fetch.rangeland_analysis_platform import main as fetch_rap
 
 router = APIRouter()
@@ -112,6 +110,7 @@ def main(
     ignition_date: datetime.datetime,
     containment_date: datetime.datetime,
     time_buffer_days: int,
+    boundary_source: str,
 ):
 
     # convert time buffer days to timedelta, adjust, and convert back to string
@@ -131,10 +130,11 @@ def main(
         "prefire": prefire_range,
         "postfire": postfire_range,
     }
-    geojson_name = "drawn_aoi_boundary" if derive_boundary else "boundary"
+    geojson_name = (
+        "drawn_aoi_boundary" if derive_boundary else f"{boundary_source}_boundary"
+    )
 
     ## TODO [#34]: Should probably define a class for batch analysis and fetch
-
     job_status = {
         "submitted": str(submission_time),
         "fire_event_name": fire_event_name,
