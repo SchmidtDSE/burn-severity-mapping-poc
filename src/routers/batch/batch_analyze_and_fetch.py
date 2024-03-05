@@ -36,13 +36,14 @@ class BatchAnalyzeAndFetchPOSTBody(BaseModel):
         affiliation (str): The affiliation of the analysis.
     """
 
-    geojson: Any
+    geojson_boundary: Any
     ignition_date: str
     containment_date: str
     time_buffer_days: int
     fire_event_name: str
     affiliation: str
     derive_boundary: bool = False
+    boundary_source: str
 
 
 @router.post("/api/batch/analyze-and-fetch")
@@ -55,13 +56,14 @@ def analyze_and_fetch(
 
     try:
 
-        geojson_boundary = json.loads(body.geojson)
+        geojson_boundary = json.loads(body.geojson_boundary)
 
         fire_event_name = body.fire_event_name
         affiliation = body.affiliation
         ignition_date = body.ignition_date
         containment_date = body.containment_date
         time_buffer_days = body.time_buffer_days
+        boundary_source = body.boundary_source
         derive_boundary = body.derive_boundary
 
         ignition_date = datetime.datetime.strptime(ignition_date, "%Y-%m-%d %H:%M:%S%z")
@@ -79,6 +81,7 @@ def analyze_and_fetch(
             ignition_date=ignition_date,
             containment_date=containment_date,
             time_buffer_days=time_buffer_days,
+            boundary_source=boundary_source,
         )
 
         return JSONResponse(
