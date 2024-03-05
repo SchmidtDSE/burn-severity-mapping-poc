@@ -96,18 +96,18 @@ def main(
             edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
             if edit_ecoclass_json:
                 n_within_edit += 1
-                logger.log_text(f"Success: {ecoclass_id} exists within EDIT backend")
+                logger.info(f"Success: {ecoclass_id} exists within EDIT backend")
                 edit_ecoclass_df_row_dict = edit_ecoclass_json["generalInformation"][
                     "dominantSpecies"
                 ]
                 edit_ecoclass_df_row_dict["ecoclassid"] = ecoclass_id
                 edit_ecoclass_df_row_dicts.append(edit_ecoclass_df_row_dict)
             else:
-                logger.log_text(
+                logger.info(
                     f"Missing: {edit_ecoclass_json} doesn't exist within EDIT backend"
                 )
 
-        logger.log_text(
+        logger.info(
             f"Found {n_within_edit} of {n_ecoclasses} ecoclasses ({100*round(n_within_edit/n_ecoclasses, 2)}%) within EDIT backend"
         )
 
@@ -145,10 +145,10 @@ def main(
                 remote_path=f"public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson",
             )
 
-        logger.log_text(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
+        logger.info(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
         return f"Ecoclass GeoJSON uploaded for {fire_event_name}", 200
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        logger.log_text(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))

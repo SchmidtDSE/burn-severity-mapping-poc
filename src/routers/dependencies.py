@@ -1,11 +1,12 @@
 from fastapi import Depends
 from logging import Logger
 
-from google.cloud import logging
+from google.cloud import logging as google_logging
 import sentry_sdk
 from src.util.cloud_static_io import CloudStaticIOClient
 from src.util.gcp_secrets import get_mapbox_secret as gcp_get_mapbox_secret
 import os
+import logging as python_logging
 
 
 def get_cloud_logger():
@@ -15,9 +16,37 @@ def get_cloud_logger():
     Returns:
         google.cloud.logging.logger.Logger: The Cloud Logging logger instance.
     """
-    logging_client = logging.Client(project="dse-nps")
+    logging_client = google_logging.Client(project="dse-nps")
     log_name = "burn-backend"
-    logger = logging_client.logger(log_name)
+    logger = python_logging.getLogger(log_name)
+
+    # Set the log level to DEBUG
+    logger.setLevel(python_logging.INFO)
+
+    # Attaches a Google Cloud Logging handler to the root logger
+    handler = google_logging.handlers.CloudLoggingHandler(logging_client)
+    python_logging.getLogger().addHandler(handler)
+
+    return logger
+
+
+def get_cloud_logger_debug():
+    """
+    Returns a Cloud Logging logger instance with DEBUG level.
+
+    Returns:
+        google.cloud.logging.logger.Logger: The Cloud Logging logger instance.
+    """
+    logging_client = google_logging.Client(project="dse-nps")
+    log_name = "burn-backend"
+    logger = python_logging.getLogger(log_name)
+
+    # Set the log level to DEBUG
+    logger.setLevel(python_logging.DEBUG)
+
+    # Attaches a Google Cloud Logging handler to the root logger
+    handler = google_logging.handlers.CloudLoggingHandler(logging_client)
+    python_logging.getLogger().addHandler(handler)
 
     return logger
 
@@ -32,9 +61,9 @@ def get_cloud_static_io_client(logger: Logger = Depends(get_cloud_logger)):
     Returns:
         CloudStaticIOClient: An instance of CloudStaticIOClient.
     """
-    logger.log_text("Creating CloudStaticIOClient")
+    logger.info("Creating CloudStaticIOClient")
     s3_bucket_name = os.getenv("S3_BUCKET_NAME")
-    return CloudStaticIOClient(s3_bucket_name, "s3")
+    return CloudStaticIOClient(s3_bucket_name, "s3", logger)
 
 
 def get_manifest(
@@ -51,7 +80,7 @@ def get_manifest(
     Returns:
         dict: The manifest from the cloud storage.
     """
-    logger.log_text("Getting manifest")
+    logger.info("Getting manifest")
     manifest = cloud_static_io_client.get_manifest()
     return manifest
 
@@ -66,7 +95,7 @@ def init_sentry(logger: Logger = Depends(get_cloud_logger)):
     Returns:
         None
     """
-    logger.log_text("Initializing Sentry client")
+    logger.info("Initializing Sentry client")
 
     ## TODO [#28]: Move to sentry to environment variable if we keep sentry
     sentry_sdk.init(
@@ -80,7 +109,7 @@ def init_sentry(logger: Logger = Depends(get_cloud_logger)):
         profiles_sample_rate=1.0,
     )
     sentry_sdk.set_context("env", {"env": os.getenv("ENV")})
-    logger.log_text("Sentry initialized")
+    logger.info("Sentry initialized")
 
 
 def get_mapbox_secret():

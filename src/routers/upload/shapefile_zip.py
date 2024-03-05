@@ -63,7 +63,7 @@ async def upload_shapefile(
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        logger.log_text(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -85,7 +85,7 @@ def main(
         remote_path=user_uploaded_s3_path,
     )
 
-    logger.log_text(f"Uploaded zip file ({user_uploaded_s3_path})")
+    logger.info(f"Uploaded zip file ({user_uploaded_s3_path})")
 
     with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
         tmp_geojson = tmp.name
@@ -97,6 +97,6 @@ def main(
             remote_path=boundary_s3_path,
         )
 
-    logger.log_text(f"Uploaded geojson file ({boundary_s3_path})")
+    logger.info(f"Uploaded geojson file ({boundary_s3_path})")
 
     return JSONResponse(status_code=200, content={"geojson": geojson})

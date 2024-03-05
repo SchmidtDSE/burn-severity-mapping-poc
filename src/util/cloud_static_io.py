@@ -31,6 +31,7 @@ class CloudStaticIOClient:
     Args:
         bucket_name (str): The name of the bucket in the cloud storage service.
         provider (str): The provider of the cloud storage service (currently only supports "s3").
+        logger (logging.Logger): The logger for logging messages.
 
     Attributes:
         env (str): The environment variable for the environment (e.g. "LOCAL", "PROD").
@@ -38,7 +39,6 @@ class CloudStaticIOClient:
         service_account_email (str): The email address of the service account for GCP,
             authorized to impersonate the role in AWS.
         role_session_name (str): The name of the role session. Arbitrary.
-        logger (logging.Logger): The logger for logging messages.
         sts_client (botocore.client.STS): The STS client for assuming the AWS role using GCP credentials.
         prefix (str): The prefix for the bucket URL. We get this from tofu, once the bucket is created.
         iam_credentials (google.auth.impersonated_credentials.Credentials): The impersonated IAM credentials.
@@ -51,7 +51,7 @@ class CloudStaticIOClient:
 
     """
 
-    def __init__(self, s3_bucket_name, provider):
+    def __init__(self, s3_bucket_name, provider, logger):
 
         self.env = os.environ.get("ENV")
         self.role_arn = os.environ.get("S3_FROM_GCP_ROLE_ARN")
@@ -60,11 +60,7 @@ class CloudStaticIOClient:
 
         self.s3_bucket_name = s3_bucket_name
         self.https_prefix = BUCKET_HTTPS_PREFIX.format(s3_bucket_name=s3_bucket_name)
-
-        # Set up logging
-        logging_client = cloud_logging.Client(project="dse-nps")
-        log_name = "burn-backend"
-        self.logger = logging_client.logger(log_name)
+        self.logger = logger
 
         self.sts_client = boto3.client("sts")
 
@@ -77,7 +73,7 @@ class CloudStaticIOClient:
         self.role_assumed_credentials = None
         self.validate_credentials()
 
-        self.logger.log_text(
+        self.logger.info(
             f"Initialized CloudStaticIOClient for {self.s3_bucket_name} with provider {provider}"
         )
 
@@ -278,7 +274,7 @@ class CloudStaticIOClient:
                 band_cog.to_raster(local_cog_path, driver="GTiff")
 
                 # Update the COG with overviews, for faster loading at lower zoom levels
-                self.logger.log_text(f"Updating {band_name} with overviews")
+                self.logger.info(f"Updating {band_name} with overviews")
                 with rasterio.open(local_cog_path, "r+") as ds:
                     ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
                     ds.update_tags(ns="rio_overview", resampling="nearest")
@@ -327,7 +323,7 @@ class CloudStaticIOClient:
                 band_cog.to_raster(local_cog_path, driver="GTiff")
 
                 # Update the COG with overviews, for faster loading at lower zoom levels
-                self.logger.log_text(f"Updating {band_name} with overviews")
+                self.logger.info(f"Updating {band_name} with overviews")
                 with rasterio.open(local_cog_path, "r+") as ds:
                     ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
                     ds.update_tags(ns="rio_overview", resampling="nearest")
@@ -365,7 +361,7 @@ class CloudStaticIOClient:
             manifest = self.get_manifest()
 
             if affiliation in manifest and fire_event_name in manifest[affiliation]:
-                self.logger.log_text(
+                self.logger.info(
                     f"Fire event {fire_event_name} already exists in manifest for affiliation {affiliation}. Overwriting."
                 )
                 del manifest[affiliation][fire_event_name]
@@ -388,7 +384,7 @@ class CloudStaticIOClient:
             self.upload(
                 source_local_path=tmp_manifest_path, remote_path="manifest.json"
             )
-            self.logger.log_text(f"Uploaded/updated manifest.json")
+            self.logger.info(f"Uploaded/updated manifest.json")
 
     def upload_fire_event(
         self,
@@ -413,7 +409,7 @@ class CloudStaticIOClient:
         Returns:
             None
         """
-        self.logger.log_text(f"Uploading fire event {fire_event_name}")
+        self.logger.info(f"Uploading fire event {fire_event_name}")
 
         self.upload_cogs(
             metrics_stack=metrics_stack,
@@ -441,7 +437,7 @@ class CloudStaticIOClient:
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             self.download("manifest.json", tmpdir + "tmp_manifest.json")
-            self.logger.log_text(f"Got manifest.json")
+            self.logger.info(f"Got manifest.json")
             manifest = json.load(open(tmpdir + "tmp_manifest.json", "r"))
             return manifest
 

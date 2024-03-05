@@ -27,7 +27,7 @@ def check_connectivity(logger: Logger = Depends(get_cloud_logger)):
     """
     try:
         response = requests.get("http://example.com")
-        logger.log_text(
+        logger.info(
             f"Connectivity check: Got response {response.status_code} from http://example.com"
         )
         return (
@@ -36,5 +36,5 @@ def check_connectivity(logger: Logger = Depends(get_cloud_logger)):
         )
 
     except Exception as e:
-        logger.log_text(f"Connectivity check: Error {e}")
+        logger.info(f"Connectivity check: Error {e}")
         raise HTTPException(status_code=400, detail=str(e))

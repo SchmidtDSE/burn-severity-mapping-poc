@@ -89,7 +89,7 @@ def main(
     cloud_static_io_client,
 ):
 
-    logger.log_text(f"Received analyze-fire-event request for {fire_event_name}")
+    logger.info(f"Received analyze-fire-event request for {fire_event_name}")
     derived_boundary = None
 
     try:
@@ -102,18 +102,18 @@ def main(
             postfire_date_range=date_ranges["postfire"],
             from_bbox=True,
         )
-        logger.log_text(f"Obtained imagery for {fire_event_name}")
+        logger.info(f"Obtained imagery for {fire_event_name}")
 
         # calculate burn metrics
         geo_client.calc_burn_metrics()
-        logger.log_text(f"Calculated burn metrics for {fire_event_name}")
+        logger.info(f"Calculated burn metrics for {fire_event_name}")
 
         if derive_boundary:
             # Derive a boundary from the imagery
             # TODO [#16]: Derived boundary hardcoded for rbr / .025 threshold
             # Not sure yet but we will probably want to make this configurable
             geo_client.derive_boundary("rbr", 0.025)
-            logger.log_text(f"Derived boundary for {fire_event_name}")
+            logger.info(f"Derived boundary for {fire_event_name}")
 
             # Upload the derived boundary
             with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
@@ -138,7 +138,7 @@ def main(
             postfire_date_range=date_ranges["postfire"],
             derive_boundary=derive_boundary,
         )
-        logger.log_text(f"Cogs uploaded for {fire_event_name}")
+        logger.info(f"Cogs uploaded for {fire_event_name}")
 
         return JSONResponse(
             status_code=200,
@@ -150,7 +150,7 @@ def main(
         )
 
     except NoFireBoundaryDetectedError as e:
-        logger.log_text(f"No Fire Boundary Detected for fire event {fire_event_name}")
+        logger.info(f"No Fire Boundary Detected for fire event {fire_event_name}")
         return JSONResponse(
             status_code=204,
             content={
@@ -160,5 +160,5 @@ def main(
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        logger.log_text(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))

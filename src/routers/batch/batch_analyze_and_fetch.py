@@ -1,4 +1,8 @@
-from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
+from ..dependencies import (
+    get_cloud_logger_debug,
+    get_cloud_static_io_client,
+    init_sentry,
+)
 from src.lib.query_sentinel import Sentinel2Client, NoFireBoundaryDetectedError
 from fastapi import Depends, APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -45,7 +49,7 @@ class BatchAnalyzeAndFetchPOSTBody(BaseModel):
 def analyze_and_fetch(
     body: BatchAnalyzeAndFetchPOSTBody,
     sentry: None = Depends(init_sentry),
-    logger: Logger = Depends(get_cloud_logger),
+    logger: Logger = Depends(get_cloud_logger_debug),
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
 ):
 
@@ -113,9 +117,8 @@ def main(
     boundary_source: str,
 ):
 
-    logger.log_text(
+    logger.debug(
         f"Starting batch analyze and fetch job for fire event {fire_event_name}",
-        {"severity": "DEBUG"},
     )
 
     submission_time = datetime.datetime.now()
@@ -148,9 +151,8 @@ def main(
         "fetch_rap": {},
     }
 
-    logger.log_text(
+    logger.debug(
         f"Attempting upload -  {fire_event_name}",
-        {"severity": "DEBUG"},
     )
 
     try:
@@ -168,7 +170,7 @@ def main(
             )
 
     except Exception as e:
-        logger.log_text(
+        logger.info(
             f"An error occurred while uploading the geojson boundary for fire event {fire_event_name}: {str(e)}"
         )
         job_status["upload"]["error"] = str(e)
@@ -176,9 +178,8 @@ def main(
     time_elapsed = datetime.datetime.now() - submission_time
     job_status["upload"]["time_elapsed"] = str(time_elapsed)
     upload_done_time = datetime.datetime.now()
-    logger.log_text(
+    logger.debug(
         f"Uploaded boundary for fire event {fire_event_name} to {boundary_s3_path} in {str(time_elapsed)}",
-        {"severity": "DEBUG"},
     )
 
     try:
@@ -194,7 +195,7 @@ def main(
         )
 
     except Exception as e:
-        logger.log_text(
+        logger.info(
             f"An error occurred while analyzing spectral burn metrics for fire event {fire_event_name}: {str(e)}"
         )
         job_status["analyze_spectral_metrics"]["error"] = str(e)
@@ -202,9 +203,8 @@ def main(
     time_elapsed = datetime.datetime.now() - upload_done_time
     job_status["analyze_spectral_metrics"]["time_elapsed"] = str(time_elapsed)
     analysis_done_time = datetime.datetime.now()
-    logger.log_text(
+    logger.debug(
         f"Analyzed spectral burn metrics for fire event {fire_event_name} in {str(time_elapsed)}",
-        {"severity": "DEBUG"},
     )
 
     try:
@@ -218,7 +218,7 @@ def main(
         )
 
     except Exception as e:
-        logger.log_text(
+        logger.info(
             f"An error occurred while fetching ecoclass data for fire event {fire_event_name}: {str(e)}"
         )
         job_status["fetch_ecoclass"]["error"] = str(e)
@@ -226,9 +226,8 @@ def main(
     time_elapsed = datetime.datetime.now() - analysis_done_time
     job_status["fetch_ecoclass"]["time_elapsed"] = str(time_elapsed)
     fetch_ecoclass_done_time = datetime.datetime.now()
-    logger.log_text(
+    logger.debug(
         f"Fetched ecoclass data for fire event {fire_event_name} in {str(time_elapsed)}",
-        {"severity": "DEBUG"},
     )
 
     try:
@@ -244,7 +243,7 @@ def main(
         )
 
     except Exception as e:
-        logger.log_text(
+        logger.info(
             f"An error occurred while fetching rangeland analysis platform data for fire event {fire_event_name}: {str(e)}"
         )
         job_status["fetch_rap"]["error"] = str(e)
@@ -252,13 +251,12 @@ def main(
     time_elapsed = datetime.datetime.now() - fetch_ecoclass_done_time
     job_status["fetch_rap"]["time_elapsed"] = str(time_elapsed)
     __fetch_rap_done_time = datetime.datetime.now()
-    logger.log_text(
+    logger.debug(
         f"Fetched rangeland analysis platform data for fire event {fire_event_name} in {str(time_elapsed)}",
-        {"severity": "DEBUG"},
     )
 
     total_time_elapsed = str(datetime.datetime.now() - submission_time)
-    logger.log_text(
+    logger.debug(
         f"Batch analyze and fetch job status for fire event {fire_event_name} in {total_time_elapsed}: {job_status}"
     )
     job_status["total_time_elapsed"] = total_time_elapsed
@@ -272,7 +270,6 @@ def main(
             source_local_path=tmp_json, remote_path=log_s3_path
         )
 
-    logger.log_text(
+    logger.debug(
         f"Batch analyze and fetch job status for fire event {fire_event_name} has been logged to {log_s3_path} in {str(total_time_elapsed)}",
-        {"severity": "DEBUG"},
     )

@@ -92,7 +92,7 @@ def main(
             affiliation=affiliation,
             fire_event_name=fire_event_name,
         )
-        logger.log_text(f"RAP estimates uploaded for {fire_event_name}")
+        logger.info(f"RAP estimates uploaded for {fire_event_name}")
 
         return JSONResponse(
             status_code=200,
@@ -104,5 +104,5 @@ def main(
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        logger.log_text(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))

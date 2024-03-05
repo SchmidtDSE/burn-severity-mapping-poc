@@ -57,7 +57,7 @@ async def upload_drawn_aoi(
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        logger.log_text(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 
