@@ -149,6 +149,14 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
 resource "google_cloud_tasks_queue" "tf-rest-burn-severity-queue" {
   name = "tf-rest-burn-severity-queue-${terraform.workspace}"
   location = "us-central1"
+
+  rate_limits {
+    max_concurrent_dispatches = 2
+  }
+
+  retry_config {
+    max_attempts = "2"
+  }
 }
 
 
