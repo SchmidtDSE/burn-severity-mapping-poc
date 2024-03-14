@@ -8,6 +8,7 @@ dependencies:
   - google-auth
   - google-cloud-secret-manager
   - google-cloud-logging
+  - google-cloud-tasks
   - rioxarray
   - stackstac
   - gdal
