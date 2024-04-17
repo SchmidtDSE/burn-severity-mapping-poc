@@ -131,6 +131,10 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
       connector = google_vpc_access_connector.burn_backend_vpc_connector.id
       egress = "ALL_TRAFFIC"
     }
+    scaling {
+      min_instance_count = 1 # to reduce cold start time
+      max_instance_count = 100
+    }
   }
 
   traffic {
