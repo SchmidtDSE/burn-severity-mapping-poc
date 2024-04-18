@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 import sentry_sdk
 import json
-
+import time
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
 from src.lib.query_rap import (
     rap_get_biomass,
@@ -55,16 +55,35 @@ def fetch_rangeland_analysis_platform(
     Returns:
         JSONResponse: The response containing the status and message.
     """
-    boundary_geojson = json.loads(body.geojson)
+    geojson_boundary = json.loads(body.geojson)
     ignition_date = body.ignition_date
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
 
     sentry_sdk.set_context("analyze_rap", {"request": body})
+    ignition_year = time.strptime(ignition_date, "%Y-%m-%d").tm_year
 
+    return main(
+        geojson_boundary=geojson_boundary,
+        ignition_year=ignition_year,
+        fire_event_name=fire_event_name,
+        affiliation=affiliation,
+        cloud_static_io_client=cloud_static_io_client,
+        logger=logger,
+    )
+
+
+def main(
+    geojson_boundary: Any,
+    ignition_year: int,
+    fire_event_name: str,
+    affiliation: str,
+    cloud_static_io_client: CloudStaticIOClient,
+    logger: Logger,
+):
     try:
         rap_estimates = rap_get_biomass(
-            boundary_geojson=boundary_geojson, ignition_date=ignition_date
+            geojson_boundary=geojson_boundary, ignition_year=ignition_year
         )
 
         # save the cog to the FTP server
@@ -73,7 +92,7 @@ def fetch_rangeland_analysis_platform(
             affiliation=affiliation,
             fire_event_name=fire_event_name,
         )
-        logger.log_text(f"RAP estimates uploaded for {fire_event_name}")
+        logger.info(f"RAP estimates uploaded for {fire_event_name}")
 
         return JSONResponse(
             status_code=200,
@@ -85,5 +104,5 @@ def fetch_rangeland_analysis_platform(
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        logger.log_text(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))

@@ -20,6 +20,10 @@ from src.util.cloud_static_io import CloudStaticIOClient
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 
 
+class NoFireBoundaryDetectedError(BaseException):
+    pass
+
+
 class Sentinel2Client:
     def __init__(
         self,
@@ -288,7 +292,7 @@ class Sentinel2Client:
                 dim="classification_source",
             )
 
-    def derive_boundary(self, metric_name="rbr", threshold=0.025):
+    def derive_boundary(self, metric_name="rbr", threshold=0.025, inplace=True):
         """
         Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
         This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as `boundary.geojson`
@@ -331,9 +335,18 @@ class Sentinel2Client:
 
         boundary_geojson = raster_mask_to_geojson(boundary_xr)
 
-        self.set_boundary(boundary_geojson)
+        if not boundary_geojson:
+            raise NoFireBoundaryDetectedError(
+                "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
+            )
+
         self.metrics_stack = self.metrics_stack.rio.clip(
             self.geojson_boundary.geometry.values, self.geojson_boundary.crs
         )
 
         self.metrics_stack = self.metrics_stack.where(self.metrics_stack != 0, np.nan)
+
+        if inplace:
+            self.set_boundary(boundary_geojson)
+        else:
+            return boundary_geojson

@@ -57,14 +57,26 @@ def fetch_ecoclass(
         tuple: A tuple containing the success message and the HTTP status code.
     """
     fire_event_name = body.fire_event_name
-    geojson = json.loads(body.geojson)
+    geojson_boundary = json.loads(body.geojson)
     affiliation = body.affiliation
 
     sentry_sdk.set_context("analyze_ecoclass", {"request": body})
 
+    main(
+        fire_event_name=fire_event_name,
+        geojson_boundary=geojson_boundary,
+        affiliation=affiliation,
+        cloud_static_io_client=cloud_static_io_client,
+        logger=logger,
+    )
+
+
+def main(
+    fire_event_name, geojson_boundary, affiliation, cloud_static_io_client, logger
+):
     try:
 
-        mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson)
+        mapunit_gdf = sdm_get_esa_mapunitid_poly(geojson_boundary)
         mu_polygon_keys = [
             mupolygonkey
             for __musym, __nationalmusym, __mukey, mupolygonkey in mapunit_gdf.index
@@ -84,18 +96,18 @@ def fetch_ecoclass(
             edit_ecoclass_json = edit_get_ecoclass_info(ecoclass_id)
             if edit_ecoclass_json:
                 n_within_edit += 1
-                logger.log_text(f"Success: {ecoclass_id} exists within EDIT backend")
+                logger.info(f"Success: {ecoclass_id} exists within EDIT backend")
                 edit_ecoclass_df_row_dict = edit_ecoclass_json["generalInformation"][
                     "dominantSpecies"
                 ]
                 edit_ecoclass_df_row_dict["ecoclassid"] = ecoclass_id
                 edit_ecoclass_df_row_dicts.append(edit_ecoclass_df_row_dict)
             else:
-                logger.log_text(
+                logger.info(
                     f"Missing: {edit_ecoclass_json} doesn't exist within EDIT backend"
                 )
 
-        logger.log_text(
+        logger.info(
             f"Found {n_within_edit} of {n_ecoclasses} ecoclasses ({100*round(n_within_edit/n_ecoclasses, 2)}%) within EDIT backend"
         )
 
@@ -133,10 +145,10 @@ def fetch_ecoclass(
                 remote_path=f"public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson",
             )
 
-        logger.log_text(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
+        logger.info(f"Ecoclass GeoJSON uploaded for {fire_event_name}")
         return f"Ecoclass GeoJSON uploaded for {fire_event_name}", 200
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        logger.log_text(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))

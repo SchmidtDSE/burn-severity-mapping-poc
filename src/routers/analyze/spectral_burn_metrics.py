@@ -8,7 +8,7 @@ import sentry_sdk
 import json
 
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
-from src.lib.query_sentinel import Sentinel2Client
+from src.lib.query_sentinel import Sentinel2Client, NoFireBoundaryDetectedError
 from src.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
@@ -60,16 +60,37 @@ def analyze_spectral_burn_metrics(
     Returns:
         JSONResponse: The response containing the analysis results and derived boundary, if applicable.
     """
+    sentry_sdk.set_context("fire-event", {"request": body})
     geojson_boundary = json.loads(body.geojson)
 
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
     derive_boundary = body.derive_boundary
-    derived_boundary = None
 
-    sentry_sdk.set_context("fire-event", {"request": body})
-    logger.log_text(f"Received analyze-fire-event request for {fire_event_name}")
+    return main(
+        geojson_boundary,
+        date_ranges,
+        fire_event_name,
+        affiliation,
+        derive_boundary,
+        logger,
+        cloud_static_io_client,
+    )
+
+
+def main(
+    geojson_boundary,
+    date_ranges,
+    fire_event_name,
+    affiliation,
+    derive_boundary,
+    logger,
+    cloud_static_io_client,
+):
+
+    logger.info(f"Received analyze-fire-event request for {fire_event_name}")
+    derived_boundary = None
 
     try:
         # create a Sentinel2Client instance
@@ -81,18 +102,18 @@ def analyze_spectral_burn_metrics(
             postfire_date_range=date_ranges["postfire"],
             from_bbox=True,
         )
-        logger.log_text(f"Obtained imagery for {fire_event_name}")
+        logger.info(f"Obtained imagery for {fire_event_name}")
 
         # calculate burn metrics
         geo_client.calc_burn_metrics()
-        logger.log_text(f"Calculated burn metrics for {fire_event_name}")
+        logger.info(f"Calculated burn metrics for {fire_event_name}")
 
         if derive_boundary:
             # Derive a boundary from the imagery
             # TODO [#16]: Derived boundary hardcoded for rbr / .025 threshold
             # Not sure yet but we will probably want to make this configurable
             geo_client.derive_boundary("rbr", 0.025)
-            logger.log_text(f"Derived boundary for {fire_event_name}")
+            logger.info(f"Derived boundary for {fire_event_name}")
 
             # Upload the derived boundary
             with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
@@ -117,7 +138,7 @@ def analyze_spectral_burn_metrics(
             postfire_date_range=date_ranges["postfire"],
             derive_boundary=derive_boundary,
         )
-        logger.log_text(f"Cogs uploaded for {fire_event_name}")
+        logger.info(f"Cogs uploaded for {fire_event_name}")
 
         return JSONResponse(
             status_code=200,
@@ -128,7 +149,16 @@ def analyze_spectral_burn_metrics(
             },
         )
 
+    except NoFireBoundaryDetectedError as e:
+        logger.info(f"No Fire Boundary Detected for fire event {fire_event_name}")
+        return JSONResponse(
+            status_code=204,
+            content={
+                "message": f"No Fire Boundary Detected for fire event {fire_event_name}"
+            },
+        )
+
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        logger.log_text(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))

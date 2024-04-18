@@ -34,9 +34,7 @@ locals {
   google_project_number = data.google_project.project.number
   aws_account_id = data.aws_caller_identity.current.account_id
   aws_region = data.aws_region.current.name
-  # oidc_provider_domain_url = "https://accounts.google.com"
   oidc_provider_domain_url = "accounts.google.com"
-  # gcp_cloud_run_client_id = "${terraform.workspace}" == "prod" ? "117526146749746854545" : "101023653831248304550"
 }
 
 # Initialize the modules

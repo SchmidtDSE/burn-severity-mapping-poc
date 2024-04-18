@@ -210,8 +210,11 @@
           const boundaryResponse = await fetch('{{ burn_boundary_geojson_url | safe }}');
           const boundaryGeojson = await boundaryResponse.json();
 
+          let ecoclassGeojson = null;
           const ecoclassResponse = await fetch('{{ ecoclass_geojson_url | safe }}');
-          const ecoclassGeojson= await ecoclassResponse.json();
+          if (ecoclassResponse.status !== 404) {
+            ecoclassGeojson= await ecoclassResponse.json();
+          }
 
           let severityObsGeojson = null;
           const severityObsResponse = await fetch('{{ severity_obs_geojson_url | safe }}');
@@ -350,6 +353,7 @@
           }
         }
 
+        if (ecoclassGeojson) {
           // Create a layer for each combo of dominant trees
           var uniqueTreeCombinations = [...new Set(ecoclassGeojson.features.map(feature => [feature.properties.dominantTree1, feature.properties.dominantTree2].join(', ')))];
           var treeLayers = {};
@@ -466,7 +470,7 @@
               // Add the layer to the object using the herb combination as the key
               herbLayers[herbCombination] = herbLayer;
           });
-
+        }
           // Add GeoJSON layer for burn boundary
           var boundaryLayer = L.geoJSON(boundaryGeojson, {
               style: function(feature) {

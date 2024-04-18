@@ -20,5 +20,5 @@ async def trigger_error(logger: Logger = Depends(get_cloud_logger)):
     Raises:
         ZeroDivisionError: If a division by zero occurs (it definitely will).
     """
-    logger.log_text("Triggering a division by zero error for Sentry to catch.")
+    logger.info("Triggering a division by zero error for Sentry to catch.")
     __division_by_zero = 1 / 0

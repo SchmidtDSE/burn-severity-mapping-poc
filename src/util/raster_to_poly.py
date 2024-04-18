@@ -30,6 +30,9 @@ def raster_mask_to_geojson(binary_mask):
         if v == 1
     ]
 
+    if len(results) == 0:
+        return None
+
     # Merge polygons and create a convex hull if necessary
     merged = unary_union(results)
     if isinstance(merged, MultiPolygon):
