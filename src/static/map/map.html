@@ -14,15 +14,15 @@
     <!-- Include Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-    <!-- Include Leaflet JS -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Include Leaflet JS - 1.6.x for compatability with panel layers -->
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet-src.js"></script>
 
-    <!-- Include Leaflet GroupedLayerControl JS -->
+    <!-- Include the Leaflet Panel Layers CSS and JS files -->
     <link
       rel="stylesheet"
-      href="https://unpkg.com/leaflet-groupedlayercontrol@0.4.0/dist/leaflet.groupedlayercontrol.min.css"
+      href="/static/js/leaflet-panel-layers/src/leaflet-panel-layers.css"
     />
-    <script src="https://unpkg.com/leaflet-groupedlayercontrol@0.4.0"></script>
+    <script src="/static/js/leaflet-panel-layers/src/leaflet-panel-layers.js"></script>
 
     <!-- Include MathJax -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -644,24 +644,85 @@
               });
           }
 
-          var groupedOverlays = {
-              "Burn Metrics": metricsLayers,
-              "Polygons": polyLayers,
-              "Rangeland Analysis Platform": biomassLayers,
-              "EDIT Tree Cover": treeLayers,
-              "EDIT Shrub Cover": shrubLayers,
-              "EDIT Herb Cover": herbLayers
-          };
+            var baseLayers = [
+                {
+                    name: "OpenTopoMap",
+                    layer: openTopoLayer
+                },
+                {
+                    name: "NAIP",
+                    layer: naipLayer
+                },
+                {
+                    name: "Satellite",
+                    layer: satelliteLayer
+                }
+            ];
 
-          if (severityObsGeojson) {
-              groupedOverlays["Burn Observations"] = obsLayers;
-          }
+            var overLayers = [
+                {
+                    group: "Burn Metrics",
+                    layers: [
+                        {
+                            name: "Continuous",
+                            layer: continiousTileLayer
+                        },
+                        {
+                            name: "Classifications",
+                            layer: classifiedTileLayer
+                        }
+                    ]
+                },
+                {
+                    group: "Polygons",
+                    layers: [
+                        {
+                            name: "Burn Boundary",
+                            layer: boundaryLayer
+                        },
+                        {
+                            name: "EDIT Ecological Classification",
+                            layer: ecoclassLayer
+                        }
+                    ]
+                },
+                {
+                    group: "Rangeland Analysis Platform",
+                    icon: '<i class="icon icon-water"></i>',
+                    collapsed: true,
+                    layers: [
+                        {
+                            name: "Annual Biomass",
+                            layer: RapAnnualLayer
+                        },
+                        {
+                            name: "Perennial Biomass",
+                            layer: RapPerennialLayer
+                        },
+                        {
+                            name: "Shrub Biomass",
+                            layer: RapShrubLayer
+                        },
+                        {
+                            name: "Tree Biomass",
+                            layer: RapTreeLayer
+                        }
+                    ]
+                },
+                // Add more groups here
+            ];
 
-          var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, {
-            //   exclusiveGroups: ["Burn Metrics"],
-              position: 'topleft',
-              collapsed: false
-          }).addTo(map);
+            // Create the panel layers control
+            var panelLayers = new L.control.panelLayers(baseLayers, overLayers, {
+                compact: true,
+                collapsed: true,
+                // autoZIndex: true,
+                collapsibleGroups: true,
+                position: 'topleft'
+            });
+
+            // Add the control to the map
+            map.addControl(panelLayers);
 
           var opacitySlider = document.getElementById('opacity-slider');
 
