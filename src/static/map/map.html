@@ -12,10 +12,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Include Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+    />
 
     <!-- Include Leaflet JS -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet-src.js"></script>
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet-src.js"></script>
 
     <!-- Include the Leaflet Panel Layers CSS and JS files -->
     <link
@@ -224,84 +227,6 @@
 
       }
 
-      // var popup = L.popup({
-      //     closeButton: false,
-      //     autoClose: false
-      // });
-
-      // function onEachEcoclass(feature, layer) {
-      // layer.on({
-      //         mouseover: function(e) {
-      //             var layers = e.target._map._layers;
-      //             var mousePos = e.latlng;
-      //             var ecoclassNames = [];
-      //             var muname = 'N/A'; // Initialize muname here
-      //             for (var i in layers) {
-      //                 if (layers[i] instanceof L.Polygon) {
-      //                     if (layers[i].getBounds().contains(mousePos)) {
-      //                         if (layers[i].feature) {
-      //                             // Perform operations on layers[i]
-      //                             console.log(layers[i].feature.properties);
-      //                             layers[i].setStyle({
-      //                                 weight: 5,
-      //                                 color: '#666',
-      //                                 dashArray: '',
-      //                                 fillOpacity: 0.7
-      //                             });
-      //                             if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-      //                                 layers[i].bringToFront();
-      //                             }
-      //                             var ecoclassName = layers[i].feature.properties.ecoclassname ? layers[i].feature.properties.ecoclassname : 'N/A';
-      //                             if (!ecoclassNames.includes(ecoclassName)) {
-      //                                 ecoclassNames.push(ecoclassName);
-      //                             }
-      //                             muname = layers[i].feature.properties.muname ? layers[i].feature.properties.muname : 'N/A'; // Update muname here
-      //                         }
-      //                     }
-      //                 }
-      //             }
-      //             popup.setContent(
-      //                 "<strong>Map Unit Name:</strong> <br> - " +
-      //                 muname + // Use muname here
-      //                 "<br><strong>Ecoclass Names:</strong> <br> - " +
-      //                 ecoclassNames.join(', ')
-      //             );
-      //             popup.setLatLng(mousePos);
-      //             popup.openOn(e.target._map);
-      //         },
-      //         mousemove: function(e) {
-      //             var layers = e.target._map._layers;
-      //             var mousePos = e.latlng;
-      //             for (var i in layers) {
-      //                 if (layers[i] instanceof L.Polygon) {
-      //                     if (layers[i].getBounds().contains(mousePos)) {
-      //                         if (layers[i].feature) {
-      //                         // Perform operations on layers[i]
-      //                             popup.setLatLng(mousePos);
-      //                         }
-      //                     }
-      //                 }
-      //             }
-      //         },
-      //         mouseout: function(e) {
-      //             var layers = e.target._map._layers;
-      //             for (var i in layers) {
-      //                 if (layers[i] instanceof L.Polygon) {
-      //                     if (layers[i].feature) {
-      //                         layers[i].setStyle({
-      //                             color: "#03420f",
-      //                             weight: 1,
-      //                             opacity: 1,
-      //                             fillOpacity: 0
-      //                         });
-      //                         e.target._map.closePopup();
-      //                     }
-      //                 }
-      //             }
-      //         }
-      //     });
-      // }
-
       fetchData().then(({ boundaryGeojson, ecoclassGeojson, severityObsGeojson }) => {
 
           var ecoclassLayer = L.geoJSON(ecoclassGeojson, {
@@ -416,20 +341,6 @@
               pane: 'burn-boundary'
           });
 
-        //   // Add COG tile layer for classifications
-        //   var classifiedTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}}', {
-        //       maxZoom: 20,
-        //       pane: 'metrics',
-        //       opacity: 0.1
-        //   })
-
-        //   // Add COG tile layer for continious metric, no classification
-        //   var continiousTileLayer = L.tileLayer('{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"},"color":"red"}', {
-        //       maxZoom: 20,
-        //       pane: 'metrics',
-        //       opacity: 0.1
-        //   })
-
           // Easy peasy Mapbox tileservers for the NAIP and Satellite layers
           var naipLayer = L.tileLayer(mapboxNaipUrl, {
               maxZoom: 20,
@@ -470,14 +381,6 @@
               pane: 'metrics'
           })
 
-        //   // Create map
-        //   var map = L.map('burn-map', {
-        //       layers: [openTopoLayer, boundaryLayer],
-        //       zoomControl: false
-        //   }).whenReady(function(){
-        //       classifiedTileLayer.addTo(this);
-        //   });
-
           // Create map
           var map = L.map('burn-map', {
               layers: [openTopoLayer, boundaryLayer],
@@ -515,11 +418,6 @@
               "NAIP": naipLayer,
               "Satellite": satelliteLayer
           };
-
-        //   var metricsLayers = {
-        //       "Continuous": continiousTileLayer,
-        //       "Classifications": classifiedTileLayer
-        //   };
 
           var polyLayers = {
               "Burn Boundary": boundaryLayer,
@@ -610,41 +508,6 @@
 
             var overLayers = [
                 {
-                    group: "Burn Metrics",
-                    layers: [
-                        {
-                            name: "Continuous",
-                            slider: "continuous-slider",
-                            layer: {
-                                type: 'tileLayer',
-                                args: [
-                                    '{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}}',
-                                    {
-                                        maxZoom: 20,
-                                        pane: 'metrics',
-                                        opacity: 1
-                                    }
-                                ],
-                            }
-                        },
-                        {
-                            name: "Classifications",
-                            slider: "categorical-slider",
-                            layer: {
-                                type: 'tileLayer',
-                                args: [
-                                    '{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"},"color":"red"}',
-                                    {
-                                        maxZoom: 20,
-                                        pane: 'metrics',
-                                        opacity: 1
-                                    }
-                                ],
-                            }
-                        }
-                    ]
-                },
-                {
                     group: "Polygons",
                     layers: [
                         {
@@ -698,58 +561,116 @@
             ];
 
             // Create the panel layers control
-            var panelLayers = new L.control.panelLayers(baseLayers, overLayers, {
+            console.log("Creating panel layers", baseLayers)
+            L.control.panelLayers(baseLayers, overLayers, {
                 compact: false,
                 collapsed: false,
                 // autoZIndex: true,
                 collapsibleGroups: true,
                 position: 'topleft',
+            }).addTo(map);
+
+            // Add the burn metrics
+            var metricLayers = [
+                        {
+                            name: "Continuous",
+                            slider: "continuous-slider",
+                            layer: {
+                                type: 'tileLayer',
+                                args: [
+                                    '{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}}',
+                                    {
+                                        maxZoom: 20,
+                                        pane: 'metrics',
+                                        opacity: 1
+                                    }
+                                ],
+                            }
+                        },
+                        {
+                            name: "Classifications",
+                            slider: "categorical-slider",
+                            layer: {
+                                type: 'tileLayer',
+                                args: [
+                                    '{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"},"color":"red"}',
+                                    {
+                                        maxZoom: 20,
+                                        pane: 'metrics',
+                                        opacity: 1
+                                    }
+                                ],
+                            }
+                        }
+                    ]
+
+            console.log("Created panel layers", baseLayers, overLayers)
+            console.log("Creating metric panel layers", metricLayers)
+
+            L.control.panelLayers(null, metricLayers, {
+                compact: false,
+                collapsed: false,
+                collapsibleGroups: false,
+                position: 'bottomleft',
                 buildItem: function(layerItem) {
+                    console.log("Building layer", layerItem)
                     var layer = layerItem.layer;
                     var name = layerItem.name;
                     var sliderType = layerItem.slider;
 
-                    console.log("Building item for layer", layer)
                     var div = document.createElement('div');
                     if (sliderType) {
                         console.log("Building slider for layer", layer, name)
-                        // Create a new div element for the slider
                         var sliderDiv = document.createElement('div');
-                        sliderDiv.id = name + '-slider';
+                        sliderDiv.className = 'layer-slider';
 
-                        // Create a new noUiSlider on the div element
                         noUiSlider.create(sliderDiv, {
-                            start: [20, 80],
-                            connect: true,
+                            start: layer.options.opacity,
+                            step: 0.01,
                             range: {
-                                'min': 0,
-                                'max': 100
+                                'min': 0.1,
+                                'max': 1
                             }
                         });
 
-                        // Add event listeners for slider updates
                         sliderDiv.noUiSlider.on('update', function(values, handle) {
-                            var url = layer._url;
-                            var newUrl = url.replace(/"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}/, '"thresholds":{"' + values[0] + '":250,"' + values[1] + '":175}');
-                            layer.setUrl(newUrl);
+                            layer.setOpacity(values[0]);
                         });
 
-                        // Append the slider to the div
-                        div.appendChild(sliderDiv);
-                        // Set the div's innerText to the label
-                        div.innerText = name || 'Unnamed Layer';
-                        // Return the div element
-                        return div;
+                        return sliderDiv;
+                        // // Create a new div element for the slider
+                        // var sliderDiv = document.createElement('div');
+                        // sliderDiv.id = name + '-slider';
+
+                        // // Create a new noUiSlider on the div element
+                        // noUiSlider.create(sliderDiv, {
+                        //     start: [20, 80],
+                        //     connect: true,
+                        //     range: {
+                        //         'min': 0,
+                        //         'max': 100
+                        //     }
+                        // });
+
+                        // // Add event listeners for slider updates
+                        // sliderDiv.noUiSlider.on('update', function(values, handle) {
+                        //     var url = layer._url;
+                        //     var newUrl = url.replace(/"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}/, '"thresholds":{"' + values[0] + '":250,"' + values[1] + '":175}');
+                        //     layer.setUrl(newUrl);
+                        // });
+
+                        // // Append the slider to the div
+                        // div.appendChild(sliderDiv);
+                        // // Set the div's innerText to the label
+                        // div.innerText = name || 'Unnamed Layer';
+                        // // Return the div element
+                        // return div;
                     } else {
-                        console.log("No slider needed within", layer, name)
                         // return empty node
                         return document.createElement('div');
                     }
                 },
-            });
-
-            // Add the control to the map
-            map.addControl(panelLayers);
+            }).addTo(map);
 
         //   var opacitySlider = document.getElementById('opacity-slider');
 
