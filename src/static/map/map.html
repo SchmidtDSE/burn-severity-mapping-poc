@@ -14,7 +14,7 @@
     <!-- Include Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-    <!-- Include Leaflet JS - 1.6.x for compatability with panel layers -->
+    <!-- Include Leaflet JS -->
     <script src="https://unpkg.com/leaflet/dist/leaflet-src.js"></script>
 
     <!-- Include the Leaflet Panel Layers CSS and JS files -->
@@ -97,7 +97,7 @@
     #ui-elements-bottom-left {
       position: absolute;
       bottom: 10px;
-      left: 10px;
+      left: 60px;
       z-index: 1000;
       padding: 10px;
       border-radius: 10px;
@@ -166,16 +166,7 @@
 
     <!-- Top right ui elements -->
     <div id="ui-elements-top-right">
-      <!-- Opacity -->
-      <label for="opacity-slider">Burn Severity Layer Opacity</label>
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.1"
-        value="1"
-        id="opacity-slider"
-      />
+      <div id="burn-metric-info"></div>
     </div>
 
     <!-- Bottom right ui elements -->
@@ -187,8 +178,15 @@
 
     <!-- Bottom left ui elements -->
     <div id="ui-elements-bottom-left">
-      <!-- Burn metric info -->
-      <div id="burn-metric-info"></div>
+      <label for="opacity-slider">Burn Severity Layer Opacity</label>
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.1"
+        value="1"
+        id="opacity-slider"
+      />
     </div>
 
     <script>
@@ -473,9 +471,15 @@
           // Create map
           var map = L.map('burn-map', {
               layers: [openTopoLayer, boundaryLayer],
+              zoomControl: false
           }).whenReady(function(){
               classifiedTileLayer.addTo(this);
           });
+
+            // Add zoom control
+            L.control.zoom({
+                position: 'bottomleft'
+            }).addTo(map);
 
           // Create panes to properly order basemaps and metrics
           map.createPane('basemaps');
@@ -625,19 +629,21 @@
                 },
                 {
                     group: "EDIT Dominant Trees",
+                    collapsed: true,
                     layers: treeLayers
                 },
                 {
                     group: "EDIT Dominant Shrubs",
+                    collapsed: true,
                     layers: shrubLayers
                 },
                 {
                     group: "EDIT Dominant Herbs",
+                    collapsed: true,
                     layers: herbLayers
                 },
                 {
                     group: "Rangeland Analysis Platform",
-                    icon: '<i class="icon icon-water"></i>',
                     collapsed: true,
                     layers: [
                         {
