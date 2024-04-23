@@ -704,10 +704,14 @@
                 // autoZIndex: true,
                 collapsibleGroups: true,
                 position: 'topleft',
-                buildItem: function(layer, name) {
-                    console.log("Building item for layer", layer, name)
+                buildItem: function(layerItem) {
+                    var layer = layerItem.layer;
+                    var name = layerItem.name;
+                    var sliderType = layerItem.slider;
+
+                    console.log("Building item for layer", layer)
                     var div = document.createElement('div');
-                    if (layer.slider) {
+                    if (sliderType) {
                         console.log("Building slider for layer", layer, name)
                         // Create a new div element for the slider
                         var sliderDiv = document.createElement('div');
@@ -725,20 +729,22 @@
 
                         // Add event listeners for slider updates
                         sliderDiv.noUiSlider.on('update', function(values, handle) {
-                            var url = layer.layer._url;
+                            var url = layer._url;
                             var newUrl = url.replace(/"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}/, '"thresholds":{"' + values[0] + '":250,"' + values[1] + '":175}');
-                            layer.layer.setUrl(newUrl);
+                            layer.setUrl(newUrl);
                         });
 
                         // Append the slider to the div
                         div.appendChild(sliderDiv);
+                        // Set the div's innerText to the label
+                        div.innerText = name || 'Unnamed Layer';
+                        // Return the div element
+                        return div;
                     } else {
                         console.log("No slider needed within", layer, name)
+                        // return empty node
+                        return document.createElement('div');
                     }
-                    // Set the div's innerText to the label
-                    div.innerText = name;
-                    // Return the div element
-                    return div;
                 },
             });
 
