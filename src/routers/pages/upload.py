@@ -3,14 +3,17 @@ from fastapi.responses import HTMLResponse
 import os
 from fastapi.templating import Jinja2Templates
 
-from ..dependencies import get_mapbox_secret
+from ..dependencies import get_mapbox_secret, get_manifest
 
 router = APIRouter()
 templates = Jinja2Templates(directory="src/static")
 
 
 @router.get("/upload", response_class=HTMLResponse)
-def upload(request: Request, mapbox_token: str = Depends(get_mapbox_secret)):
+def upload(
+    request: Request,
+    mapbox_token: str = Depends(get_mapbox_secret),
+):
     tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
 
     return templates.TemplateResponse(

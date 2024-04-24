@@ -72,10 +72,20 @@
       }
 
       .form-area {
-        flex: 0 0 50%;
+        flex: 0 0 20%;
         border: 1px solid #ccc;
         padding: 10px;
         margin-top: 10px;
+        display: flex;
+
+      }
+
+      .satellite-info-area {
+        flex: 0 0 25%;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 10px;
+        display: flex;
       }
 
       .indicator-area {
@@ -94,6 +104,7 @@
     </style>
   </head>
   <body>
+
     <div class="container">
       <div class="upload-and-products">
         <div class="upload-area">
@@ -132,7 +143,7 @@
       </div>
     </div>
 
-    <div class="container">
+     <div class = "container">
       <div class="form-area">
         <form id="fire-analysis-form">
           <label for="prefire">Prefire Date Range:</label><br />
@@ -178,6 +189,12 @@
           /><br />
           <input type="submit" value="Submit" />
         </form>
+      </div>
+      <div class="satellite-info-area">
+        <h3>Satellite Observations</h3>
+        <p id="n-prefire-items"></p>
+        <p id="n-postfire-items"></p>
+        <p id="latest-pass"></p>
       </div>
       <div class="indicator-area">
         <div class="grid-container">
@@ -558,6 +575,10 @@
               success: function (analysisResponse) {
                 $("#burn-analysis-loading").hide();
                 $("#burn-analysis-success").show();
+                var satellitePassInfo = JSON.parse(analysisResponse.satellite_pass_information)
+                document.getElementById('n-prefire-items').textContent = 'Number of prefire items: ' + satellitePassInfo.n_prefire_items;
+                document.getElementById('n-postfire-items').textContent = 'Number of postfire items: ' + satellitePassInfo.n_postfire_items;
+                document.getElementById('latest-pass').textContent = 'Latest pass: ' + satellitePassInfo.latest_pass;
                 successCounter++;
               },
               error: function (error) {

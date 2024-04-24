@@ -240,6 +240,14 @@ class Sentinel2Client:
         self.prefire_stack = self.arrange_stack(prefire_items)
         self.postfire_stack = self.arrange_stack(postfire_items)
 
+        return {
+            "n_prefire_passes": len(prefire_items),
+            "n_postfire_passes": len(postfire_items),
+            "latest_pass": max([item.datetime for item in postfire_items]).strftime(
+                format="%Y-%m-%d"
+            ),
+        }
+
     def calc_burn_metrics(self):
         """
         Calculates burn metrics using prefire and postfire Sentinel satellite data.

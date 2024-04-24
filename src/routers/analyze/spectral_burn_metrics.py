@@ -97,7 +97,7 @@ def main(
         geo_client = Sentinel2Client(geojson_boundary=geojson_boundary, buffer=0.1)
 
         # get imagery data before and after the fire
-        geo_client.query_fire_event(
+        satellite_pass_information = geo_client.query_fire_event(
             prefire_date_range=date_ranges["prefire"],
             postfire_date_range=date_ranges["postfire"],
             from_bbox=True,
@@ -137,6 +137,7 @@ def main(
             prefire_date_range=date_ranges["prefire"],
             postfire_date_range=date_ranges["postfire"],
             derive_boundary=derive_boundary,
+            satellite_pass_information=satellite_pass_information,
         )
         logger.info(f"Cogs uploaded for {fire_event_name}")
 
@@ -146,6 +147,7 @@ def main(
                 "message": f"Cogs uploaded for {fire_event_name}",
                 "fire_event_name": fire_event_name,
                 "derived_boundary": derived_boundary,
+                "satellite_pass_information": satellite_pass_information,
             },
         )
 
