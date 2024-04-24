@@ -76,7 +76,6 @@
         border: 1px solid #ccc;
         padding: 10px;
         margin-top: 10px;
-        display: flex;
 
       }
 
@@ -85,7 +84,6 @@
         border: 1px solid #ccc;
         padding: 10px;
         margin-top: 10px;
-        display: flex;
       }
 
       .indicator-area {
@@ -575,10 +573,11 @@
               success: function (analysisResponse) {
                 $("#burn-analysis-loading").hide();
                 $("#burn-analysis-success").show();
-                var satellitePassInfo = JSON.parse(analysisResponse.satellite_pass_information)
-                document.getElementById('n-prefire-items').textContent = 'Number of prefire items: ' + satellitePassInfo.n_prefire_items;
-                document.getElementById('n-postfire-items').textContent = 'Number of postfire items: ' + satellitePassInfo.n_postfire_items;
-                document.getElementById('latest-pass').textContent = 'Latest pass: ' + satellitePassInfo.latest_pass;
+                var satellitePassInfo = analysisResponse.satellite_pass_information;
+                console.log(satellitePassInfo)
+                document.getElementById('n-prefire-items').innerHTML = '<i>Number of prefire images: </i>' + satellitePassInfo.n_prefire_passes.toString();
+                document.getElementById('n-postfire-items').innerHTML = '<i>Number of postfire images: </i>' + satellitePassInfo.n_postfire_passes.toString();
+                document.getElementById('latest-pass').innerHTML = '<i>Latest pass obtained: </i>' + satellitePassInfo.latest_pass;
                 successCounter++;
               },
               error: function (error) {
