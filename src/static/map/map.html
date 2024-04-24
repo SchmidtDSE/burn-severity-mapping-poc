@@ -46,6 +46,9 @@
     /* TODO [#8]: Figure out sourcing for FastAPI served html */
     /* html, css, js, should obviously be seperate for legibility instead of spaghetti */
 
+    .noUi-connects {
+      height: 25px;
+    }
     /* CSS to style the colored areas of the categorical slider to match map */
     #categorical-slider .noUi-connects .noUi-connect:nth-child(4) {
       background: rgb(255, 25, 25);
@@ -163,6 +166,9 @@
       border-radius: 10px;
       background-color: #f0f0f0;
     }
+    .leaflet-panel-layers-list {
+      width: 400px !important;
+    }
   </style>
   <body>
     <div id="burn-map"></div>
@@ -173,14 +179,14 @@
     </div>
 
     <!-- Bottom right ui elements -->
-    <div id="ui-elements-bottom-right">
-      <!-- Thresholds -->
-      <div id="categorical-slider"></div>
-      <div id="continuous-slider"></div>
-    </div>
+    <!-- <div id="ui-elements-bottom-right"> -->
+    <!-- Thresholds -->
+    <!-- <div id="categorical-slider"></div> -->
+    <!-- <div id="continuous-slider"></div> -->
+    <!-- </div> -->
 
     <!-- Bottom left ui elements -->
-    <div id="ui-elements-bottom-left">
+    <!-- <div id="ui-elements-bottom-left">
       <label for="opacity-slider">Burn Severity Layer Opacity</label>
       <input
         type="range"
@@ -190,7 +196,7 @@
         value="1"
         id="opacity-slider"
       />
-    </div>
+    </div> -->
 
     <script>
       // Data from Jinja2
@@ -573,7 +579,7 @@
             // Add the burn metrics
             var metricLayers = [
                         {
-                            name: "Continuous",
+                            name: "Continuous                                                        ",
                             slider: "continuous-slider",
                             layer: {
                                 type: 'tileLayer',
@@ -607,24 +613,32 @@
             console.log("Created panel layers", baseLayers, overLayers)
             console.log("Creating metric panel layers", metricLayers)
 
-            L.control.panelLayers(null, metricLayers, {
+            var metricsPanel = L.control.panelLayers(null, metricLayers, {
                 compact: false,
                 collapsed: false,
                 collapsibleGroups: false,
-                position: 'bottomleft',
+                position: 'bottomright',
                 buildItem: function(layerItem) {
                     console.log("Building layer", layerItem)
                     var layer = layerItem.layer;
                     var name = layerItem.name;
                     var sliderType = layerItem.slider;
 
-                    var div = document.createElement('div');
+                    var parentDiv = document.createElement('div');
                     if (sliderType) {
-                        console.log("Building slider for layer", layer, name)
-                        var sliderDiv = document.createElement('div');
-                        sliderDiv.className = 'layer-slider';
+                        console.log("Building sliders for layer", layer, name)
+                        var opacitySliderDiv = document.createElement('div');
+                        opacitySliderDiv.className = 'layer-slider';
+                        opacitySliderDiv.style.height = '60px';
 
-                        noUiSlider.create(sliderDiv, {
+                        // Add "Opacity" label
+                        var opacityLabel = document.createElement('label');
+                        opacityLabel.htmlFor = sliderType;
+                        opacityLabel.innerText = 'Opacity';
+                        opacitySliderDiv.appendChild(opacityLabel);
+
+                        // Create a new div element for the slider
+                        noUiSlider.create(opacitySliderDiv, {
                             start: layer.options.opacity,
                             step: 0.01,
                             range: {
@@ -633,44 +647,51 @@
                             }
                         });
 
-                        sliderDiv.noUiSlider.on('update', function(values, handle) {
+                        opacitySliderDiv.noUiSlider.on('update', function(values, handle) {
                             layer.setOpacity(values[0]);
                         });
 
-                        return sliderDiv;
-                        // // Create a new div element for the slider
-                        // var sliderDiv = document.createElement('div');
-                        // sliderDiv.id = name + '-slider';
+                        // Append the slider to the div
+                        parentDiv.appendChild(opacitySliderDiv);
 
-                        // // Create a new noUiSlider on the div element
-                        // noUiSlider.create(sliderDiv, {
-                        //     start: [20, 80],
-                        //     connect: true,
-                        //     range: {
-                        //         'min': 0,
-                        //         'max': 100
-                        //     }
-                        // });
+                        // Create a new div element for the slider
+                        var breaksSliderDiv = document.createElement('div');
+                        breaksSliderDiv.id = name + '-slider';
 
-                        // // Add event listeners for slider updates
-                        // sliderDiv.noUiSlider.on('update', function(values, handle) {
-                        //     var url = layer._url;
-                        //     var newUrl = url.replace(/"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}/, '"thresholds":{"' + values[0] + '":250,"' + values[1] + '":175}');
-                        //     layer.setUrl(newUrl);
-                        // });
+                        // Create a new noUiSlider on the div element
+                        noUiSlider.create(breaksSliderDiv, {
+                            start: [20, 80],
+                            connect: true,
+                            range: {
+                                'min': 0,
+                                'max': 100
+                            }
+                        });
 
-                        // // Append the slider to the div
-                        // div.appendChild(sliderDiv);
-                        // // Set the div's innerText to the label
-                        // div.innerText = name || 'Unnamed Layer';
-                        // // Return the div element
-                        // return div;
+                        // Add event listeners for slider updates
+                        breaksSliderDiv.noUiSlider.on('update', function(values, handle) {
+                            var url = layer._url;
+                            var newUrl = url.replace(/"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}/, '"thresholds":{"' + values[0] + '":250,"' + values[1] + '":175}');
+                            layer.setUrl(newUrl);
+                        });
+
+                        // Append the slider to the div
+                        parentDiv.appendChild(breaksSliderDiv);
+                        // Set the div's innerText to the label
+
+                        // Return the div element
+                        return parentDiv;
                     } else {
                         // return empty node
                         return document.createElement('div');
                     }
                 },
-            }).addTo(map);
+            })
+
+            console.log("metricsPanel", metricsPanel)
+            metricsPanel.addTo(map);
+            metricsPanel.getContainer().id = 'controlMetrics';
+
 
         //   var opacitySlider = document.getElementById('opacity-slider');
 
