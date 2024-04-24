@@ -156,7 +156,7 @@
 
     .opacity-slider {
       height: 60px;
-      margin-bottom: 15%;
+      margin-bottom: 40px;
     }
 
     .breaks-slider {
@@ -309,7 +309,7 @@
 
                     // if item1 is not null, but item2 is null or blank, set item2 to (none)
                     if ((item1 !== 'null' && item1 !== '') && (item2 === 'null' || item2 === '')) {
-                        item2 = '(none)';
+                        item2 = null;
                     }
 
                     var layer = L.geoJSON(geojson, {
@@ -326,7 +326,7 @@
 
                     // Add the layer to the object using the combination as the key, in the panel format
                     var panelLayer =  {
-                        name: `${item1} - ${item2}`,
+                        name: !item2? item1 : `${item1} - ${item2}`,
                         layer: layer
                     };
 
@@ -671,6 +671,12 @@
                         breaksSliderDiv.style.height = '50px';
                         breaksSliderDiv.style.padding = '10px';
                         breaksSliderDiv.className = 'breaks-slider';
+
+                        // // Add "Thresholds" label
+                        // var thresholdLabel = document.createElement('label');
+                        // thresholdLabel.htmlFor = sliderType;
+                        // thresholdLabel.innerText = 'Thresholds';
+                        // breaksSliderDiv.appendChild(thresholdLabel);
 
                         if (sliderType === 'categorical-slider') {
                             // Create a new noUiSlider on the div element
