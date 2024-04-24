@@ -43,10 +43,24 @@
         border: 1px solid #ccc;
         padding: 20px;
       }
+
       .upload-area {
-        flex: 0 0 30%;
         border: 1px solid #ccc;
         padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      .products-area {
+        border: 1px solid #ccc;
+        padding: 10px;
+        flex-grow: 1;
+      }
+
+      .upload-and-products {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        flex: 0 0 30%;
         margin-right: 10px;
       }
 
@@ -81,9 +95,29 @@
   </head>
   <body>
     <div class="container">
-      <div class="upload-area">
-        <label for="shp_zip">Zipped Shapefile:</label><br />
-        <input type="file" id="shp_zip" name="shp_zip" /><br />
+      <div class="upload-and-products">
+        <div class="upload-area">
+            <label for="shp_zip">Zipped Shapefile:</label><br />
+            <input type="file" id="shp_zip" name="shp_zip" /><br />
+        </div>
+        <div class="products-area">
+          <div class="products">
+            <h3>Derived Products</h3>
+            <p>
+              <ul style="list-style: none">
+                <li><a id="map-rbr" href="" style="font-size: 16px; display: none;"><strong>Interactive Map of Relative Burn Ratio (RBR)</strong></a></li>
+                <li><a id="map-dnbr" href="" style="font-size: 16px; display: none"><strong>Interactive Map of Delta Normalized Burn Ratio (dNBR)</strong></a></li>
+              </ul>
+            </p>
+            <div id="products-loading" style="display: none;">
+              <img
+                class="indicator-img"
+                src="/static/upload/spinner.gif"
+              />
+            </div>
+            <div id="products-list"></div>
+          </div>
+        </div>
       </div>
       <div class="map-area">
         <div class="location-search">
@@ -221,26 +255,6 @@
         </div>
       </div>
     </div>
-
-    <div class="container">
-      <div class="products">
-        <h3>Derived Products</h3>
-        <p>
-          <ul style="list-style: none">
-            <li><a id="map-rbr" href="" style="font-size: 16px; display: none;"><strong>Interactive Map of Relative Burn Ratio (RBR)</strong></a></li>
-            <li><a id="map-dnbr" href="" style="font-size: 16px; display: none"><strong>Interactive Map of Delta Normalized Burn Ratio (dNBR)</strong></a></li>
-          </ul>
-        </p>
-        <div id="products-loading" style="display: none;">
-          <img
-            class="indicator-img"
-            src="/static/upload/spinner.gif"
-          />
-        </div>
-        <div id="products-list"></div>
-      </div>
-    </div>
-
     <script>
       // AOI Input Map
       var mapboxToken = "{{ mapbox_token }}";
