@@ -1,0 +1,3 @@
+[submodule "src/static/js/leaflet-panel-layers"]
+	path = src/static/js/leaflet-panel-layers
+	url = https://github.com/stefanocudini/leaflet-panel-layers.git
