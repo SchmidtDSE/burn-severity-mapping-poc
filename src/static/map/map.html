@@ -147,14 +147,14 @@
       background-color: #ffe875;
     }
 
-    #categorical-slider,
+    /* #categorical-slider,
     #continuous-slider {
       height: 90%;
       float: left;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
+    } */
 
     /* Style for the burn metric info div */
     .burn-metric-info {
@@ -578,37 +578,37 @@
 
             // Add the burn metrics
             var metricLayers = [
-                        {
-                            name: "Continuous                                                        ",
-                            slider: "continuous-slider",
-                            layer: {
-                                type: 'tileLayer',
-                                args: [
-                                    '{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}}',
-                                    {
-                                        maxZoom: 20,
-                                        pane: 'metrics',
-                                        opacity: 1
-                                    }
-                                ],
+                {
+                    name: "Continuous",
+                    slider: "continuous-slider",
+                    layer: {
+                        type: 'tileLayer',
+                        args: [
+                            '{{ cog_tileserver_url_prefix | safe }}&algorithm=classify&algorithm_params={"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}}',
+                            {
+                                maxZoom: 20,
+                                pane: 'metrics',
+                                opacity: 1
                             }
-                        },
-                        {
-                            name: "Classifications",
-                            slider: "categorical-slider",
-                            layer: {
-                                type: 'tileLayer',
-                                args: [
-                                    '{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"},"color":"red"}',
-                                    {
-                                        maxZoom: 20,
-                                        pane: 'metrics',
-                                        opacity: 1
-                                    }
-                                ],
+                        ],
+                    }
+                },
+                {
+                    name: "Classifications",
+                    slider: "categorical-slider",
+                    layer: {
+                        type: 'tileLayer',
+                        args: [
+                            '{{ cog_tileserver_url_prefix | safe }}&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":"-0.400","max":"0.400"},"color":"red"}',
+                            {
+                                maxZoom: 20,
+                                pane: 'metrics',
+                                opacity: 1
                             }
-                        }
-                    ]
+                        ],
+                    }
+                }
+            ]
 
             console.log("Created panel layers", baseLayers, overLayers)
             console.log("Creating metric panel layers", metricLayers)
@@ -625,11 +625,13 @@
                     var sliderType = layerItem.slider;
 
                     var parentDiv = document.createElement('div');
+                    parentDiv.style.height = '120px'
+                    parentDiv.style.padding = '10px';
+
                     if (sliderType) {
                         console.log("Building sliders for layer", layer, name)
                         var opacitySliderDiv = document.createElement('div');
                         opacitySliderDiv.className = 'layer-slider';
-                        opacitySliderDiv.style.height = '60px';
 
                         // Add "Opacity" label
                         var opacityLabel = document.createElement('label');
@@ -658,23 +660,101 @@
                         var breaksSliderDiv = document.createElement('div');
                         breaksSliderDiv.id = name + '-slider';
 
-                        // Create a new noUiSlider on the div element
-                        noUiSlider.create(breaksSliderDiv, {
-                            start: [20, 80],
-                            connect: true,
-                            range: {
-                                'min': 0,
-                                'max': 100
-                            }
-                        });
+                        if (sliderType === 'categorical-slider') {
+                            // Create a new noUiSlider on the div element
+                            noUiSlider.create(breaksSliderDiv, {
+                                start: [-.025, .125, 0.250, 0.8],
+                                connect: [true, true, true, true, false],
+                                range: {
+                                    'min': -.4,
+                                    'max': .8
+                                },
+                                step: .025,
+                                direction: 'rtl',
+                                orientation: 'horizontal',
+                                pips: {
+                                    mode: 'steps',
+                                    stepped: true,
+                                    density: 16,
+                                    format: wNumb({
+                                        decimals: 2,
+                                        to: function(value) {
+                                            // Convert to percentage from float
+                                            return (value * 100).toFixed(0) + '%';
+                                        }
+                                    }),
+                                    filter: function(value, type) {
+                                        return value % (4 * 0.025) === 0 ? 1 : -1;
+                                    }
+                                },
+                                behaviour: 'tap-drag',
+                                tooltips: true,
+                                format: wNumb({
+                                    decimals: 3
+                                }),
+                            });
 
-                        // Add event listeners for slider updates
-                        breaksSliderDiv.noUiSlider.on('update', function(values, handle) {
-                            var url = layer._url;
-                            var newUrl = url.replace(/"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}/, '"thresholds":{"' + values[0] + '":250,"' + values[1] + '":175}');
-                            layer.setUrl(newUrl);
-                        });
+                            // Add event listeners for slider updates
+                            breaksSliderDiv.noUiSlider.on('update', function(values, handle) {
+                                var thresholds = {
+                                    [values[0]]: 250,
+                                    [values[1]]: 175,
+                                    [values[2]]: 100,
+                                    [values[3]]: 25
+                                };
+                                var url = layer._url;
+                                var newUrl = url.replace(/"thresholds":{"-0.025":250,"0.125":175,"0.250":100, "0.800":25}/, '"thresholds":' + JSON.stringify(thresholds));
+                                layer.setUrl(newUrl);
+                            });
+                            breaksSliderDiv.id = "categorical-slider"
 
+                        } else if (sliderType === 'continuous-slider') {
+                            // Create a new noUiSlider on the div element
+                            noUiSlider.create(breaksSliderDiv, {
+                                start: [-.025, .4],
+                                connect: [true, true, true],
+                                range: {
+                                    'min': -.4,
+                                    'max': .8
+                                },
+                                step: .025,
+                                direction: 'rtl',
+                                orientation: 'horizontal',
+                                pips: {
+                                    mode: 'steps',
+                                    stepped: true,
+                                    density: 16,
+                                    format: wNumb({
+                                        decimals: 2,
+                                        to: function(value) {
+                                            // Convert to percentage from float
+                                            return (value * 100).toFixed(0) + '%';
+                                        }
+                                    }),
+                                    filter: function(value, type) {
+                                        return value % (4 * 0.025) === 0 ? 1 : -1;
+                                    }
+                                },
+                                behaviour: 'tap-drag',
+                                tooltips: true,
+                                format: wNumb({
+                                    decimals: 3
+                                }),
+                            });
+
+                            // Add event listeners for slider updates
+                            breaksSliderDiv.noUiSlider.on('update', function(values, handle) {
+                                var thresholds = {
+                                    min: values[0],
+                                    max: values[1]
+                                };
+                                var url = layer._url;
+                                var newUrl = url.replace(/"thresholds":{"min":"-0.400","max":"0.400"}/, '"thresholds":' + JSON.stringify(thresholds));
+                                layer.setUrl(newUrl);
+                            });
+
+                            breaksSliderDiv.id = "continuous-slider"
+                        }
                         // Append the slider to the div
                         parentDiv.appendChild(breaksSliderDiv);
                         // Set the div's innerText to the label
