@@ -20,9 +20,9 @@ jobs:
       - name: Setup Workload Identity Federation
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: "projects/113009620257/locations/global/workloadIdentityPools/github-actions/providers/oidc-provider"
+          workload_identity_provider: "projects/113009620257/locations/global/workloadIdentityPools/github-actions-prod/providers/oidc-provider-prod"
           project_id: "dse-nps"
-          service_account: "github-actions-service-account@dse-nps.iam.gserviceaccount.com"
+          service_account: "github-actions-sa-prod@dse-nps.iam.gserviceaccount.com"
 
       - name: Set environment variable for branch name
         run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
