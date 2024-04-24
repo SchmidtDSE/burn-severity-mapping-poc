@@ -147,14 +147,21 @@
       background-color: #ffe875;
     }
 
-    /* #categorical-slider,
+    #categorical-slider,
     #continuous-slider {
-      height: 90%;
-      float: left;
       display: flex;
       align-items: center;
       justify-content: center;
-    } */
+    }
+
+    .opacity-slider {
+      height: 60px;
+      margin-bottom: 15%;
+    }
+
+    .breaks-slider {
+      height: 100px;
+    }
 
     /* Style for the burn metric info div */
     .burn-metric-info {
@@ -625,13 +632,16 @@
                     var sliderType = layerItem.slider;
 
                     var parentDiv = document.createElement('div');
-                    parentDiv.style.height = '120px'
+                    parentDiv.style.height = '200px'
                     parentDiv.style.padding = '10px';
 
                     if (sliderType) {
                         console.log("Building sliders for layer", layer, name)
                         var opacitySliderDiv = document.createElement('div');
-                        opacitySliderDiv.className = 'layer-slider';
+
+                        opacitySliderDiv.className = 'opacity-slider';
+                        opacitySliderDiv.height = '90%';
+                        opacitySliderDiv.style.padding = '10px';
 
                         // Add "Opacity" label
                         var opacityLabel = document.createElement('label');
@@ -658,7 +668,9 @@
 
                         // Create a new div element for the slider
                         var breaksSliderDiv = document.createElement('div');
-                        breaksSliderDiv.id = name + '-slider';
+                        breaksSliderDiv.style.height = '50px';
+                        breaksSliderDiv.style.padding = '10px';
+                        breaksSliderDiv.className = 'breaks-slider';
 
                         if (sliderType === 'categorical-slider') {
                             // Create a new noUiSlider on the div element
@@ -670,7 +682,7 @@
                                     'max': .8
                                 },
                                 step: .025,
-                                direction: 'rtl',
+                                direction: 'ltr',
                                 orientation: 'horizontal',
                                 pips: {
                                     mode: 'steps',
