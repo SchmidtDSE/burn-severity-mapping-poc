@@ -464,6 +464,7 @@
         if ($("#shp_zip").prop("disabled")) {
           // Get the drawn shape
           var drawnGeojson = editableLayers.toGeoJSON();
+          console.log(drawnGeojson);
           formData.append("geojson", JSON.stringify(drawnGeojson));
           var deriveBoundary = true;
 
