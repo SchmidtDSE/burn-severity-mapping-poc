@@ -35,6 +35,7 @@ dependencies:
   - smart_open
   - sentry-sdk[fastapi]
   - sphinx
+  - sklearn
   - pip:
       - titiler.core
       - python-multipart
