@@ -9,14 +9,14 @@ from abc import ABC, abstractmethod
 ## THRESHOLDING STRATEGIES
 class ThresholdingStrategy(ABC):
     @abstractmethod
-    def apply(self, metrics_layer):
+    def apply(self, metric_layer):
         pass
 
 
 class OtsuThreshold(ThresholdingStrategy):
-    def apply(self, metrics_layer):
-        threshold = threshold_otsu(metrics_layer)
-        burn_mask = metrics_layer.where(metrics_layer >= threshold, 1, 0)
+    def apply(self, metric_layer):
+        threshold = threshold_otsu(metric_layer)
+        burn_mask = metric_layer.where(metric_layer >= threshold, 1, 0)
         return burn_mask
 
 
@@ -24,8 +24,8 @@ class SimpleThreshold(ThresholdingStrategy):
     def __init__(self, threshold=0.5):
         self.threshold = threshold
 
-    def apply(self, metrics_layer):
-        burn_mask = metrics_layer.where(metrics_layer >= self.threshold, 1, 0)
+    def apply(self, metric_layer):
+        burn_mask = metric_layer.where(metric_layer >= self.threshold, 1, 0)
         return burn_mask
 
 
@@ -52,12 +52,12 @@ class FloodFillSegmentation(SegmentationStrategy):
 
 
 def derive_boundary(
-    metrics_layer,
+    metric_layer,
     thresholding_strategy=OtsuThreshold(),
     segmentation_strategy=FloodFillSegmentation(),
 ):
 
-    burn_boundary_raster = thresholding_strategy.apply(metrics_layer)
+    burn_boundary_raster = thresholding_strategy.apply(metric_layer)
 
     burn_boundary_raster_postprocessed = postprocess_burn_mask(
         burn_boundary_raster, fill_holes=True, smooth=True, buffer=True

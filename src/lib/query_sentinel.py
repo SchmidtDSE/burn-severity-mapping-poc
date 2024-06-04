@@ -1,7 +1,7 @@
 import requests
 import geopandas as gpd
 import rasterio.features
-from shapely.geometry import shape, MultiPolygon
+from shapely.geometry import shape, MultiPolygon, Point
 from shapely.ops import unary_union
 from pystac_client import Client as PystacClient
 from datetime import datetime
@@ -16,7 +16,12 @@ import os
 from .burn_severity import calc_burn_metrics, classify_burn
 from ..util.raster_to_poly import raster_mask_to_geojson
 from src.util.cloud_static_io import CloudStaticIOClient
-from src.lib.derive_boundary import derive_boundary
+from src.lib.derive_boundary import (
+    derive_boundary,
+    OtsuThreshold,
+    SimpleThreshold,
+    FloodFillSegmentation,
+)
 
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
@@ -302,13 +307,7 @@ class Sentinel2Client:
                 dim="classification_source",
             )
 
-    def derive_boundary(
-        self,
-        metric_name="rbr",
-        inplace=True,
-        derive_type="otsu",
-        threshold_kwargs={},
-    ):
+    def derive_boundary(self, metric_name="rbr", inplace=True):
         """
         Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
         This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as `boundary.geojson`
@@ -322,10 +321,14 @@ class Sentinel2Client:
             None
         """
 
+        test_point = Point(10, 10)
+
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
         boundary_geojson = derive_boundary(
-            metric_layer, threshold=threshold, derive_type=derive_type
+            metric_layer,
+            thresholding_strategy=OtsuThreshold(),
+            segmeentation_strategy=FloodFillSegmentation(seed_location=test_point),
         )
 
         if not boundary_geojson:
