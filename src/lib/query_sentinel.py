@@ -16,6 +16,8 @@ import os
 from .burn_severity import calc_burn_metrics, classify_burn
 from ..util.raster_to_poly import raster_mask_to_geojson
 from src.util.cloud_static_io import CloudStaticIOClient
+from src.lib.derive_boundary import derive_boundary
+
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 
@@ -300,7 +302,13 @@ class Sentinel2Client:
                 dim="classification_source",
             )
 
-    def derive_boundary(self, metric_name="rbr", threshold=0.025, inplace=True):
+    def derive_boundary(
+        self,
+        metric_name="rbr",
+        inplace=True,
+        derive_type="otsu",
+        threshold_kwargs={},
+    ):
         """
         Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
         This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as `boundary.geojson`
@@ -313,35 +321,12 @@ class Sentinel2Client:
         Returns:
             None
         """
+
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
-        # Threshold the metric layer to get a binary boundary
-        binary_mask = metric_layer.where(metric_layer >= threshold, 0)
-        binary_mask = binary_mask.where(binary_mask == 0, 1)
-
-        # Smooth the boundary, removing small artifacts
-        filled_mask = binary_fill_holes(binary_mask)
-        smoothed_mask = gaussian_filter(filled_mask, sigma=1)
-        buffered_mask = binary_dilation(smoothed_mask, iterations=1)
-        int_mask = buffered_mask.astype(int)
-
-        # Convert back to a DataArray
-        boundary_xr = xr.DataArray(
-            int_mask,
-            coords=metric_layer.coords,
-            dims=metric_layer.dims,
-            attrs=metric_layer.attrs,
+        boundary_geojson = derive_boundary(
+            metric_layer, threshold=threshold, derive_type=derive_type
         )
-        boundary_xr.rio.write_crs(metric_layer.rio.crs, inplace=True)
-
-        # Convert to geojson
-        # TODO [#18]: More robust conversion from raster to poly
-        # This seems overcomplicated for what a simple polygonize should do, but near as I can tell
-        # there is no out of the box solution in xarray/rioxarray for this. This seems like something we
-        # will do regularly, so we should probably make a util function for it and understand why it's
-        # not a built-in method... must have more complications than I realize currently.
-
-        boundary_geojson = raster_mask_to_geojson(boundary_xr)
 
         if not boundary_geojson:
             raise NoFireBoundaryDetectedError(
