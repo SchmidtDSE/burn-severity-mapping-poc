@@ -72,17 +72,19 @@ def derive_boundary(
     return burn_boundary_polygon
 
 
-def postprocess_burn_mask(burn_mask, fill_holes=True, smooth=True, buffer=True):
+def postprocess_burn_mask(
+    burn_mask, fill_holes=False, smooth_sigma=None, buffer_iterations=None
+):
     # Fill holes in the burn mask
     if fill_holes:
         burn_mask = binary_fill_holes(burn_mask)
 
     # Smooth the boundary, removing small artifacts
-    if smooth:
-        burn_mask = gaussian_filter(burn_mask, sigma=1)
+    if smooth_sigma:
+        burn_mask = gaussian_filter(burn_mask, sigma=smooth_sigma)
 
     # Buffer the boundary to ensure it is continuous
-    if buffer:
-        burn_mask = binary_dilation(burn_mask, iterations=1)
+    if buffer_iterations:
+        burn_mask = binary_dilation(burn_mask, iterations=buffer_iterations)
 
     return burn_mask
