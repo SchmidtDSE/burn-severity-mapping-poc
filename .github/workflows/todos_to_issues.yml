@@ -1,16 +1,19 @@
-name: Track TODOs as Issues
-on:
-  push:
-    branches:
-      - dev
+### NOTE: Disabled for now, since we are not paying for the MongoDB Atlas cluster -
+### probably should just self-host it but not really necessary at the moment for just this repo
 
-jobs:
-  todos:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - name: todo-actions
-        uses: dtinth/todo-actions@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TODO_ACTIONS_MONGO_URL: ${{ secrets.TODO_ACTIONS_MONGO_URL }}
+# name: Track TODOs as Issues
+# on:
+#   push:
+#     branches:
+#       - dev
+
+# jobs:
+#   todos:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v1
+#       - name: todo-actions
+#         uses: dtinth/todo-actions@master
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           TODO_ACTIONS_MONGO_URL: ${{ secrets.TODO_ACTIONS_MONGO_URL }}
