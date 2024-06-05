@@ -22,13 +22,22 @@ from src.lib.derive_boundary import (
     SimpleThreshold,
     FloodFillSegmentation,
 )
-
+from pyproj import CRS
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 
 
 class NoFireBoundaryDetectedError(BaseException):
     pass
+
+
+class PointWithCRS:
+    def __init__(self, x, y, crs):
+        self.location = Point(x, y)
+        self.crs = CRS(crs)
+
+    def to_geojson(self):
+        return gpd.GeoDataFrame(geometry=[self.location], crs=self.crs).to_json()
 
 
 class Sentinel2Client:
@@ -321,14 +330,19 @@ class Sentinel2Client:
             None
         """
 
-        test_point = Point(10, 10)
+        # For now, hard code that the chosen point is basically the center of the given AOI
+        test_point = PointWithCRS(
+            x=self.geojson_boundary.centroid.x,
+            y=self.geojson_boundary.centroid.y,
+            crs=self.geojson_boundary.crs,
+        )
 
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
         boundary_geojson = derive_boundary(
             metric_layer,
             thresholding_strategy=OtsuThreshold(),
-            segmeentation_strategy=FloodFillSegmentation(seed_location=test_point),
+            segmentation_strategy=FloodFillSegmentation(seed_location=test_point),
         )
 
         if not boundary_geojson:
