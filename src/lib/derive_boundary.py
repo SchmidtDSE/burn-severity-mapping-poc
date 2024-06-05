@@ -71,8 +71,10 @@ def derive_boundary(
     if no_interior_nan_detected:
         # In this case, we aren't missing interior unburned islands, but we still want the original
         # shape preserved so we can use the mask to fill in the holes later and re-apply the spatial
-        # information to the final boundary
-        metric_values = np.nan_to_num(metric_layer.values, 0)
+        # information to the final boundary. We are replacing NaNs with the mean of the metric layer,
+        # so that we minimize the leverage of these points in the thresholding process. We will
+        # mask them out later.
+        metric_values = np.nan_to_num(metric_layer.values, np.mean(metric_layer.values))
     else:
         # In this case, we MAY be missing interior unburned islands
         # if we proceed. For now we just want to raise an error, but
