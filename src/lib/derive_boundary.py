@@ -17,7 +17,7 @@ class ThresholdingStrategy(ABC):
 class OtsuThreshold(ThresholdingStrategy):
     def apply(self, metric_values):
         threshold = threshold_otsu(metric_values)
-        burn_mask = metric_values.where(metric_values >= threshold, 1, 0)
+        burn_mask = (metric_values >= threshold).astype(int)
         return burn_mask
 
 
@@ -26,7 +26,7 @@ class SimpleThreshold(ThresholdingStrategy):
         self.threshold = threshold
 
     def apply(self, metric_values):
-        burn_mask = metric_values.where(metric_values >= self.threshold, 1, 0)
+        burn_mask = (metric_values >= self.threshold).astype(int)
         return burn_mask
 
 
