@@ -54,7 +54,7 @@ class FloodFillSegmentation(SegmentationStrategy):
 def derive_boundary(
     metric_layer,
     thresholding_strategy=OtsuThreshold(),
-    segmentation_strategy=FloodFillSegmentation(),
+    segmentation_strategy=FloodFillSegmentation(seed_location=(0, 0)),
 ):
 
     burn_boundary_raster = thresholding_strategy.apply(metric_layer)
