@@ -62,18 +62,22 @@ def derive_boundary(
     ## at the outside edge of the metric layer - not an issue to replace with 0 in this case
     ## but zeros inside the image will be erroneously identified as unburned islands which is
     ## a big problem.
-    metric_nan_mask = np.isnan(metric_layer.values)
-    metric_nan_cleared = clear_border(metric_layer.values, mask=metric_nan_mask)
+    metric_values_exist_binary = np.where(np.isnan(metric_layer.values), 0, 1)
+    interior_nan_filled = binary_fill_holes(metric_values_exist_binary)
+    no_interior_nan_detected = np.array_equal(
+        interior_nan_filled, metric_values_exist_binary
+    )
 
-    if np.any(np.isnan(metric_nan_cleared)):
-        # In this case, we MAY be missing interior unburned islands
-        # if we proceed
-        raise ValueError("NaN values in metric layer")
-    else:
+    if no_interior_nan_detected:
         # In this case, we aren't missing interior unburned islands, but we still want the original
         # shape preserved so we can use the mask to fill in the holes later and re-apply the spatial
         # information to the final boundary
         metric_values = np.nan_to_num(metric_layer.values, 0)
+    else:
+        # In this case, we MAY be missing interior unburned islands
+        # if we proceed. For now we just want to raise an error, but
+        # later we may need to be robust to this
+        raise ValueError("NaN values within interior of metric layer")
 
     burn_boundary_raster = thresholding_strategy.apply(metric_values)
 
