@@ -77,7 +77,7 @@ class FloodFillSegmentation(SegmentationStrategy):
             segmented_burns = np.logical_or(segmented_burns, burn_boundary_segmented)
 
         metric_layer["disturbed"] = xr.DataArray(
-            segmented_burns.astype(bool),
+            [segmented_burns.astype(bool)],
             dims=metric_layer.dims,
             coords=metric_layer.coords,
         )

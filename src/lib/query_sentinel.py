@@ -323,7 +323,7 @@ class Sentinel2Client:
         print("Deriving boundary using metric: {}".format(metric_name))
 
         # For now, hard code that the chosen point is basically the center of the given AOI
-        jitter_amount = 0.01
+        jitter_amount = 0.0001
 
         seed_points = gpd.GeoDataFrame(
             geometry=[
