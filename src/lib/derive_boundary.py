@@ -67,6 +67,8 @@ class FloodFillSegmentation(SegmentationStrategy):
             if disturbed_layer_int[seed_point_tuple] == 0:
                 continue
 
+            # Flood fill the burn boundary from the seed point, and combine with
+            # the existing segmented burns from other seed points
             burn_boundary_segmented = flood_fill(
                 image=disturbed_layer_int,
                 seed_point=seed_point_tuple,
