@@ -18,9 +18,9 @@ class OtsuThreshold(ThresholdingStrategy):
 
     def apply(self, metric_layer):
         threshold = threshold_otsu(metric_layer.values)
-        metric_layer.expand_dims(dim="burned")
-        metric_layer["burned"] = xr.DataArray(
-            np.where(metric_layer.values > threshold, False, True),
+        metric_layer.expand_dims(dim="disturbed")
+        metric_layer["disturbed"] = xr.DataArray(
+            np.where(metric_layer.values > threshold, True, False),
             dims=metric_layer.dims,
             coords=metric_layer.coords,
         )
@@ -35,7 +35,7 @@ class SimpleThreshold(ThresholdingStrategy):
     def apply(self, metric_layer):
         metric_layer.expand_dims(dim="disturbed")
         metric_layer["disturbed"] = xr.DataArray(
-            np.where(metric_layer.values > self.threshold, False, True),
+            np.where(metric_layer.values > self.threshold, True, False),
             dims=metric_layer.dims,
             coords=metric_layer.coords,
         )
@@ -51,26 +51,34 @@ class SegmentationStrategy(ABC):
 
 
 class FloodFillSegmentation(SegmentationStrategy):
-    def __init__(self, seed_location=None):
-        self.seed_location = seed_location
-
-    def set_seed_location(self, seed_location):
-        self.seed_location = seed_location
-
     def apply(self, metric_layer):
-        disturbed_layer_int = metric_layer["disturbed"].values.astype(int)
-        seed_location_layer = metric_layer["seed"]
+        disturbed_layer_int = metric_layer["disturbed"].values.astype(np.int8)[0, :, :]
+        seed_locations = np.where(metric_layer["seed"].values[0, :, :])
 
-        burn_boundary_segmented = flood_fill(
-            image=disturbed_layer_int, seed_point=self.seed_location, new_value=0
-        )
+        segmented_burns = np.full_like(disturbed_layer_int, fill_value=False)
+        for seed_location in seed_locations:
+
+            # Skimage needs the seed point as a tuple, for some reason
+            seed_point_tuple = tuple(seed_location.tolist())
+            print(f"Processing seed point: {seed_point_tuple}")
+
+            # Skip if the seed point is not in the burn boundary, so we don't
+            # get the negative space of the burn boundary
+            if disturbed_layer_int[seed_point_tuple] == 0:
+                continue
+
+            burn_boundary_segmented = flood_fill(
+                image=disturbed_layer_int,
+                seed_point=seed_point_tuple,
+                new_value=True,
+            )
+            segmented_burns = np.logical_or(segmented_burns, burn_boundary_segmented)
 
         return burn_boundary_segmented
 
 
 def derive_boundary(
     metric_layer,
-    seed_locations=None,
     thresholding_strategy=OtsuThreshold(),
     segmentation_strategy=FloodFillSegmentation(),
 ):
