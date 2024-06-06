@@ -76,7 +76,12 @@ class FloodFillSegmentation(SegmentationStrategy):
             )
             segmented_burns = np.logical_or(segmented_burns, burn_boundary_segmented)
 
-        return burn_boundary_segmented
+        metric_layer["disturbed"] = xr.DataArray(
+            segmented_burns.astype(bool),
+            dims=metric_layer.dims,
+            coords=metric_layer.coords,
+        )
+        return metric_layer
 
 
 def derive_boundary(
@@ -120,7 +125,9 @@ def derive_boundary(
         burn_boundary_raster_postprocessed
     )
 
-    burn_boundary_polygon = raster_mask_to_geojson(burn_boundary_raster_segmented)
+    burn_boundary_polygon = raster_mask_to_geojson(
+        burn_boundary_raster_segmented["disturbed"]
+    )
 
     return burn_boundary_polygon
 
