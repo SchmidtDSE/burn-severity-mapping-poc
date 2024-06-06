@@ -15,19 +15,30 @@ class ThresholdingStrategy(ABC):
 
 
 class OtsuThreshold(ThresholdingStrategy):
-    def apply(self, metric_values):
-        threshold = threshold_otsu(metric_values)
-        burn_mask = (metric_values >= threshold).astype(int)
-        return burn_mask
+
+    def apply(self, metric_layer):
+        threshold = threshold_otsu(metric_layer.values)
+        metric_layer.expand_dims(dim="burned")
+        metric_layer["burned"] = xr.DataArray(
+            np.where(metric_layer.values > threshold, False, True),
+            dims=metric_layer.dims,
+            coords=metric_layer.coords,
+        )
 
 
 class SimpleThreshold(ThresholdingStrategy):
     def __init__(self, threshold=0.5):
         self.threshold = threshold
 
-    def apply(self, metric_values):
-        burn_mask = (metric_values >= self.threshold).astype(int)
-        return burn_mask
+    def apply(self, metric_layer):
+        metric_layer.expand_dims(dim="disturbed")
+        metric_layer["disturbed"] = xr.DataArray(
+            np.where(metric_layer.values > self.threshold, False, True),
+            dims=metric_layer.dims,
+            coords=metric_layer.coords,
+        )
+
+        return metric_layer
 
 
 ## SEGMENTATION STRATEGIES
@@ -38,15 +49,18 @@ class SegmentationStrategy(ABC):
 
 
 class FloodFillSegmentation(SegmentationStrategy):
-    def __init__(self, seed_location):
+    def __init__(self, seed_location=None):
         self.seed_location = seed_location
 
-    def apply(self, burn_boundary_raster):
-        assert self.seed_location.crs == burn_boundary_raster.rio.crs
+    def set_seed_location(self, seed_location):
+        self.seed_location = seed_location
 
-        burn_boundary_raster_int = burn_boundary_raster.astype(int)
+    def apply(self, metric_layer):
+        disturbed_layer_int = metric_layer["disturbed"].values.astype(int)
+        seed_location_layer = metric_layer["seed"]
+
         burn_boundary_segmented = flood_fill(
-            burn_boundary_raster_int, self.seed_location
+            image=disturbed_layer_int, seed_point=self.seed_location, new_value=0
         )
 
         return burn_boundary_segmented
@@ -54,8 +68,9 @@ class FloodFillSegmentation(SegmentationStrategy):
 
 def derive_boundary(
     metric_layer,
+    seed_locations=None,
     thresholding_strategy=OtsuThreshold(),
-    segmentation_strategy=FloodFillSegmentation(seed_location=(0, 0)),
+    segmentation_strategy=FloodFillSegmentation(),
 ):
 
     ## TODO: Some part of the spectral index process is creating a buffer of NaN
@@ -74,17 +89,19 @@ def derive_boundary(
         # information to the final boundary. We are replacing NaNs with the mean of the metric layer,
         # so that we minimize the leverage of these points in the thresholding process. We will
         # mask them out later.
-        metric_values = np.nan_to_num(metric_layer.values, np.mean(metric_layer.values))
+        metric_layer.values = np.nan_to_num(
+            metric_layer.values, np.mean(metric_layer.values)
+        )
     else:
         # In this case, we MAY be missing interior unburned islands
         # if we proceed. For now we just want to raise an error, but
         # later we may need to be robust to this
         raise ValueError("NaN values within interior of metric layer")
 
-    burn_boundary_raster = thresholding_strategy.apply(metric_values)
+    burn_boundary_raster = thresholding_strategy.apply(metric_layer)
 
     burn_boundary_raster_postprocessed = postprocess_burn_mask(
-        burn_boundary_raster, fill_holes=True, smooth=True, buffer=True
+        burn_boundary_raster, fill_holes=True, smooth_sigma=1, buffer_iterations=1
     )
 
     burn_boundary_raster_segmented = segmentation_strategy.apply(
@@ -99,16 +116,21 @@ def derive_boundary(
 def postprocess_burn_mask(
     burn_mask, fill_holes=False, smooth_sigma=None, buffer_iterations=None
 ):
+    burn_mask_values = burn_mask.values
+
     # Fill holes in the burn mask
     if fill_holes:
-        burn_mask = binary_fill_holes(burn_mask)
+        burn_mask_values = binary_fill_holes(burn_mask_values)
 
     # Smooth the boundary, removing small artifacts
     if smooth_sigma:
-        burn_mask = gaussian_filter(burn_mask, sigma=smooth_sigma)
+        burn_mask_values = gaussian_filter(burn_mask_values, sigma=smooth_sigma)
 
     # Buffer the boundary to ensure it is continuous
     if buffer_iterations:
-        burn_mask = binary_dilation(burn_mask, iterations=buffer_iterations)
+        burn_mask_values = binary_dilation(
+            burn_mask_values, iterations=buffer_iterations
+        )
 
+    burn_mask.values = burn_mask_values
     return burn_mask

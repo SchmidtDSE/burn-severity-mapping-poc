@@ -31,15 +31,6 @@ class NoFireBoundaryDetectedError(BaseException):
     pass
 
 
-class PointWithCRS:
-    def __init__(self, x, y, crs):
-        self.location = Point(x, y)
-        self.crs = CRS(crs)
-
-    def to_geojson(self):
-        return gpd.GeoDataFrame(geometry=[self.location], crs=self.crs).to_json()
-
-
 class Sentinel2Client:
     def __init__(
         self,
@@ -329,20 +320,47 @@ class Sentinel2Client:
         Returns:
             None
         """
+        print("Deriving boundary using metric: {}".format(metric_name))
 
         # For now, hard code that the chosen point is basically the center of the given AOI
-        test_point = PointWithCRS(
-            x=self.geojson_boundary.centroid.x,
-            y=self.geojson_boundary.centroid.y,
-            crs=self.geojson_boundary.crs,
+        jitter_amount = 0.01
+
+        seed_points = gpd.GeoDataFrame(
+            geometry=[
+                Point(
+                    self.geojson_boundary.centroid.values[0].x
+                    + np.random.normal(0, jitter_amount),
+                    self.geojson_boundary.centroid.values[0].y
+                    + np.random.normal(0, jitter_amount),
+                ),
+                Point(
+                    self.geojson_boundary.centroid.values[0].x
+                    + np.random.normal(0, jitter_amount),
+                    self.geojson_boundary.centroid.values[0].y
+                    + np.random.normal(0, jitter_amount),
+                ),
+            ]
         )
 
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
+        if seed_points:
+            # Add a dim called 'seed' to denote whether the pixel is a seed point
+            metric_layer = metric_layer.expand_dims(dim="seed")
+            metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)
+
+            for point in seed_points.geometry:
+                nearest_pixel = metric_layer.sel(x=point.x, y=point.y, method="nearest")
+                nearest_pixel_x = nearest_pixel.x.values
+                nearest_pixel_y = nearest_pixel.y.values
+                metric_layer["seed"].loc[dict(x=nearest_pixel_x, y=nearest_pixel_y)] = (
+                    True
+                )
+
         boundary_geojson = derive_boundary(
-            metric_layer,
+            metric_layer=metric_layer,
             thresholding_strategy=OtsuThreshold(),
-            segmentation_strategy=FloodFillSegmentation(seed_location=test_point),
+            segmentation_strategy=FloodFillSegmentation(),
         )
 
         if not boundary_geojson:

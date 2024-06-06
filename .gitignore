@@ -15,3 +15,8 @@ gha-creds-*.json
 
 # Ignore massive segmentanything .pth used for exploratory
 exploratory/sam_*
+
+# throwaway test files
+tst.*
+tst/*
+*/tst.*
