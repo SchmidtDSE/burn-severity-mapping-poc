@@ -344,7 +344,7 @@ class Sentinel2Client:
 
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
-        if seed_points:
+        if seed_points is not None:
             # Add a dim called 'seed' to denote whether the pixel is a seed point
             metric_layer = metric_layer.expand_dims(dim="seed")
             metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)

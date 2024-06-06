@@ -25,6 +25,8 @@ class OtsuThreshold(ThresholdingStrategy):
             coords=metric_layer.coords,
         )
 
+        return metric_layer
+
 
 class SimpleThreshold(ThresholdingStrategy):
     def __init__(self, threshold=0.5):
