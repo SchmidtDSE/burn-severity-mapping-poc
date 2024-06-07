@@ -156,7 +156,7 @@ def test_derive_boundary(test_geojson, test_3d_valid_xarray_epsg_4326):
     initial_boundary = client.geojson_boundary
 
     # Call the derive_boundary method
-    client.derive_boundary(metric_name="rbr", threshold=0.025)
+    client.derive_boundary(metric_name="rbr")
 
     # Check that the boundary was updated
     assert all(

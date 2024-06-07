@@ -90,6 +90,26 @@ class Sentinel2Client:
             geojson_bbox[3].round(decimals=2) + self.buffer,
         ]
 
+    def ingest_metrics_stack(self, metrics_stack):
+        """
+        Ingests the metrics stack and checks for the required metrics.
+
+        Args:
+            metrics_stack (dict): The metrics stack.
+
+        Raises:
+            ValueError: If a required metric is missing from the metrics stack.
+        """
+        required_metrics = ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]
+
+        for metric in required_metrics:
+            if metric not in metrics_stack:
+                raise ValueError(
+                    f"Required metric '{metric}' is missing from the metrics stack."
+                )
+
+        self.metrics_stack = metrics_stack
+
     def get_items(self, date_range, from_bbox=True, max_items=None):
         """
         Retrieves items from the Sentinel-2-L2A collection based on the specified date range and optional parameters.

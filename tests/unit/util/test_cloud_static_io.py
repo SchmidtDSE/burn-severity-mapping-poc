@@ -26,6 +26,11 @@ def test_upload_fire_event(
     postfire_date_range = "test_postfire_range"
     affiliation = "test_affiliation"
     derive_boundary = "test_boundary"
+    satellite_pass_information = {
+        "n_prefire_passes": 4,
+        "n_postfire_passes": 4,
+        "latest_pass": "2021-01-01",
+    }
 
     # Call upload_fire_event
     client.upload_fire_event(
@@ -35,6 +40,7 @@ def test_upload_fire_event(
         postfire_date_range,
         affiliation,
         derive_boundary,
+        satellite_pass_information=satellite_pass_information,
     )
 
     # Assert that __init__, upload_cogs and update_manifest were called with the correct arguments
@@ -51,6 +57,7 @@ def test_upload_fire_event(
         postfire_date_range=postfire_date_range,
         affiliation=affiliation,
         derive_boundary=derive_boundary,
+        satellite_pass_information=satellite_pass_information,
     )
 
 
@@ -186,6 +193,11 @@ def test_update_manifest(
     postfire_date_range = "test_postfire_range"
     affiliation = "test_affiliation"
     derive_boundary = "test_boundary"
+    satellite_pass_information = {
+        "n_prefire_passes": 4,
+        "n_postfire_passes": 4,
+        "latest_pass": "2021-01-01",
+    }
 
     # Mock the return value of get_manifest
     mock_get_manifest.return_value = {}
@@ -198,6 +210,7 @@ def test_update_manifest(
         postfire_date_range,
         affiliation,
         derive_boundary,
+        satellite_pass_information,
     )
 
     # Assert that __init__, get_manifest, json.dump and upload were called with the correct arguments

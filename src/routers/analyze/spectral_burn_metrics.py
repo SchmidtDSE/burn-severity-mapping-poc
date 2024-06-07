@@ -6,7 +6,8 @@ from pydantic import BaseModel
 import tempfile
 import sentry_sdk
 import json
-
+import rioxarray as rxr
+import xarray as xr
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
 from src.lib.query_sentinel import Sentinel2Client, NoFireBoundaryDetectedError
 from src.util.cloud_static_io import CloudStaticIOClient
@@ -87,28 +88,47 @@ def main(
     derive_boundary,
     logger,
     cloud_static_io_client,
+    use_existing_metrics_stack=False,
 ):
     ## NOTE: derive_boundary is accepted for now to maintain compatibility with the frontend,
     ## but will shortly be a different endpoint
 
     logger.info(f"Received analyze-fire-event request for {fire_event_name}")
     derived_boundary = None
+    satellite_pass_information = None
 
     try:
         # create a Sentinel2Client instance
         geo_client = Sentinel2Client(geojson_boundary=geojson_boundary, buffer=0.1)
 
-        # get imagery data before and after the fire
-        satellite_pass_information = geo_client.query_fire_event(
-            prefire_date_range=date_ranges["prefire"],
-            postfire_date_range=date_ranges["postfire"],
-            from_bbox=True,
-        )
-        logger.info(f"Obtained imagery for {fire_event_name}")
+        if not use_existing_metrics_stack:
+            # get imagery data before and after the fire
+            satellite_pass_information = geo_client.query_fire_event(
+                prefire_date_range=date_ranges["prefire"],
+                postfire_date_range=date_ranges["postfire"],
+                from_bbox=True,
+            )
+            logger.info(f"Obtained imagery for {fire_event_name}")
 
-        # calculate burn metrics
-        geo_client.calc_burn_metrics()
-        logger.info(f"Calculated burn metrics for {fire_event_name}")
+            # calculate burn metrics
+            geo_client.calc_burn_metrics()
+            logger.info(f"Calculated burn metrics for {fire_event_name}")
+
+        else:
+            for metric_name in ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]:
+                metrics_layers = []
+                with tempfile.NamedTemporaryFile(suffix=".tiff", delete=False) as tmp:
+                    tmp_tiff = tmp.name
+                    cloud_static_io_client.download(
+                        source_remote_path=f"public/{affiliation}/{fire_event_name}/{metric_name}.tif",
+                        target_local_path=tmp_tiff,
+                    )
+                    metrics_layers.append(rxr.open_rasterio(tmp_tiff, masked=True))
+
+            existing_metrics_stack = xr.concat(metrics_layers, dim="band")
+            geo_client.ingest_metrics_stack(existing_metrics_stack)
+
+            logger.info(f"Loaded existing metrics stack for {fire_event_name}")
 
         # if derive_boundary:
         #     # Derive a boundary from the imagery
@@ -153,14 +173,14 @@ def main(
             },
         )
 
-    except NoFireBoundaryDetectedError as e:
-        logger.info(f"No Fire Boundary Detected for fire event {fire_event_name}")
-        return JSONResponse(
-            status_code=204,
-            content={
-                "message": f"No Fire Boundary Detected for fire event {fire_event_name}"
-            },
-        )
+    # except NoFireBoundaryDetectedError as e:
+    #     logger.info(f"No Fire Boundary Detected for fire event {fire_event_name}")
+    #     return JSONResponse(
+    #         status_code=204,
+    #         content={
+    #             "message": f"No Fire Boundary Detected for fire event {fire_event_name}"
+    #         },
+    #     )
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
