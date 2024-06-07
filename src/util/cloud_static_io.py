@@ -341,7 +341,7 @@ class CloudStaticIOClient:
         postfire_date_range,
         affiliation,
         derive_boundary,
-        satellite_pass_information
+        satellite_pass_information,
     ):
         """
         Updates the manifest with the given fire event information for the specified affiliation. If the fire event
@@ -376,7 +376,7 @@ class CloudStaticIOClient:
                 "postfire_date_range": postfire_date_range,
                 "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "derive_boundary": derive_boundary,
-                "satellite_pass_information": derive_boundary,
+                "satellite_pass_information": satellite_pass_information,
             }
 
             # Upload the manifest to our SFTP server
@@ -387,6 +387,20 @@ class CloudStaticIOClient:
                 source_local_path=tmp_manifest_path, remote_path="manifest.json"
             )
             self.logger.info(f"Uploaded/updated manifest.json")
+
+    def upload_approx_aoi_metrics(
+        self,
+        metrics_stack,
+        fire_event_name,
+        affiliation,
+    ):
+        self.logger.info(f"Uploading approx AOI metrics for {fire_event_name}")
+
+        self.upload_cogs(
+            metrics_stack=metrics_stack,
+            fire_event_name=fire_event_name,
+            affiliation=affiliation,
+        )
 
     def upload_fire_event(
         self,
