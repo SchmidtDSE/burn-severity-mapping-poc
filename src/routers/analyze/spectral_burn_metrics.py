@@ -88,6 +88,8 @@ def main(
     logger,
     cloud_static_io_client,
 ):
+    ## NOTE: derive_boundary is accepted for now to maintain compatibility with the frontend,
+    ## but will shortly be a different endpoint
 
     logger.info(f"Received analyze-fire-event request for {fire_event_name}")
     derived_boundary = None
@@ -108,26 +110,26 @@ def main(
         geo_client.calc_burn_metrics()
         logger.info(f"Calculated burn metrics for {fire_event_name}")
 
-        if derive_boundary:
-            # Derive a boundary from the imagery
-            # TODO [#16]: Derived boundary hardcoded for rbr / .025 threshold
-            # Not sure yet but we will probably want to make this configurable
-            geo_client.derive_boundary("rbr", 0.025)
-            logger.info(f"Derived boundary for {fire_event_name}")
+        # if derive_boundary:
+        #     # Derive a boundary from the imagery
+        #     # TODO [#16]: Derived boundary hardcoded for rbr / .025 threshold
+        #     # Not sure yet but we will probably want to make this configurable
+        #     geo_client.derive_boundary("rbr", 0.025)
+        #     logger.info(f"Derived boundary for {fire_event_name}")
 
-            # Upload the derived boundary
-            with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-                tmp_geojson = tmp.name
-                with open(tmp_geojson, "w") as f:
-                    f.write(geo_client.geojson_boundary.to_json())
+        #     # Upload the derived boundary
+        #     with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+        #         tmp_geojson = tmp.name
+        #         with open(tmp_geojson, "w") as f:
+        #             f.write(geo_client.geojson_boundary.to_json())
 
-                cloud_static_io_client.upload(
-                    source_local_path=tmp_geojson,
-                    remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
-                )
+        #         cloud_static_io_client.upload(
+        #             source_local_path=tmp_geojson,
+        #             remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
+        #         )
 
-            # Return the derived boundary
-            derived_boundary = geo_client.geojson_boundary.to_json()
+        #     # Return the derived boundary
+        #     derived_boundary = geo_client.geojson_boundary.to_json()
 
         # save the cog to the FTP server
         cloud_static_io_client.upload_fire_event(
