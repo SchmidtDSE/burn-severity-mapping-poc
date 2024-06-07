@@ -103,7 +103,7 @@ class Sentinel2Client:
         required_metrics = ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]
 
         for metric in required_metrics:
-            if metric not in metrics_stack:
+            if metric not in metrics_stack.burn_metric:
                 raise ValueError(
                     f"Required metric '{metric}' is missing from the metrics stack."
                 )

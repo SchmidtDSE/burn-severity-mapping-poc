@@ -162,3 +162,45 @@ def test_derive_boundary(test_geojson, test_3d_valid_xarray_epsg_4326):
     assert all(
         (initial_boundary.bounds != client.geojson_boundary.bounds).values[0].tolist()
     )
+
+
+def test_ingest_metrics_stack(test_geojson, test_3d_valid_xarray_epsg_4326):
+    # Initialize Sentinel2Client
+    client = Sentinel2Client(test_geojson)
+
+    # Initialize metrics stack
+    metrics_stack = xr.concat(
+        [
+            test_3d_valid_xarray_epsg_4326[0, :, :].rename({"band": "burn_metric"}),
+            test_3d_valid_xarray_epsg_4326[0, :, :].rename({"band": "burn_metric"}),
+            test_3d_valid_xarray_epsg_4326[0, :, :].rename({"band": "burn_metric"}),
+            test_3d_valid_xarray_epsg_4326[0, :, :].rename({"band": "burn_metric"}),
+            test_3d_valid_xarray_epsg_4326[0, :, :].rename({"band": "burn_metric"}),
+        ],
+        dim="burn_metric",
+    )
+
+    metrics_stack["burn_metric"] = [
+        "nbr_prefire",
+        "nbr_postfire",
+        "dnbr",
+        "rdnbr",
+        "rbr",
+    ]
+
+    # Call the ingest_metrics_stack method
+    client.ingest_metrics_stack(metrics_stack)
+
+    # Check that the metrics stack was ingested correctly
+    assert client.metrics_stack is not None
+    assert all(
+        [
+            metric in client.metrics_stack.burn_metric
+            for metric in ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]
+        ]
+    )
+
+    # Test with missing metric
+    missing_metric_metrics_stack = metrics_stack[:3, :, :]
+    with pytest.raises(ValueError):
+        client.ingest_metrics_stack(missing_metric_metrics_stack)
