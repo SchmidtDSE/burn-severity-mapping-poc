@@ -62,12 +62,18 @@ def analyze_spectral_burn_metrics(
         JSONResponse: The response containing the analysis results and derived boundary, if applicable.
     """
     sentry_sdk.set_context("fire-event", {"request": body})
-    geojson_boundary = json.loads(body.geojson)
+    # geojson_boundary = json.loads(body.geojson)
+    geojson_boundary = body.geojson
 
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
     derive_boundary = body.derive_boundary
+
+    # For development - this allows us to optionally use an existing metrics stack,
+    # in the case where a previous endpoint shows the user an intermediate output for them
+    # to segment their own fire events from the thresholded rbr imagery
+    use_existing_metrics_stack = True
 
     return main(
         geojson_boundary,
@@ -77,6 +83,7 @@ def analyze_spectral_burn_metrics(
         derive_boundary,
         logger,
         cloud_static_io_client,
+        use_existing_metrics_stack,
     )
 
 
@@ -115,17 +122,27 @@ def main(
             logger.info(f"Calculated burn metrics for {fire_event_name}")
 
         else:
+            ## TODO: Since we are running serverless, and don't have a live database, we are
+            ## required to re-construct the metrics stack from the existing files, in the case
+            ## where the user has identified fire boundaries from our intermediate rbr output.
+            ## This is not ideal, but not sure there is a better solution without using something
+            ## like redis or another live cache.
+            metric_layers = []
             for metric_name in ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]:
-                metrics_layers = []
-                with tempfile.NamedTemporaryFile(suffix=".tiff", delete=False) as tmp:
+                with tempfile.NamedTemporaryFile(suffix=".tif", delete=False) as tmp:
                     tmp_tiff = tmp.name
                     cloud_static_io_client.download(
-                        source_remote_path=f"public/{affiliation}/{fire_event_name}/{metric_name}.tif",
+                        remote_path=f"public/{affiliation}/{fire_event_name}/{metric_name}.tif",
                         target_local_path=tmp_tiff,
                     )
-                    metrics_layers.append(rxr.open_rasterio(tmp_tiff, masked=True))
 
-            existing_metrics_stack = xr.concat(metrics_layers, dim="band")
+                    metric_layer = rxr.open_rasterio(tmp_tiff)
+                    metric_layer = metric_layer.rename({"band": "burn_metric"})
+                    metric_layer["burn_metric"] = [metric_name]
+
+                    metric_layers.append(metric_layer)
+
+            existing_metrics_stack = xr.concat(metric_layers, dim="band")
             geo_client.ingest_metrics_stack(existing_metrics_stack)
 
             logger.info(f"Loaded existing metrics stack for {fire_event_name}")
