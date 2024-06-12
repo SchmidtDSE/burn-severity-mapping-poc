@@ -158,7 +158,6 @@ class MapPresenter {
 class LocationFormPresenter {
   constructor(selection, onLocationChange) {
     const self = this;
-    console.log("LocationFormPresenter", self);
     self._selection = selection;
     self._onLocationChange = onLocationChange;
 
