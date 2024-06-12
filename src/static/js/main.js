@@ -93,7 +93,7 @@ class MainPresenter {
     const self = this;
 
     if (self._shapefileFormPresenter.getFiles().length > 0) {
-      self._map.removeDrawControl();
+      self._mapPresenter.removeDrawControl();
     }
 
     self._shapefileUploaded = true;
