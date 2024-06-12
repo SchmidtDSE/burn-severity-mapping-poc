@@ -1,705 +1,120 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <title>Fire Analysis Upload (DSE Burn Severity V0)</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%221em%22 font-size=%2280%22>🌿</text></svg>"
-    />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-    />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%221em%22 font-size=%2280%22>🌿</text></svg>"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
-    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-
-    <style>
-      .indicator-img {
-        width: 50px;
-        height: 50px;
-      }
-
-      .container {
-        display: flex;
-        justify-content: space-between;
-      }
-
-      .grid-container {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: repeat(1, 1fr);
-        grid-gap: 20px;
-      }
-
-      .grid-item {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #ccc;
-        padding: 20px;
-      }
-
-      .upload-area {
-        border: 1px solid #ccc;
-        padding: 10px;
-        margin-bottom: 10px;
-      }
-
-      .products-area {
-        border: 1px solid #ccc;
-        padding: 10px;
-        flex-grow: 1;
-      }
-
-      .upload-and-products {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        flex: 0 0 30%;
-        margin-right: 10px;
-      }
-
-      .map-area {
-        flex: 0 0 70%;
-        border: 1px solid #ccc;
-        padding: 10px;
-        min-height: 700px;
-      }
-
-      .form-area {
-        flex: 0 0 20%;
-        border: 1px solid #ccc;
-        padding: 10px;
-        margin-top: 10px;
-
-      }
-
-      .satellite-info-area {
-        flex: 0 0 25%;
-        border: 1px solid #ccc;
-        padding: 10px;
-        margin-top: 10px;
-      }
-
-      .indicator-area {
-        flex: 0 0 50%;
-        display: flex;
-        justify-content: flex-end;
-        border: 1px solid #ccc;
-        padding: 10px;
-        margin-top: 10px;
-      }
-
-      #map {
-        height: 675px;
-        width: 100%;
-      }
-    </style>
-  </head>
-  <body>
-
+    <link rel="stylesheet" href="/static/upload/upload.css"/>
+</head>
+<body>
     <div class="container">
-      <div class="upload-and-products">
-        <div class="upload-area">
-            <label for="shp_zip">Zipped Shapefile:</label><br />
-            <input type="file" id="shp_zip" name="shp_zip" /><br />
-        </div>
-        <div class="products-area">
-          <div class="products">
-            <h3>Derived Products</h3>
-            <p>
-              <ul style="list-style: none">
-                <li><a id="map-rbr" href="" style="font-size: 16px; display: none;"><strong>Interactive Map of Relative Burn Ratio (RBR)</strong></a></li>
-                <li><a id="map-dnbr" href="" style="font-size: 16px; display: none"><strong>Interactive Map of Delta Normalized Burn Ratio (dNBR)</strong></a></li>
-              </ul>
-            </p>
-            <div id="products-loading" style="display: none;">
-              <img
-                class="indicator-img"
-                src="/static/upload/spinner.gif"
-              />
+        <div class="upload-and-products">
+            <div class="upload-area">
+                <label for="shp_zip">Zipped Shapefile:</label><br />
+                <input type="file" id="shp_zip" name="shp_zip" /><br />
             </div>
-            <div id="products-list"></div>
-          </div>
+            <div class="products-area">
+                <div class="products">
+                    <h3>Derived Products</h3>
+                    <p>
+                        <ul style="list-style: none">
+                            <li><a id="map-rbr" href="" style="font-size: 16px; display: none;"><strong>Interactive Map of Relative Burn Ratio (RBR)</strong></a></li>
+                            <li><a id="map-dnbr" href="" style="font-size: 16px; display: none"><strong>Interactive Map of Delta Normalized Burn Ratio (dNBR)</strong></a></li>
+                        </ul>
+                    </p>
+                    <div id="products-loading" style="display: none;">
+                        <img class="indicator-img" src="/static/upload/spinner.gif"/>
+                    </div>
+                    <div id="products-list"></div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="map-area">
-        <div class="location-search">
-          <input
-            type="text"
-            id="location-input"
-            placeholder="Enter a location"
-          />
-          <button id="location-button">Go</button>
+        <div class="map-area">
+            <div class="location-search">
+                <input type="text" id="location-input" placeholder="Enter a location"/>
+                <button id="location-button">Go</button>
+            </div>
+            <div id="map"></div>
         </div>
-        <div id="map"></div>
-      </div>
     </div>
-
-     <div class = "container">
-      <div class="form-area">
-        <form id="fire-analysis-form">
-          <label for="prefire">Prefire Date Range:</label><br />
-          <input
-            type="date"
-            id="prefire-start"
-            name="prefire-start"
-            value="2023-05-09"
-          />
-          <input
-            type="date"
-            id="prefire-end"
-            name="prefire-end"
-            value="2023-06-09"
-          /><br />
-          <label for="postfire">Postfire Date Range:</label><br />
-          <input
-            type="date"
-            id="postfire-start"
-            name="postfire-start"
-            value="2023-06-17"
-          />
-          <input
-            type="date"
-            id="postfire-end"
-            name="postfire-end"
-            value="2023-07-17"
-          /><br />
-
-          <label for="fire_event_name">Fire Event Name:</label><br />
-          <input
-            type="text"
-            id="fire_event_name"
-            name="fire_event_name"
-            value="tst"
-          /><br />
-          <label for="affiliation">Affiliation:</label><br />
-          <input
-            type="text"
-            id="affiliation"
-            name="affiliation"
-            value="dse"
-          /><br />
-          <input type="submit" value="Submit" />
-        </form>
-      </div>
-      <div class="satellite-info-area">
-        <h3>Satellite Observations</h3>
-        <p id="n-prefire-items"></p>
-        <p id="n-postfire-items"></p>
-        <p id="latest-pass"></p>
-      </div>
-      <div class="indicator-area">
-        <div class="grid-container">
-          <div id="upload-loading" style="display: none">
-            <img
-              class="indicator-img"
-              src="/static/upload/spinner.gif"
-              alt="Uploading shapefile... this may take a few moments."
-            />
-            <p>Uploading AOI...</p>
-          </div>
-
-          <div id="upload-success" style="display: none">
-            <img
-              class="indicator-img"
-              src="/static/upload/checkmark.png"
-              alt="Upload Success!"
-            />
-            <p>Upload Success!</p>
-          </div>
-
-          <div id="burn-analysis-loading" style="display: none">
-            <img
-              class="indicator-img"
-              src="/static/upload/spinner.gif"
-              alt="Analyzing burn area... depending on AOI size, this may take several minutes."
-            />
-            <p>Analyzing Disturbance Metrics...</p>
-          </div>
-
-          <div id="burn-analysis-success" style="display: none">
-            <img
-              class="indicator-img"
-              src="/static/upload/checkmark.png"
-              alt="Burn Metric Analysis Success!"
-            />
-            <p>Disturbance Metric Analysis Success!</p>
-          </div>
-
-          <div id="ecoclass-analysis-loading" style="display: none">
-            <img
-              class="indicator-img"
-              src="/static/upload/spinner.gif"
-              alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes."
-            />
-            <p>Fetching EDIT cover types...</p>
-          </div>
-
-          <div id="ecoclass-analysis-success" style="display: none">
-            <img
-              class="indicator-img"
-              src="/static/upload/checkmark.png"
-              alt="EDIT Ecoclass Analysis Success!"
-            />
-            <p>EDIT Successfully Fetched!</p>
-          </div>
-
-          <div id="rap-analysis-loading" style="display: none">
-            <img
-              class="indicator-img"
-              src="/static/upload/spinner.gif"
-              alt="Analyzing RAP... depending on AOI size, this may take several minutes."
-            />
-            <p>Fetching RAP...</p>
-          </div>
-
-          <div id="rap-analysis-success" style="display: none">
-            <img
-              class="indicator-img"
-              src="/static/upload/checkmark.png"
-              alt="RAP Analysis Success!"
-            />
-            <p>RAP Successfully Fetched!</p>
-          </div>
+    <div class="container">
+        <div class="form-area">
+            <form id="fire-analysis-form">
+                <label for="prefire">Prefire Date Range:</label><br />
+                <input type="date" id="prefire-start" name="prefire-start" value="2023-05-09"/>
+                <input type="date" id="prefire-end" name="prefire-end" value="2023-06-09"/><br />
+                <label for="postfire">Postfire Date Range:</label><br />
+                <input type="date" id="postfire-start" name="postfire-start" value="2023-06-17"/>
+                <input type="date" id="postfire-end" name="postfire-end" value="2023-07-17"/><br />
+                <label for="fire_event_name">Fire Event Name:</label><br />
+                <input type="text" id="fire_event_name" name="fire_event_name" value="tst"/><br />
+                <label for="affiliation">Affiliation:</label><br />
+                <input type="text" id="affiliation" name="affiliation" value="dse"/><br />
+                <input type="submit" value="Submit" />
+            </form>
         </div>
-      </div>
+        <div class="satellite-info-area">
+            <h3>Satellite Observations</h3>
+            <p id="n-prefire-items"></p>
+            <p id="n-postfire-items"></p>
+            <p id="latest-pass"></p>
+        </div>
+        <div class="indicator-area">
+            <div class="grid-container">
+                <div id="upload-loading" style="display: none">
+                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Uploading shapefile... this may take a few moments."/>
+                    <p>Uploading AOI...</p>
+                </div>
+                <div id="upload-success" style="display: none">
+                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="Upload Success!"/>
+                    <p>Upload Success!</p>
+                </div>
+                <div id="burn-analysis-loading" style="display: none">
+                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes."/>
+                    <p>Analyzing Disturbance Metrics...</p>
+                </div>
+                <div id="burn-analysis-success" style="display: none">
+                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="Burn Metric Analysis Success!"/>
+                    <p>Disturbance Metric Analysis Success!</p>
+                </div>
+                <div id="ecoclass-analysis-loading" style="display: none">
+                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes."/>
+                    <p>Fetching EDIT cover types...</p>
+                </div>
+                <div id="ecoclass-analysis-success" style="display: none">
+                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="EDIT Ecoclass Analysis Success!"/>
+                    <p>EDIT Successfully Fetched!</p>
+                </div>
+                <div id="rap-analysis-loading" style="display: none">
+                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing RAP... depending on AOI size, this may take several minutes."/>
+                    <p>Fetching RAP...</p>
+                </div>
+                <div id="rap-analysis-success" style="display: none">
+                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="RAP Analysis Success!"/>
+                    <p>RAP Successfully Fetched!</p>
+                </div>
+            </div>
+        </div>
     </div>
+    <script src="static/js/main.js"></script>
+    <script src="static/js/presenters.js"></script>
+    <script src="static/js/models.js"></script>
+    <script src="static/js/util.js"></script>
+    <script src="static/js/apiFacade.js"></script>
     <script>
-      // AOI Input Map
-      var mapboxToken = "{{ mapbox_token }}";
-      var tileserverEndpoint = "{{ tileserver_endpoint }}";
+        var mapboxToken = "{{ mapbox_token }}";
+        var tileserverEndpoint = "{{ tileserver_endpoint }}";
 
-      var successCounter = 0;
-
-      function getProducts(tileserverEndpoint, affiliation, fireEventName) {
-        // If all four requests are successful, get the map url and all derived products
-        var derivedProductsResponse = $.ajax({
-          url: "/api/list/derived-products",
-          type: "post",
-          dataType: "json",
-          contentType: "application/json",
-          data: JSON.stringify({
-            fire_event_name: $("#fire_event_name").val(),
-            affiliation: $("#affiliation").val(),
-          }),
-          success: function () {
-            $("#map-rbr").show();
-            $("#map-dnbr").show();
-            $('#products-loading').hide();
-          },
-          error: function (error) {
-            console.error(error);
-            alert("Failed to get derived products.");
-          },
-        });
-
-        var mapRbrUrl = `${tileserverEndpoint}/map/${affiliation}/${fireEventName}/rbr`;
-        var mapDnbrUrl = `${tileserverEndpoint}/map/${affiliation}/${fireEventName}/dnbr`;
-
-        $.when(derivedProductsResponse).done(function (response) {
-          var productsDiv = $("#products-list");
-          var productListItem = $("<ul></ul>");
-          Object.entries(response).forEach(function ([
-            productType,
-            productUrl,
-          ]) {
-            console.log(productType, productUrl);
-            var productElement = $("<li><a></a></li>");
-            productElement.find("a").text(productType);
-            productElement.find("a").attr("href", productUrl);
-            productListItem.append(productElement);
-          });
-          productsDiv.append(productListItem);
-
-          // Add map url to the `map-id` div
-          $("#map-rbr").attr("href", mapRbrUrl);
-          $("#map-dnbr").attr("href", mapDnbrUrl);
-        });
-      }
-
-      var map = L.map("map").setView([39.7749, -100.4194], 5);
-
-      // Create panes to properly order basemaps and boundaries
-      map.createPane("basemaps");
-      map.getPane("basemaps").style.zIndex = 2;
-
-      map.createPane("boundary");
-      map.getPane("boundary").style.zIndex = 5;
-
-      // // Add a tile layer to the map
-      // L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
-      //   maxZoom: 19,
-      //   attribution: "© OpenStreetMap contributors",
-      //   pane: "basemaps",
-      // }).addTo(map);
-
-      // Add a tile layer to the map
-      L.tileLayer(
-        `https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`,
-        {
-          maxZoom: 19,
-          attribution: "© Mapbox",
-          pane: "basemaps",
-          tileSize: 512,
-          zoomOffset: -1,
-        }
-      ).addTo(map);
-
-      // Initialize the FeatureGroup to store editable layers
-      var editableLayers = new L.FeatureGroup();
-      map.addLayer(editableLayers);
-
-      // Initialize the draw control and pass it the FeatureGroup of editable layers
-      var drawControl = new L.Control.Draw({
-        edit: {
-          featureGroup: editableLayers,
-        },
-      });
-      map.addControl(drawControl);
-
-      // Pan to an input location for ease of AOI drawing
-      $("#location-button").click(function () {
-        var location = $("#location-input").val();
-        $.get(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${location}`,
-          function (data) {
-            if (data.length > 0) {
-              map.setView([data[0].lat, data[0].lon], 13);
-            } else {
-              alert("Location not found");
-            }
-          }
-        );
-      });
-
-      var shapefileUploaded = false;
-      var aoiDrawn = false;
-
-      // When a shape is drawn, disable the file input
-      map.on("draw:created", function (e) {
-        var type = e.layerType,
-          layer = e.layer;
-
-        // Add the drawn layer to the editable layers
-        editableLayers.addLayer(layer);
-
-        // Disable the file input
-        $("#shp_zip").prop("disabled", true);
-
-        // Set the aoiDrawn flag
-        aoiDrawn = true;
-      });
-
-      // When a file is selected, disable the draw control
-      $("#shp_zip").change(function () {
-        if (this.files.length > 0) {
-          map.removeControl(drawControl);
-        }
-
-        // Set the shapefileUploaded flag
-        shapefileUploaded = true;
-      });
-
-      $("#fire-analysis-form").on("submit", function (event) {
-        event.preventDefault();
-
-        // Validate the form
-        var prefireStart = new Date($("#prefire-start").val());
-        var prefireEnd = new Date($("#prefire-end").val());
-        var postfireStart = new Date($("#postfire-start").val());
-        var postfireEnd = new Date($("#postfire-end").val());
-        var fireEventName = $("#fire_event_name").val();
-        var affiliation = $("#affiliation").val();
-
-        // Check if a shapefile has been uploaded
-        if (!shapefileUploaded && !aoiDrawn) {
-          alert("Please upload a shapefile or draw an AOI");
-          return false;
-        }
-
-        // Ensure dates are valid and sequential
-        if (
-          isNaN(prefireStart) ||
-          isNaN(prefireEnd) ||
-          isNaN(postfireStart) ||
-          isNaN(postfireEnd)
-        ) {
-          alert("Please enter valid dates");
-          return false;
-        }
-
-        if (
-          prefireStart >= prefireEnd ||
-          prefireEnd >= postfireStart ||
-          postfireStart >= postfireEnd
-        ) {
-          alert("Please enter valid date ranges");
-          return false;
-        }
-
-        // Ensure a fire event name is entered
-        if (fireEventName == "") {
-          alert("Please enter a fire event name");
-          return false;
-        }
-
-        // Show the upload loading spinner
-        $("#upload-loading").show();
-        $("#burn-analysis-loading").show();
-        $("#ecoclass-analysis-loading").show();
-        $("#rap-analysis-loading").show();
-        $('#products-loading').show();
-
-        var formData = new FormData();
-        formData.append("file", $("#shp_zip")[0].files[0]);
-        formData.append("fire_event_name", $("#fire_event_name").val());
-        formData.append("affiliation", $("#affiliation").val());
-
-        if ($("#shp_zip").prop("disabled")) {
-          // Get the drawn shape
-          var drawnGeojson = editableLayers.toGeoJSON();
-          console.log(drawnGeojson);
-          formData.append("geojson", JSON.stringify(drawnGeojson));
-          var deriveBoundary = true;
-
-          // Make a request to upload the drawn shape
-          var upload = $.ajax({
-            url: `/api/upload/drawn-aoi`,
-            type: "post",
-            processData: false,
-            contentType: false,
-            data: formData,
-            success: function () {
-              $("#upload-loading").hide();
-              $("#upload-success").show();
-              successCounter++;
-            },
-            error: function () {
-              $("#upload-loading").hide();
-              alert("Upload failed");
-            },
-          });
-        } else if ($("#shp_zip")[0].files.length > 0) {
-          // Add the shapefile to the form data
-          formData.append("shapefile", $("#shp_zip")[0].files[0]);
-          formData.append("derive_boundary", false);
-          var deriveBoundary = false;
-
-          // Make a request to upload the shapefile
-          var upload = $.ajax({
-            url: `/api/upload/shapefile-zip`,
-            type: "post",
-            processData: false,
-            contentType: false,
-            data: formData,
-            success: function () {
-              $("#upload-loading").hide();
-              $("#upload-success").show();
-              successCounter++;
-            },
-            error: function () {
-              $("#upload-loading").hide();
-              alert("Upload failed");
-            },
-          });
-        }
-
-        $.when(upload)
-          .done(function (uploadResponse) {
-
-            // Get the GeoJSON, either from drawn AOI or uploaded shapefile
-            var AOI = JSON.parse(uploadResponse.geojson);
-
-            // Disable editing on the map, and add the drawn/uploaded shape, coloring by whether its final
-            editableLayers.eachLayer(function (layer) {
-              editableLayers.removeLayer(layer);
-            });
-            map.removeControl(drawControl);
-
-            // Add the AOI to the map - if we still derive the boundary, then style it red and without fill.
-            // We later add the derived boundary to the map, and style it black with fill.
-            // Otherwise, style it black and with fill to show its the 'real' boundary.
-            var uploadedLayer = L.geoJSON(AOI, {
-              style: function (feature) {
-                return {
-                  color: deriveBoundary ? "#f12215" : "#000000",
-                  weight: 2,
-                  opacity: 1,
-                  fillOpacity: deriveBoundary ? 0 : 0.5,
-                };
-              },
-              pane: "boundary",
-            }).addTo(map);
-
-            // Center the uploaded layer on the map
-            map.fitBounds(uploadedLayer.getBounds());
-
-            var aoiLabel = deriveBoundary
-              ? "Approximate AOI"
-              : "Predefined Boundary";
-
-            var control = L.control.layers(
-              null,
-              {
-                aoiLabel: uploadedLayer,
-              },
-              { collapsed: false }
+        document.addEventListener("DOMContentLoaded", function() {
+            const mainPresenter = new MainPresenter(
+                mapboxToken,
+                tileserverEndpoint
             );
+        });
 
-            // Make a request to analyze the burn
-            var analyzeBurn = $.ajax({
-              url: "/api/analyze/spectral-burn-metrics",
-              type: "post",
-              dataType: "json",
-              contentType: "application/json",
-              data: JSON.stringify({
-                geojson: uploadResponse.geojson,
-                fire_event_name: $("#fire_event_name").val(),
-                affiliation: $("#affiliation").val(),
-                derive_boundary: deriveBoundary,
-                date_ranges: {
-                  prefire: [$("#prefire-start").val(), $("#prefire-end").val()],
-                  postfire: [
-                    $("#postfire-start").val(),
-                    $("#postfire-end").val(),
-                  ],
-                },
-              }),
-              success: function (analysisResponse) {
-                $("#burn-analysis-loading").hide();
-                $("#burn-analysis-success").show();
-                var satellitePassInfo = analysisResponse.satellite_pass_information;
-                console.log(satellitePassInfo)
-                document.getElementById('n-prefire-items').innerHTML = '<i>Number of prefire images: </i>' + satellitePassInfo.n_prefire_passes.toString();
-                document.getElementById('n-postfire-items').innerHTML = '<i>Number of postfire images: </i>' + satellitePassInfo.n_postfire_passes.toString();
-                document.getElementById('latest-pass').innerHTML = '<i>Latest pass obtained: </i>' + satellitePassInfo.latest_pass;
-                successCounter++;
-              },
-              error: function (error) {
-                console.error(error);
-                $("#burn-analysis-loading").hide();
-                alert("Burn analysis failed");
-              },
-              statusCode: {
-                204: function () {
-                  alert("No fire boundary detected within the AOI. Please try again by refreshing the page.");
-                  $("#burn-analysis-loading").hide();
-                  $("#burn-analysis-success").hide();
-                  $("#upload-loading").hide();
-                  $("#upload-success").hide();
-                  $("#ecoclass-analysis-loading").hide();
-                  $("#ecoclass-analysis-success").hide();
-                  $("#rap-analysis-loading").hide();
-                  $("#rap-analysis-success").hide();
-                  $('#products-loading').hide();
-                },
-              },
-            });
-
-            // Make a request to analyze the ecoclassification, if analysis is successful
-            $.when(analyzeBurn).done(function (analysisResponse) {
-
-              // Add the derived boundary to map, if we're deriving the boundary
-              if (deriveBoundary) {
-                var derivedBoundaryGeojson = JSON.parse(
-                  analysisResponse.derived_boundary
-                );
-
-                try {
-                  console.log("adding derived boundary to map");
-                  var derivedLayer = L.geoJSON(derivedBoundaryGeojson, {
-                    style: {
-                      color: "#000000",
-                      weight: 2,
-                      opacity: 1,
-                      fillOpacity: 0.5,
-                    },
-                    pane: "boundary",
-                  }).addTo(map);
-
-                  console.log("adding derived layer control to map");
-                  var control = L.control.layers(
-                    null,
-                    {
-                      "Approximate AOI": uploadedLayer,
-                      "Derived Boundary": derivedLayer,
-                    },
-                    { collapsed: false }
-                  );
-                  control.addTo(map);
-                } catch (error) {
-                  console.error(error);
-                }
-              }
-
-              $.ajax({
-                url: "/api/fetch/ecoclass",
-                type: "post",
-                dataType: "json",
-                contentType: "application/json",
-                data: JSON.stringify({
-                  geojson: deriveBoundary
-                    ? analysisResponse.derived_boundary
-                    : uploadResponse.geojson,
-                  fire_event_name: $("#fire_event_name").val(),
-                  affiliation: $("#affiliation").val(),
-                }),
-                success: function () {
-                  $("#ecoclass-analysis-loading").hide();
-                  $("#ecoclass-analysis-success").show();
-                  successCounter++;
-                  if (successCounter == 4) {
-                    // wait until all 4 requests are successful
-                    getProducts(tileserverEndpoint, affiliation, fireEventName);
-                  }
-                },
-                error: function () {
-                  console.error(error);
-                  $("#ecoclass-analysis-loading").hide();
-                  alert("Ecoclass analysis failed");
-                },
-              });
-
-              $.ajax({
-                url: "/api/fetch/rangeland-analysis-platform",
-                type: "post",
-                dataType: "json",
-                contentType: "application/json",
-                data: JSON.stringify({
-                  geojson: deriveBoundary
-                    ? analysisResponse.derived_boundary
-                    : uploadResponse.geojson,
-                  fire_event_name: $("#fire_event_name").val(),
-                  ignition_date: $("#prefire-end").val(),
-                  affiliation: $("#affiliation").val(),
-                }),
-                success: function () {
-                  $("#rap-analysis-loading").hide();
-                  $("#rap-analysis-success").show();
-                  successCounter++;
-                  if (successCounter == 4) {
-                    // wait until all 4 requests are successful
-                    getProducts(tileserverEndpoint, affiliation, fireEventName);
-                  }
-                },
-                error: function () {
-                  console.error(error);
-                  $("#rap-analysis-loading").hide();
-                  alert("Rangeland Analysis Platform query failed");
-                },
-              });
-            });
-          })
-          .fail(function (error) {
-            console.error(error);
-          });
-      });
-    </script>
-  </body>
+</script>
+</body>
 </html>
