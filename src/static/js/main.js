@@ -243,17 +243,61 @@ class MainPresenter {
       self._updateProducts(affiliation, fireEventName);
     };
 
-    return (
-      checkState()
-        .then(checkMetadata)
-        .then(showLoading)
-        .then(uploadShape)
-        .then(onUploadSuccess, onUploadFail)
-        .then(showArea)
-        .then(analyzeBurn)
-        .then(reportAnalysis)
-        .then(showDerivedBoundary),
-      then(performSecondaryAnalysis).then(updateProducts)
-    );
+    return checkState()
+      .then(checkMetadata)
+      .catch((error) => {
+        console.error("Error in checkMetadata:", error);
+        throw error;
+      })
+      .then(showLoading)
+      .catch((error) => {
+        console.error("Error in showLoading:", error);
+        throw error;
+      })
+      .then(uploadShape)
+      .catch((error) => {
+        console.error("Error in uploadShape:", error);
+        throw error;
+      })
+      .then(onUploadSuccess)
+      .catch((error) => {
+        console.error("Error in onUploadSuccess:", error);
+        throw error;
+      })
+      .then(onUploadFail)
+      .catch((error) => {
+        console.error("Error in onUploadFail:", error);
+        throw error;
+      })
+      .then(showArea)
+      .catch((error) => {
+        console.error("Error in showArea:", error);
+        throw error;
+      })
+      .then(analyzeBurn)
+      .catch((error) => {
+        console.error("Error in analyzeBurn:", error);
+        throw error;
+      })
+      .then(reportAnalysis)
+      .catch((error) => {
+        console.error("Error in reportAnalysis:", error);
+        throw error;
+      })
+      .then(showDerivedBoundary)
+      .catch((error) => {
+        console.error("Error in showDerivedBoundary:", error);
+        throw error;
+      })
+      .then(performSecondaryAnalysis)
+      .catch((error) => {
+        console.error("Error in performSecondaryAnalysis:", error);
+        throw error;
+      })
+      .then(updateProducts)
+      .catch((error) => {
+        console.error("Error in updateProducts:", error);
+        throw error;
+      });
   }
 }
