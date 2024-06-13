@@ -277,7 +277,8 @@ class FireAnalysisMetaFormPresenter {
 
     console.log("getFormContents", self);
 
-    const getVal = (targetId) => self._selection.getElementById(targetId).value;
+    const getVal = (targetId) =>
+      self._selection.querySelector("#" + targetId).value;
 
     const prefireStart = new Date(getVal("prefire-start"));
     const prefireEnd = new Date(getVal("prefire-end"));
