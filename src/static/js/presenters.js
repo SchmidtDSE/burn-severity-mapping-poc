@@ -259,7 +259,10 @@ class FireAnalysisMetaFormPresenter {
     self._selection = selection;
     self._onSubmit = onSubmit;
 
-    self._selection.addEventListener("submit", () => self._onSubmit());
+    self._selection.addEventListener("submit", (e) => {
+      e.preventDefault();
+      self._onSubmit();
+    });
   }
 
   getFireEventName() {

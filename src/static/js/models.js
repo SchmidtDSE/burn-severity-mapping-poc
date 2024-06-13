@@ -190,15 +190,18 @@ class ApiFacade {
   uploadShapefile(metadata, shapefile) {
     const self = this;
 
-    const formData = new URLSearchParams();
+    const formData = new FormData();
     formData.append("file", shapefile);
     formData.append("fire_event_name", metadata.getFireEventName());
     formData.append("affiliation", metadata.getAffiliation());
-    formData.append("shapefule", shapefile);
     formData.append("derive_boundary", false);
 
     const request = { method: "POST", body: formData };
-    return fetch(`/api/upload/shapefile-zip`, request).then(get200Json);
+    return fetch(`http://localhost:5051/api/upload/shapefile-zip`, request)
+      .then(get200Json)
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   }
 
   analyzeBurn(metadata, geojson, useDrawnShape) {
