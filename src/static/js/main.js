@@ -176,6 +176,10 @@ class MainPresenter {
       return burnAnalysisResponse;
     };
 
+    const showIntermediateBurnMetrics = (burnAnalysisResponse) => {
+      self._mapPresenter.showIntermediateBurnMetrics(burnAnalysisResponse);
+    };
+
     const reportAnalysis = (burnAnalysisResponse) => {
       return new Promise((resolve, reject) => {
         if (!burnAnalysisResponse.getExecuted()) {

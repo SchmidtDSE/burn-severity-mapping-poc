@@ -61,6 +61,7 @@ class CloudStaticIOClient:
         self.s3_bucket_name = s3_bucket_name
         self.https_prefix = BUCKET_HTTPS_PREFIX.format(s3_bucket_name=s3_bucket_name)
         self.logger = logger
+        self.cloud_cog_paths = {}
 
         self.sts_client = boto3.client("sts")
 
@@ -282,6 +283,11 @@ class CloudStaticIOClient:
                 self.upload(
                     source_local_path=local_cog_path,
                     remote_path=f"public/{affiliation}/{fire_event_name}/{band_name}.tif",
+                )
+
+                self.cloud_cog_paths[band_name] = (
+                    self.https_prefix
+                    + f"/public/{affiliation}/{fire_event_name}/{band_name}.tif"
                 )
 
             # Upload the difference between dNBR and RBR

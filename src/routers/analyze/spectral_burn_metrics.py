@@ -185,6 +185,7 @@ def main(
                 "message": f"Cogs uploaded for {fire_event_name}",
                 "fire_event_name": fire_event_name,
                 "derived_boundary": derived_boundary,
+                "cloud_cog_paths": cloud_static_io_client.cloud_cog_paths,
                 "satellite_pass_information": satellite_pass_information,
             },
         )
