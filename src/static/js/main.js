@@ -157,6 +157,7 @@ class MainPresenter {
 
       // Disable editing on the map, and add the drawn/uploaded shape, coloring by whether its final
       self._mapPresenter.disableEditing();
+      self._mapPresenter.removeDrawControl();
 
       // Add the AOI to the map - if we still derive the boundary, then style it red and without fill.
       // We later add the derived boundary to the map, and style it black with fill.

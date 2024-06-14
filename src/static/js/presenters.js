@@ -88,7 +88,6 @@ class MapPresenter {
     self._editableLayers.eachLayer((layer) => {
       self._editableLayers.removeLayer(layer);
     });
-    self._innerMap.removeControl(drawControl);
   }
 
   showAOI(aoi, deriveBoundary) {
