@@ -183,7 +183,7 @@ class MainPresenter {
 
       return new Promise((resolve, reject) => {
         if (!burnAnalysisResponse.getExecuted()) {
-          self._indicatorArea.showAnalysisFail();
+          self._indicatorArea.showBurnAnalysisFailed();
           reject();
           return;
         }
@@ -194,7 +194,7 @@ class MainPresenter {
           return;
         }
 
-        self._indicatorArea.showBurnAnalysis(burnAnalysisResponse);
+        self._indicatorArea.showBurnAnalysisSuccess(burnAnalysisResponse);
         resolve(responses);
       });
     };
@@ -217,7 +217,7 @@ class MainPresenter {
         .getEcoclass(metadata, geojson)
         .then(
           (x) => {
-            self._indicatorArea.showEcoclassLoaded();
+            self._indicatorArea.showEcoclassSuccess();
             return x;
           },
           () => self._indicatorArea.showEcoclassFailed()
@@ -256,12 +256,12 @@ class MainPresenter {
       .then(uploadShape)
       .catch((error) => {
         console.error("Error in uploadShape:", error);
+        onUploadFail();
         throw error;
       })
       .then(onUploadSuccess)
       .catch((error) => {
         console.error("Error in onUploadSuccess:", error);
-        onUploadFail();
         throw error;
       })
       .then(showArea)

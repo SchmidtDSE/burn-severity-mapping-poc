@@ -316,13 +316,8 @@ class IndicatorAreaPresenter {
   showUploadFail() {
     const self = this;
     self._hide("upload-loading");
+    self._show("upload-failure");
     alert("Upload failed");
-  }
-
-  showAnalysisFail() {
-    const self = this;
-    self._hide("burn-analysis-loading");
-    alert("Burn analysis failed");
   }
 
   showFireNotFound() {
@@ -341,14 +336,9 @@ class IndicatorAreaPresenter {
     self._hide("products-loading");
   }
 
-  showBurnAnalysis(burnAnalysisResponse) {
-    const self = this;
-
-    self._hide("burn-analysis-loading");
-    self._show("burn-analysis-success");
-
+  showSatelliePassInfo(burnAnalysisResponse) {
     const satellitePassInfo = burnAnalysisResponse.getSatellitePassInfo();
-    console.log(satellitePassInfo);
+
     document.querySelector("#n-prefire-items").innerHTML =
       "<i>Number of prefire images: </i>" +
       satellitePassInfo.n_prefire_passes.toString();
@@ -359,7 +349,26 @@ class IndicatorAreaPresenter {
       "<i>Latest pass obtained: </i>" + satellitePassInfo.latest_pass;
   }
 
-  showEcoclassLoaded() {
+  showBurnAnalysisFailed() {
+    const self = this;
+    self._hide("burn-analysis-loading");
+    alert("Burn analysis failed");
+  }
+
+  showBurnAnalysisSuccess(burnAnalysisResponse) {
+    const self = this;
+    this.showSatelliePassInfo(burnAnalysisResponse);
+    self._hide("burn-analysis-loading");
+    self._show("burn-analysis-success");
+  }
+
+  showBurnAnalysisSkipped() {
+    const self = this;
+    self._hide("burn-analysis-loading");
+    self._show("burn-analysis-skipped");
+  }
+
+  showEcoclassSuccess() {
     const self = this;
     self._hide("ecoclass-analysis-loading");
     self._hide("ecoclass-analysis-success");
@@ -368,7 +377,14 @@ class IndicatorAreaPresenter {
   showEcoclassFailed() {
     const self = this;
     self._hide("ecoclass-analysis-loading");
+    self._show("ecoclass-analysis-failure");
     alert("Ecoclass analysis failed");
+  }
+
+  showEcoclassSkipped() {
+    const self = this;
+    self._hide("ecoclass-analysis-loading");
+    self._show("ecoclass-analysis-skipped");
   }
 
   showRangelandSuccess() {
@@ -380,7 +396,14 @@ class IndicatorAreaPresenter {
   showRangelandFailed() {
     const self = this;
     self._hide("rap-analysis-loading");
+    self._show("rap-analysis-failure");
     alert("Rangeland Analysis Platform query failed");
+  }
+
+  showRangelandSkipped() {
+    const self = this;
+    self._hide("rap-analysis-loading");
+    self._show("rap-analysis-skipped");
   }
 
   _show(targetId) {

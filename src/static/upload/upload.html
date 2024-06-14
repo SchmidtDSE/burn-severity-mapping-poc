@@ -26,7 +26,7 @@
                         </ul>
                     </p>
                     <div id="products-loading" style="display: none;">
-                        <img class="indicator-img" src="/static/upload/spinner.gif"/>
+                        <img class="indicator-img" src="/static/assets/spinner.gif"/>
                     </div>
                     <div id="products-list"></div>
                 </div>
@@ -64,37 +64,69 @@
         </div>
         <div class="indicator-area">
             <div class="grid-container">
+                <!-- AOI uploads -->
                 <div id="upload-loading" style="display: none">
-                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Uploading shapefile... this may take a few moments."/>
+                    <img class="indicator-img" src="/static/assets/spinner.gif" alt="Uploading shapefile... this may take a few moments."/>
                     <p>Uploading AOI...</p>
                 </div>
                 <div id="upload-success" style="display: none">
-                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="Upload Success!"/>
+                    <img class="indicator-img" src="/static/assets/checkmark.png" alt="Upload Success!"/>
                     <p>Upload Success!</p>
                 </div>
+                <div id="upload-failure" style="display: none">
+                    <img class="indicator-img" src="/static/assets/failure.png" alt="Upload Failed!"/>
+                    <p>Upload Failed!</p>
+                </div>
+                <!-- Burn analysis -->
                 <div id="burn-analysis-loading" style="display: none">
-                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes."/>
+                    <img class="indicator-img" src="/static/assets/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes."/>
                     <p>Analyzing Disturbance Metrics...</p>
                 </div>
                 <div id="burn-analysis-success" style="display: none">
-                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="Burn Metric Analysis Success!"/>
+                    <img class="indicator-img" src="/static/assets/checkmark.png" alt="Burn Metric Analysis Success!"/>
                     <p>Disturbance Metric Analysis Success!</p>
                 </div>
+                <div id="burn-analysis-failure" style="display: none">
+                    <img class="indicator-img" src="/static/assets/failure.png" alt="Burn Metric Analysis Failed!"/>
+                    <p>Disturbance Metric Analysis Failed!</p>
+                </div>
+                <div id="burn-analysis-skipped" style="display: none">
+                    <img class="indicator-img" src="/static/assets/skipped.png" alt="Burn Metric Analysis Failed!"/>
+                    <p>Disturbance Metric Analysis Skipped.</p>
+                </div>
+                <!-- Ecoclass analysis -->
                 <div id="ecoclass-analysis-loading" style="display: none">
-                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes."/>
+                    <img class="indicator-img" src="/static/assets/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes."/>
                     <p>Fetching EDIT cover types...</p>
                 </div>
                 <div id="ecoclass-analysis-success" style="display: none">
-                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="EDIT Ecoclass Analysis Success!"/>
+                    <img class="indicator-img" src="/static/assets/checkmark.png" alt="EDIT Ecoclass Analysis Success!"/>
                     <p>EDIT Successfully Fetched!</p>
                 </div>
+                <div id="ecoclass-analysis-failure" style="display: none">
+                    <img class="indicator-img" src="/static/assets/failure.png" alt="EDIT Ecoclass Analysis Failed!"/>
+                    <p>EDIT Failed!</p>
+                </div>
+                <div id="ecoclass-analysis-skipped" style="display: none">
+                    <img class="indicator-img" src="/static/assets/skipped.png" alt="EDIT Ecoclass Analysis Failed!"/>
+                    <p>EDIT Skipped.</p>
+                </div>
+                <!-- RAP analysis -->
                 <div id="rap-analysis-loading" style="display: none">
-                    <img class="indicator-img" src="/static/upload/spinner.gif" alt="Analyzing RAP... depending on AOI size, this may take several minutes."/>
+                    <img class="indicator-img" src="/static/assets/spinner.gif" alt="Analyzing RAP... depending on AOI size, this may take several minutes."/>
                     <p>Fetching RAP...</p>
                 </div>
                 <div id="rap-analysis-success" style="display: none">
-                    <img class="indicator-img" src="/static/upload/checkmark.png" alt="RAP Analysis Success!"/>
+                    <img class="indicator-img" src="/static/assets/checkmark.png" alt="RAP Analysis Success!"/>
                     <p>RAP Successfully Fetched!</p>
+                </div>
+                <div id="rap-analysis-failure" style="display: none">
+                    <img class="indicator-img" src="/static/assets/failure.png" alt="RAP Analysis Failed!"/>
+                    <p>RAP Failed!</p>
+                </div>
+                <div id="rap-analysis-skipped" style="display: none">
+                    <img class="indicator-img" src="/static/assets/skipped.png" alt="RAP Analysis Failed!"/>
+                    <p>RAP Skipped.</p>
                 </div>
             </div>
         </div>

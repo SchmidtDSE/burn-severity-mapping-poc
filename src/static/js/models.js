@@ -197,11 +197,7 @@ class ApiFacade {
     formData.append("derive_boundary", false);
 
     const request = { method: "POST", body: formData };
-    return fetch(`http://localhost:5051/api/upload/shapefile-zip`, request)
-      .then(get200Json)
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+    return fetch(`/api/upload/shapefile-zip`, request).then(get200Json);
   }
 
   analyzeBurn(metadata, geojson, useDrawnShape) {
