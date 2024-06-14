@@ -101,8 +101,6 @@ class MainPresenter {
 
   _onMetadataSubmit() {
     const self = this;
-
-    const useDrawnShape = self._shapefileFormPresenter.getIsDisabled();
     const metadata = self._fireAnalysisMetaFormPresenter.getFormContents();
 
     const checkState = () =>
@@ -132,7 +130,7 @@ class MainPresenter {
     };
 
     const uploadShape = () => {
-      if (useDrawnShape) {
+      if (self._aoiDrawn) {
         const drawnGeojsonStr = self._mapPresenter.getDrawnGeojson();
         return self._apiFacade.uploadDrawnShape(metadata, drawnGeojsonStr);
       } else {
@@ -162,7 +160,7 @@ class MainPresenter {
       // Add the AOI to the map - if we still derive the boundary, then style it red and without fill.
       // We later add the derived boundary to the map, and style it black with fill.
       // Otherwise, style it black and with fill to show its the 'real' boundary.
-      self._mapPresenter.showAOI(aoi, useDrawnShape);
+      self._mapPresenter.showAOI(aoi, self._aoiDrawn);
 
       return uploadResponse;
     };
@@ -172,7 +170,7 @@ class MainPresenter {
       const burnAnalysisResponse = await self._apiFacade.analyzeBurn(
         metadata,
         geojson,
-        useDrawnShape
+        self._aoiDrawn
       );
       return {
         burnAnalysisResponse,
@@ -204,7 +202,7 @@ class MainPresenter {
     const showDerivedBoundary = (responses) => {
       const burnAnalysisResponse = responses.burnAnalysisResponse;
 
-      if (!useDrawnShape) {
+      if (!self._aoiDrawn) {
         return burnAnalysisResponse;
       }
 
