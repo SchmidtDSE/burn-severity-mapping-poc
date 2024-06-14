@@ -14,6 +14,9 @@ class MapPresenter {
     map.createPane("basemaps");
     map.getPane("basemaps").style.zIndex = 2;
 
+    map.createPane("intermediateBurnMetrics");
+    map.getPane("intermediateBurnMetrics").style.zIndex = 3;
+
     map.createPane("boundary");
     map.getPane("boundary").style.zIndex = 5;
 
@@ -157,6 +160,19 @@ class MapPresenter {
     } catch (error) {
       console.error(error);
     }
+  }
+
+  showIntermediateBurnMetrics(burnMetricHttpPath) {
+    const self = this;
+
+    // Create a new tile layer with the provided URL
+    const metricLayer = L.tileLayer(burnMetricHttpPath, {
+      maxZoom: 19,
+      pane: "intermediateBurnMetrics",
+    });
+
+    // Add the new layer to the map
+    metricLayer.addTo(self._innerMap);
   }
 }
 
