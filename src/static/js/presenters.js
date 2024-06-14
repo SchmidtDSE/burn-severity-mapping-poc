@@ -40,11 +40,32 @@ class MapPresenter {
     ).addTo(map);
 
     // Initialize the FeatureGroup to store editable layers
+    const { editableLayers, drawControl } = this.addDrawControl(
+      map,
+      onAoiDrawn,
+      {
+        polyline: false,
+        marker: false,
+        circle: false,
+        circlemarker: false,
+        rectangle: true,
+        polygon: true,
+      }
+    );
+
+    self._innerMap = map;
+    self._editableLayers = editableLayers;
+    self._drawControl = drawControl;
+    self._aoiControl = null;
+  }
+
+  addDrawControl(map, onAoiDrawn, drawOptions = {}) {
     const editableLayers = new L.FeatureGroup();
     map.addLayer(editableLayers);
 
     // Initialize the draw control and pass it the FeatureGroup of editable layers
     const drawControl = new L.Control.Draw({
+      draw: drawOptions,
       edit: {
         featureGroup: editableLayers,
       },
@@ -61,10 +82,12 @@ class MapPresenter {
       onAoiDrawn();
     });
 
-    self._innerMap = map;
-    self._editableLayers = editableLayers;
-    self._drawControl = drawControl;
-    self._aoiControl = null;
+    return { editableLayers, drawControl };
+  }
+
+  removeDrawControl() {
+    const self = this;
+    self._innerMap.removeControl(self._drawControl);
   }
 
   goToLocation(location) {
@@ -79,11 +102,6 @@ class MapPresenter {
           alert("Location not found");
         }
       });
-  }
-
-  removeDrawControl() {
-    const self = this;
-    self._innerMap.removeControl(self._drawControl);
   }
 
   getDrawnGeojson() {
@@ -173,6 +191,26 @@ class MapPresenter {
 
     // Add the new layer to the map
     metricLayer.addTo(self._innerMap);
+  }
+
+  enableSeedMetricInput() {
+    const self = this;
+
+    onSeedPointDrawn = (e) => {
+      const lat = e.layer._latlng.lat;
+      const lon = e.layer._latlng.lng;
+      const seedPoint = [lat, lon];
+      console.log(seedPoint);
+    };
+
+    this.addDrawControl(self._innerMap, onSeedPointDrawn, {
+      polyline: false,
+      marker: true,
+      circle: false,
+      circlemarker: false,
+      rectangle: false,
+      polygon: false,
+    });
   }
 }
 

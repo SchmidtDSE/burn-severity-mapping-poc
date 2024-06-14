@@ -188,6 +188,8 @@ class MainPresenter {
       self._mapPresenter.showIntermediateBurnMetrics(
         intermediateProductTileserverUrl
       );
+
+      self._mapPresenter.enableSeedMetricInput();
     };
 
     const reportAnalysis = (burnAnalysisResponse) => {
