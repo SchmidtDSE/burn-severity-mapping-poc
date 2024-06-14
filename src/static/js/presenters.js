@@ -1,3 +1,9 @@
+const AnalysisStatus = {
+  PENDING: "pending",
+  SUCCESS: "success",
+  FAILURE: "failure",
+};
+
 class MapPresenter {
   constructor(targetId, onAoiDrawn) {
     const self = this;
@@ -298,6 +304,15 @@ class FireAnalysisMetaFormPresenter {
 }
 
 class IndicatorAreaPresenter {
+  constructor(selection) {
+    const self = this;
+    self._selection = selection;
+    self._uploadStatus = AnalysisStatus.PENDING;
+    self._rangelandStatus = AnalysisStatus.PENDING;
+    self._ecolassStatus = AnalysisStatus.PENDING;
+    self._burnAnalysisStatus = AnalysisStatus.PENDING;
+  }
+
   showAllLoading() {
     const self = this;
     self._show("upload-loading");
@@ -305,19 +320,6 @@ class IndicatorAreaPresenter {
     self._show("ecoclass-analysis-loading");
     self._show("rap-analysis-loading");
     self._show("products-loading");
-  }
-
-  showUploadSuccess() {
-    const self = this;
-    self._hide("upload-loading");
-    self._show("upload-success");
-  }
-
-  showUploadFail() {
-    const self = this;
-    self._hide("upload-loading");
-    self._show("upload-failure");
-    alert("Upload failed");
   }
 
   showFireNotFound() {
@@ -349,61 +351,24 @@ class IndicatorAreaPresenter {
       "<i>Latest pass obtained: </i>" + satellitePassInfo.latest_pass;
   }
 
-  showBurnAnalysisFailed() {
-    const self = this;
-    self._hide("burn-analysis-loading");
-    alert("Burn analysis failed");
-  }
-
-  showBurnAnalysisSuccess(burnAnalysisResponse) {
-    const self = this;
-    this.showSatelliePassInfo(burnAnalysisResponse);
-    self._hide("burn-analysis-loading");
-    self._show("burn-analysis-success");
-  }
-
-  showBurnAnalysisSkipped() {
-    const self = this;
-    self._hide("burn-analysis-loading");
-    self._show("burn-analysis-skipped");
-  }
-
-  showEcoclassSuccess() {
-    const self = this;
-    self._hide("ecoclass-analysis-loading");
-    self._hide("ecoclass-analysis-success");
-  }
-
-  showEcoclassFailed() {
-    const self = this;
-    self._hide("ecoclass-analysis-loading");
-    self._show("ecoclass-analysis-failure");
-    alert("Ecoclass analysis failed");
-  }
-
-  showEcoclassSkipped() {
-    const self = this;
-    self._hide("ecoclass-analysis-loading");
-    self._show("ecoclass-analysis-skipped");
-  }
-
-  showRangelandSuccess() {
-    const self = this;
-    self._hide("rap-analysis-loading");
-    self._show("rap-analysis-success");
-  }
-
-  showRangelandFailed() {
-    const self = this;
-    self._hide("rap-analysis-loading");
-    self._show("rap-analysis-failure");
-    alert("Rangeland Analysis Platform query failed");
-  }
-
-  showRangelandSkipped() {
-    const self = this;
-    self._hide("rap-analysis-loading");
-    self._show("rap-analysis-skipped");
+  showSkippedAnalyses() {
+    debugger;
+    if (this._uploadStatus == AnalysisStatus.PENDING) {
+      this._hide("upload-loading");
+      this._show("upload-skipped");
+    }
+    if (this._burnAnalysisStatus == AnalysisStatus.PENDING) {
+      this._hide("burn-analysis-loading");
+      this._show("burn-analysis-skipped");
+    }
+    if (this._ecolassStatus == AnalysisStatus.PENDING) {
+      this._hide("ecoclass-analysis-loading");
+      this._show("ecoclass-analysis-skipped");
+    }
+    if (this._rangelandStatus == AnalysisStatus.PENDING) {
+      this._hide("rap-analysis-loading");
+      this._show("rap-analysis-skipped");
+    }
   }
 
   _show(targetId) {
@@ -414,5 +379,96 @@ class IndicatorAreaPresenter {
   _hide(targetId) {
     const self = this;
     document.getElementById(targetId).style.display = "none";
+  }
+
+  // Upload
+
+  showUploadSuccess() {
+    const self = this;
+    self._hide("upload-loading");
+    self._show("upload-success");
+    self._uploadStatus = AnalysisStatus.SUCCESS;
+  }
+
+  showUploadFail() {
+    const self = this;
+    self._hide("upload-loading");
+    self._show("upload-failure");
+    self._uploadStatus = AnalysisStatus.FAILURE;
+    self.showSkippedAnalyses();
+    alert("Upload failed");
+  }
+
+  // Burn Analysis
+
+  showBurnAnalysisSuccess(burnAnalysisResponse) {
+    const self = this;
+    this.showSatelliePassInfo(burnAnalysisResponse);
+    self._hide("burn-analysis-loading");
+    self._show("burn-analysis-success");
+    self._burnAnalysisStatus = AnalysisStatus.SUCCESS;
+  }
+
+  showBurnAnalysisFailed() {
+    const self = this;
+    self._hide("burn-analysis-loading");
+    self._show("burn-analysis-failure");
+    self._burnAnalysisStatus = AnalysisStatus.FAILURE;
+    self.showSkippedAnalyses();
+    alert("Burn analysis failed");
+  }
+
+  showBurnAnalysisSkipped() {
+    const self = this;
+    self._hide("burn-analysis-loading");
+    self._show("burn-analysis-skipped");
+  }
+
+  // EcoClass
+
+  showEcoclassSuccess() {
+    const self = this;
+    self._hide("ecoclass-analysis-loading");
+    self._show("ecoclass-analysis-success");
+    self._ecolassStatus = AnalysisStatus.SUCCESS;
+  }
+
+  showEcoclassFailed() {
+    const self = this;
+    self._hide("ecoclass-analysis-loading");
+    self._show("ecoclass-analysis-failure");
+    self._ecolassStatus = AnalysisStatus.FAILURE;
+    self.showSkippedAnalyses();
+    alert("Ecoclass analysis failed");
+  }
+
+  showEcoclassSkipped() {
+    const self = this;
+    self._hide("ecoclass-analysis-loading");
+    self._show("ecoclass-analysis-skipped");
+  }
+
+  // Rangeland
+
+  showRangelandSuccess() {
+    const self = this;
+    self._hide("rap-analysis-loading");
+    self._show("rap-analysis-success");
+    self._rangelandStatus = AnalysisStatus.SUCCESS;
+  }
+
+  showRangelandFailed() {
+    const self = this;
+    self._hide("rap-analysis-loading");
+    self._show("rap-analysis-failure");
+    self._rangelandStatus = AnalysisStatus.FAILURE;
+    self.showSkippedAnalyses();
+    alert("Rangeland Analysis Platform query failed");
+  }
+
+  showRangelandSkipped() {
+    const self = this;
+    self._hide("rap-analysis-loading");
+    self._show("rap-analysis-skipped");
   }
 }

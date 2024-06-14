@@ -1,5 +1,4 @@
 function get200Json(response) {
-  debugger;
   if (response.status == 200) {
     return response.json();
   } else {
