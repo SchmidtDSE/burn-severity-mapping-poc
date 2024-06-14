@@ -137,12 +137,12 @@
     <script src="static/js/util.js"></script>
     <script>
         var mapboxToken = "{{ mapbox_token }}";
-        var tileserverEndpoint = "{{ tileserver_endpoint }}";
+        var cogTileserverUrlPrefix = "{{ cog_tileserver_url_prefix }}";
 
         document.addEventListener("DOMContentLoaded", function() {
             const mainPresenter = new MainPresenter(
                 mapboxToken,
-                tileserverEndpoint
+                cogTileserverUrlPrefix
             );
         });
 

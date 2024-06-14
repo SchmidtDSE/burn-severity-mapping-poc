@@ -1,8 +1,8 @@
 class MainPresenter {
-  constructor(mapboxToken, tileserverEndpoint) {
+  constructor(mapboxToken, cogTileserverUrlPrefix) {
     const self = this;
     self._mapboxToken = mapboxToken;
-    self._tileserverEndpoint = tileserverEndpoint;
+    self._cogTileserverUrlPrefix = cogTileserverUrlPrefix;
 
     self._successCounter = 0;
     self._aoiDrawn = false;
@@ -178,9 +178,9 @@ class MainPresenter {
 
     const showIntermediateBurnMetrics = (burnAnalysisResponse) => {
       const self = this;
-      debugger;
+      const cloudCogPathRbr = burnAnalysisResponse.getCloudCogPaths().rbr;
 
-      const cloudCogPathRbr = burnAnalysisResponse.cloud_cog_paths.rbr;
+      debugger;
 
       const intermediateProductTileserverUrl =
         self._tileserverEndpoint + cloudCogPathRbr;

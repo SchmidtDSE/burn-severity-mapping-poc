@@ -15,12 +15,16 @@ def upload(
     mapbox_token: str = Depends(get_mapbox_secret),
 ):
     tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+    cog_tileserver_url_prefix = (
+        tileserver_endpoint
+        + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?nodata=-99&return_mask=true&url="
+    )
 
     return templates.TemplateResponse(
         "upload/upload.html",
         {
             "request": request,
             "mapbox_token": mapbox_token,  # for NAIP and Satetllite in V0
-            "tileserver_endpoint": tileserver_endpoint,
+            "cog_tileserver_url_prefix": cog_tileserver_url_prefix,
         },
     )
