@@ -177,7 +177,17 @@ class MainPresenter {
     };
 
     const showIntermediateBurnMetrics = (burnAnalysisResponse) => {
-      self._mapPresenter.showIntermediateBurnMetrics(burnAnalysisResponse);
+      const self = this;
+      debugger;
+
+      const cloudCogPathRbr = burnAnalysisResponse.cloud_cog_paths.rbr;
+
+      const intermediateProductTileserverUrl =
+        self._tileserverEndpoint + cloudCogPathRbr;
+
+      self._mapPresenter.showIntermediateBurnMetrics(
+        intermediateProductTileserverUrl
+      );
     };
 
     const reportAnalysis = (burnAnalysisResponse) => {
@@ -266,11 +276,11 @@ class MainPresenter {
         .then(showAoi)
         .then(analyzeBurn)
         .then(reportAnalysis)
-        .then(showIntermediateBurnMetrics)
-        .then(ingestUserSeedPoints)
-        .then(refineBoundary)
-        .then(reportRefinedAnalysis)
-        .then(showDerivedBoundary);
+        .then(showIntermediateBurnMetrics);
+      // .then(ingestUserSeedPoints)
+      // .then(refineBoundary)
+      // .then(reportRefinedAnalysis)
+      // .then(showDerivedBoundary);
       // .then(performSecondaryAnalysis)
       // .then(updateProducts);
     };

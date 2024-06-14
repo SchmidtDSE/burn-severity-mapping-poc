@@ -17,12 +17,19 @@ class Product {
 }
 
 class BurnAnalysisResponse {
-  constructor(executed, fireFound, derivedBoundary, satellitePassInfo) {
+  constructor(
+    executed,
+    fireFound,
+    derivedBoundary,
+    satellitePassInfo,
+    cloudCogPaths
+  ) {
     const self = this;
     self._executed = executed;
     self._fireFound = fireFound;
     self._derivedBoundary = derivedBoundary;
     self._satellitePassInfo = satellitePassInfo;
+    self._cloudCogPaths = cloudCogPaths;
   }
 
   getExecuted() {
@@ -43,6 +50,11 @@ class BurnAnalysisResponse {
   getSatellitePassInfo() {
     const self = this;
     return self._satellitePassInfo;
+  }
+
+  getCloudCogPaths() {
+    const self = this;
+    return self._cloudCogPaths;
   }
 }
 
@@ -235,13 +247,14 @@ class ApiFacade {
                 true,
                 true,
                 responseJson.derived_boundary,
-                responseJson.satellite_pass_information
+                responseJson.satellite_pass_information,
+                responseJson.cloud_cog_paths
               )
           );
       } else if (statusCode == 204) {
-        return new BurnAnalysisResponse(true, false, null, null);
+        return new BurnAnalysisResponse(true, false, null, null, null);
       } else {
-        return new BurnAnalysisResponse(false, false, null, null);
+        return new BurnAnalysisResponse(false, false, null, null, null);
       }
     };
 
