@@ -95,7 +95,7 @@ class MapPresenter {
     const self = this;
 
     const uploadedLayer = L.geoJSON(aoi, {
-      style: function (feature) {
+      style: function () {
         return {
           color: deriveBoundary ? "#f12215" : "#000000",
           weight: 2,
@@ -310,7 +310,7 @@ class IndicatorAreaPresenter {
 
   showUploadSuccess() {
     const self = this;
-    self._show("upload-loading");
+    self._hide("upload-loading");
     self._show("upload-success");
   }
 
@@ -386,7 +386,6 @@ class IndicatorAreaPresenter {
 
   _show(targetId) {
     const self = this;
-    debugger;
     document.getElementById(targetId).style.display = "block";
   }
 

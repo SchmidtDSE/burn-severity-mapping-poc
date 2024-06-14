@@ -253,27 +253,23 @@ class MainPresenter {
       .catch((error) => {
         console.error("Error in showLoading:", error);
         throw error;
+      })
+      .then(uploadShape)
+      .catch((error) => {
+        console.error("Error in uploadShape:", error);
+        throw error;
+      })
+      .then(onUploadSuccess)
+      .catch((error) => {
+        console.error("Error in onUploadSuccess:", error);
+        onUploadFail();
+        throw error;
+      })
+      .then(showArea)
+      .catch((error) => {
+        console.error("Error in showArea:", error);
+        throw error;
       });
-    // .then(uploadShape)
-    // .catch((error) => {
-    //   console.error("Error in uploadShape:", error);
-    //   throw error;
-    // })
-    // .then(onUploadSuccess)
-    // .catch((error) => {
-    //   console.error("Error in onUploadSuccess:", error);
-    //   throw error;
-    // })
-    // .then(onUploadFail)
-    // .catch((error) => {
-    //   console.error("Error in onUploadFail:", error);
-    //   throw error;
-    // })
-    // .then(showArea)
-    // .catch((error) => {
-    //   console.error("Error in showArea:", error);
-    //   throw error;
-    // })
     // .then(analyzeBurn)
     // .catch((error) => {
     //   console.error("Error in analyzeBurn:", error);
