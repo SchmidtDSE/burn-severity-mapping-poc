@@ -168,7 +168,6 @@ class LocationFormPresenter {
 
   getLocation() {
     const self = this;
-    console.log("getLocation", self);
     return self._selection.querySelector("#location-input").value;
   }
 }
@@ -277,8 +276,6 @@ class FireAnalysisMetaFormPresenter {
 
   getFormContents() {
     const self = this;
-
-    console.log("getFormContents", self);
 
     const getVal = (targetId) =>
       self._selection.querySelector("#" + targetId).value;
@@ -389,11 +386,12 @@ class IndicatorAreaPresenter {
 
   _show(targetId) {
     const self = this;
-    document.getElementById(targetId).display = "block";
+    debugger;
+    document.getElementById(targetId).style.display = "block";
   }
 
   _hide(targetId) {
     const self = this;
-    document.getElementById(targetId).display = "none";
+    document.getElementById(targetId).style.display = "none";
   }
 }
