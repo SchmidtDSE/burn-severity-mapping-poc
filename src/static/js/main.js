@@ -180,10 +180,10 @@ class MainPresenter {
       const self = this;
       const cloudCogPathRbr = burnAnalysisResponse.getCloudCogPaths().rbr;
 
-      debugger;
-
       const intermediateProductTileserverUrl =
-        self._tileserverEndpoint + cloudCogPathRbr;
+        self._cogTileserverUrlPrefix + cloudCogPathRbr;
+
+      debugger;
 
       self._mapPresenter.showIntermediateBurnMetrics(
         intermediateProductTileserverUrl

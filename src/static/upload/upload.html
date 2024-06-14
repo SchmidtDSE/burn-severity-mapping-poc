@@ -137,7 +137,7 @@
     <script src="static/js/util.js"></script>
     <script>
         var mapboxToken = "{{ mapbox_token }}";
-        var cogTileserverUrlPrefix = "{{ cog_tileserver_url_prefix }}";
+        var cogTileserverUrlPrefix = {{ cog_tileserver_url_prefix | tojson | safe}};
 
         document.addEventListener("DOMContentLoaded", function() {
             const mainPresenter = new MainPresenter(
