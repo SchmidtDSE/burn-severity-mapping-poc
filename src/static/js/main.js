@@ -129,15 +129,15 @@ class MainPresenter {
       self._indicatorArea.showAllLoading();
     };
 
-    const uploadShape = () => {
-      if (self._aoiDrawn) {
-        const drawnGeojsonStr = self._mapPresenter.getDrawnGeojson();
-        return self._apiFacade.uploadDrawnShape(metadata, drawnGeojsonStr);
-      } else {
-        const files = self._shapefileFormPresenter.getFiles();
-        const file = files[0];
-        return self._apiFacade.uploadShapefile(metadata, file);
-      }
+    const uploadDrawnAoi = () => {
+      const drawnGeojsonStr = self._mapPresenter.getDrawnGeojson();
+      return self._apiFacade.uploadDrawnShape(metadata, drawnGeojsonStr);
+    };
+
+    const uploadPredefinedAoi = () => {
+      const files = self._shapefileFormPresenter.getFiles();
+      const file = files[0];
+      return self._apiFacade.uploadShapefile(metadata, file);
     };
 
     const onUploadSuccess = (response) => {
@@ -149,7 +149,7 @@ class MainPresenter {
       self._indicatorArea.showUploadFail();
     };
 
-    const showArea = (uploadResponse) => {
+    const showAoi = (uploadResponse) => {
       // Get the GeoJSON, either from drawn AOI or uploaded shapefile
       const aoi = JSON.parse(uploadResponse.geojson);
 
@@ -172,15 +172,11 @@ class MainPresenter {
         geojson,
         self._aoiDrawn
       );
-      return {
-        burnAnalysisResponse,
-        uploadResponse,
-      };
+
+      return burnAnalysisResponse;
     };
 
-    const reportAnalysis = (responses) => {
-      const burnAnalysisResponse = responses.burnAnalysisResponse;
-
+    const reportAnalysis = (burnAnalysisResponse) => {
       return new Promise((resolve, reject) => {
         if (!burnAnalysisResponse.getExecuted()) {
           self._indicatorArea.showBurnAnalysisFailed();
@@ -188,31 +184,46 @@ class MainPresenter {
           return;
         }
 
-        if (!burnAnalysisResponse.getFireFound()) {
+        if (!self._aoiDrawn) {
+          // If we're still deriving the boundary, show the intermediate burn metrics,
+          // and leave th pending indicator as is. We will resolve that later.
+          if (!burnAnalysisResponse.getFireFound()) {
+            self._indicatorArea.showFireNotFound();
+            reject();
+            return;
+          }
+
+          self._indicatorArea.showBurnAnalysisSuccess(burnAnalysisResponse);
+        }
+        resolve(burnAnalysisResponse);
+      });
+    };
+
+    const reportRefinedAnalysis = (refinedBurnAnalysisResponse) => {
+      return new Promise((resolve, reject) => {
+        if (!refinedBurnAnalysisResponse.getExecuted()) {
+          self._indicatorArea.showBurnAnalysisFailed();
+          reject();
+          return;
+        }
+
+        if (!refinedBurnAnalysisResponse.getFireFound()) {
           self._indicatorArea.showFireNotFound();
           reject();
           return;
         }
 
         self._indicatorArea.showBurnAnalysisSuccess(burnAnalysisResponse);
-        resolve(responses);
+        resolve(refinedBurnAnalysisResponse);
       });
     };
 
-    const showDerivedBoundary = (responses) => {
-      const burnAnalysisResponse = responses.burnAnalysisResponse;
-
-      if (!self._aoiDrawn) {
-        return burnAnalysisResponse;
-      }
-
+    const showDerivedBoundary = (burnAnalysisResponse) => {
       const boundary = burnAnalysisResponse.getDerivedBoundary();
       self._mapPresenter.showBoundaryGeojson(boundary);
-
-      return responses;
     };
 
-    const performSecondaryAnalysis = (responses) => {
+    const performSecondaryAnalysis = () => {
       const ecoclassFuture = self._apiFacade
         .getEcoclass(metadata, geojson)
         .then(
@@ -242,57 +253,100 @@ class MainPresenter {
       self._updateProducts(affiliation, fireEventName);
     };
 
-    return checkState()
-      .then(checkMetadata)
-      .catch((error) => {
-        console.error("Error in checkMetadata:", error);
-        throw error;
-      })
-      .then(showAllLoading)
-      .catch((error) => {
-        console.error("Error in showLoading:", error);
-        throw error;
-      })
-      .then(uploadShape)
-      .catch((error) => {
-        console.error("Error in uploadShape:", error);
-        onUploadFail();
-        throw error;
-      })
-      .then(onUploadSuccess)
-      .catch((error) => {
-        console.error("Error in onUploadSuccess:", error);
-        throw error;
-      })
-      .then(showArea)
-      .catch((error) => {
-        console.error("Error in showArea:", error);
-        throw error;
-      });
-    // .then(analyzeBurn)
-    // .catch((error) => {
-    //   console.error("Error in analyzeBurn:", error);
-    //   throw error;
-    // })
-    // .then(reportAnalysis)
-    // .catch((error) => {
-    //   console.error("Error in reportAnalysis:", error);
-    //   throw error;
-    // })
-    // .then(showDerivedBoundary)
-    // .catch((error) => {
-    //   console.error("Error in showDerivedBoundary:", error);
-    //   throw error;
-    // })
-    // .then(performSecondaryAnalysis)
-    // .catch((error) => {
-    //   console.error("Error in performSecondaryAnalysis:", error);
-    //   throw error;
-    // })
-    // .then(updateProducts)
-    // .catch((error) => {
-    //   console.error("Error in updateProducts:", error);
-    //   throw error;
-    // });
+    const drawnAoiFlow = () => {
+      return checkState()
+        .then(checkMetadata)
+        .then(showAllLoading)
+        .then(uploadDrawnAoi)
+        .then(onUploadSuccess)
+        .then(showAoi)
+        .then(analyzeBurn)
+        .then(reportAnalysis)
+        .then(showIntermediateBurnMetrics)
+        .then(ingestUserSeedPoints)
+        .then(refineBoundary)
+        .then(reportRefinedAnalysis)
+        .then(showDerivedBoundary);
+      // .then(performSecondaryAnalysis)
+      // .then(updateProducts);
+    };
+
+    const predefinedAoiFlow = () => {
+      return checkState()
+        .then(checkMetadata)
+        .then(showAllLoading)
+        .then(uploadPredefinedAoi)
+        .then(onUploadSuccess)
+        .then(showAoi)
+        .then(analyzeBurn)
+        .then(reportAnalysis);
+      // .then(performSecondaryAnalysis)
+      // .then(updateProducts);
+    };
+
+    if (self._aoiDrawn) {
+      return drawnAoiFlow();
+    } else {
+      return predefinedAoiFlow();
+    }
+
+    //   return (
+    //     checkState()
+    //       .then(checkMetadata)
+    //       .catch((error) => {
+    //         console.error("Error in checkMetadata:", error);
+    //         throw error;
+    //       })
+    //       .then(showAllLoading)
+    //       .catch((error) => {
+    //         console.error("Error in showLoading:", error);
+    //         throw error;
+    //       })
+    //       // This uploads the shapefile or drawn AOI, with different behavior for each
+    //       .then(uploadShape)
+    //       .catch((error) => {
+    //         console.error("Error in uploadShape:", error);
+    //         onUploadFail();
+    //         throw error;
+    //       })
+    //       .then(onUploadSuccess)
+    //       .catch((error) => {
+    //         console.error("Error in onUploadSuccess:", error);
+    //         throw error;
+    //       })
+    //       // This shows the AOI on the map, with a different style if it's 'final' or not
+    //       .then(showArea)
+    //       .catch((error) => {
+    //         console.error("Error in showArea:", error);
+    //         throw error;
+    //       })
+    //       // This runs the burn analysis, on either the finished boundary (shp upload) or the to-be-derived boundary
+    //       // (since we need the burn metrics to derive the boundary)
+    //       .then(analyzeBurn)
+    //       .catch((error) => {
+    //         console.error("Error in analyzeBurn:", error);
+    //         throw error;
+    //       })
+    //       .then(reportAnalysis)
+    //       .catch((error) => {
+    //         console.error("Error in reportAnalysis:", error);
+    //         throw error;
+    //       })
+    //       .then(showDerivedBoundary)
+    //       .catch((error) => {
+    //         console.error("Error in showDerivedBoundary:", error);
+    //         throw error;
+    //       })
+    //   );
+    //   // .then(performSecondaryAnalysis)
+    //   // .catch((error) => {
+    //   //   console.error("Error in performSecondaryAnalysis:", error);
+    //   //   throw error;
+    //   // })
+    //   // .then(updateProducts)
+    //   // .catch((error) => {
+    //   //   console.error("Error in updateProducts:", error);
+    //   //   throw error;
+    //   // });
   }
 }

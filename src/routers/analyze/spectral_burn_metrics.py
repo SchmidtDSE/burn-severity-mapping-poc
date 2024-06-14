@@ -62,8 +62,7 @@ def analyze_spectral_burn_metrics(
         JSONResponse: The response containing the analysis results and derived boundary, if applicable.
     """
     sentry_sdk.set_context("fire-event", {"request": body})
-    # geojson_boundary = json.loads(body.geojson)
-    geojson_boundary = body.geojson
+    geojson_boundary = json.loads(body.geojson)
 
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
@@ -73,7 +72,7 @@ def analyze_spectral_burn_metrics(
     # For development - this allows us to optionally use an existing metrics stack,
     # in the case where a previous endpoint shows the user an intermediate output for them
     # to segment their own fire events from the thresholded rbr imagery
-    use_existing_metrics_stack = True
+    use_existing_metrics_stack = False
 
     return main(
         geojson_boundary,
