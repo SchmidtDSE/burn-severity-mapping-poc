@@ -508,13 +508,16 @@ class IndicatorAreaPresenter {
 
   waitForSeedPointSubmission() {
     const self = this;
-    const seedSubmissionButton = document.querySelector("#seed-point-submit");
+    const seedSubmissionButton = document.querySelector(
+      "#seed-point-submission"
+    );
 
     // Return a Promise that resolves when the button is clicked
     return new Promise((resolve) => {
       seedSubmissionButton.addEventListener(
         "click",
         () => {
+          debugger;
           resolve();
         },
         { once: true }
