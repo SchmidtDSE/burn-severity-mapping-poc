@@ -190,6 +190,7 @@ class MainPresenter {
       );
 
       self._mapPresenter.enableSeedMetricInput();
+      self._indicatorArea.showSeedPointSubmissionWaiting();
     };
 
     const reportAnalysis = (burnAnalysisResponse) => {
@@ -215,9 +216,14 @@ class MainPresenter {
       });
     };
 
+    const waitForSeedPointSubmission = () => {
+      return self._indicatorArea.waitForSeedPointSubmission();
+    };
+
     const ingestUserSeedPoints = () => {
-      const seedPoints = self._mapPresenter.getSeedPoints();
-      return self._apiFacade.ingestUserSeedPoints(metadata, seedPoints);
+      debugger;
+      const seedPointsJson = self._mapPresenter.exportEditableLayersAsJson();
+      return self._apiFacade.ingestUserSeedPoints(metadata, seedPointsJson);
     };
 
     const reportRefinedAnalysis = (refinedBurnAnalysisResponse) => {
@@ -284,6 +290,7 @@ class MainPresenter {
         .then(analyzeBurn)
         .then(reportAnalysis)
         .then(showIntermediateBurnMetrics)
+        .then(waitForSeedPointSubmission)
         .then(ingestUserSeedPoints);
       // .then(refineBoundary)
       // .then(reportRefinedAnalysis)

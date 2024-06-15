@@ -115,6 +115,8 @@ class MapPresenter {
     self._editableLayers.eachLayer((layer) => {
       self._editableLayers.removeLayer(layer);
     });
+
+    self._editableLayers = null;
   }
 
   showAOI(aoi, deriveBoundary) {
@@ -203,14 +205,26 @@ class MapPresenter {
       console.log(seedPoint);
     };
 
-    this.addDrawControl(self._innerMap, onSeedPointDrawn, {
-      polyline: false,
-      marker: true,
-      circle: false,
-      circlemarker: false,
-      rectangle: false,
-      polygon: false,
-    });
+    const { editableLayers, drawControl } = this.addDrawControl(
+      self._innerMap,
+      onSeedPointDrawn,
+      {
+        polyline: false,
+        marker: true,
+        circle: false,
+        circlemarker: false,
+        rectangle: false,
+        polygon: false,
+      }
+    );
+
+    self._editableLayers = editableLayers;
+    self._drawControl = drawControl;
+  }
+
+  exportEditableLayersAsJson() {
+    const self = this;
+    return self._editableLayers.toGeoJSON();
   }
 }
 
@@ -476,6 +490,36 @@ class IndicatorAreaPresenter {
     const self = this;
     self._hide("burn-analysis-loading");
     self._show("burn-analysis-skipped");
+  }
+
+  // Seed Point submission (in the place of burn analysis)
+
+  showSeedPointSubmissionWaiting() {
+    const self = this;
+    self._hide("burn-analysis-loading");
+    self._show("seed-point-submission");
+  }
+
+  showSeedPointSubmissionPending() {
+    const self = this;
+    self._hide("seed-point-submission");
+    self._show("burn-analysis-pending");
+  }
+
+  waitForSeedPointSubmission() {
+    const self = this;
+    const seedSubmissionButton = document.querySelector("#seed-point-submit");
+
+    // Return a Promise that resolves when the button is clicked
+    return new Promise((resolve) => {
+      seedSubmissionButton.addEventListener(
+        "click",
+        () => {
+          resolve();
+        },
+        { once: true }
+      );
+    });
   }
 
   // EcoClass
