@@ -15,7 +15,7 @@ from src.util.cloud_static_io import CloudStaticIOClient
 router = APIRouter()
 
 
-class FloodFillRefinementPOSTBody(BaseModel):
+class FloodFillSegmentationPOSTBody(BaseModel):
     """
     Represents the request body for analyzing burn metrics.
 
@@ -34,12 +34,12 @@ class FloodFillRefinementPOSTBody(BaseModel):
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
 @router.post(
-    "/api/analyze/flood-fill-refinement",
+    "/api/analyze/flood-fill-segmentation",
     tags=["analysis"],
-    description="Use seed points to refine a burn boundary.",
+    description="Use seed points to segment a burn boundary.",
 )
 def analyze_spectral_burn_metrics(
-    body: FloodFillRefinementPOSTBody,
+    body: FloodFillSegmentationPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
     logger: Logger = Depends(get_cloud_logger),
@@ -113,7 +113,7 @@ def main(
 
         logger.info(f"Loaded existing metrics stack for {fire_event_name}")
 
-        # Use the seed points to perform flood fill refinement
+        # Use the seed points to perform flood fill
         geo_client.derive_boundary_flood_fill(
             seed_points=geojson_seed_points,
             burn_metric="rbr",
@@ -121,7 +121,7 @@ def main(
         )
 
         # save the cog to the FTP server - this essentially overwrites
-        # previous un-refined boundarie, but those are usually just imprecise
+        # previous un-segmented boundarie, but those are usually just imprecise
         # rectangles so this is fine
         cloud_static_io_client.update_metrics_stack(
             metrics_stack=geo_client.metrics_stack,
@@ -133,7 +133,7 @@ def main(
         return JSONResponse(
             status_code=200,
             content={
-                "message": f"Cogs refined using flood-fill for {fire_event_name}",
+                "message": f"Cogs segmented using flood-fill for {fire_event_name}",
                 "fire_event_name": fire_event_name,
             },
         )
