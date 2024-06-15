@@ -223,38 +223,36 @@ class MainPresenter {
     const refineBurnWithSeedPoints = async () => {
       debugger;
       const geojson = self._mapPresenter.exportEditableLayersAsJson();
-      const refinedBurnAnalysisResponse = await self._apiFacade.analyzeBurn(
+      const refineResponse = await self._apiFacade.refineFloodFill(
         metadata,
-        geojson,
-        self._aoiDrawn
+        geojson
       );
-
-      return burnAnalysisResponse;
-      return self._apiFacade.ingestUserSeedPoints(metadata, seedPointsJson);
+      return refinedBurnAnalysisResponse;
     };
 
-    const reportRefinedAnalysis = (refinedBurnAnalysisResponse) => {
+    const reportRefinedAnalysis = (refineResponse) => {
       return new Promise((resolve, reject) => {
-        if (!refinedBurnAnalysisResponse.getExecuted()) {
+        if (!refineResponse.getExecuted()) {
           self._indicatorArea.showBurnAnalysisFailed();
           reject();
           return;
         }
 
-        if (!refinedBurnAnalysisResponse.getFireFound()) {
+        if (!refineResponse.getFireFound()) {
           self._indicatorArea.showFireNotFound();
           reject();
           return;
         }
 
-        self._indicatorArea.showBurnAnalysisSuccess(burnAnalysisResponse);
+        self._indicatorArea.showSeedPointSubmissionSuccess();
+        self._mapPresenter.showDerivedBoundary(refinedBurnAnalysisResponse);
         resolve(refinedBurnAnalysisResponse);
       });
     };
 
-    const showDerivedBoundary = (burnAnalysisResponse) => {
-      const boundary = burnAnalysisResponse.getDerivedBoundary();
-      self._mapPresenter.showBoundaryGeojson(boundary);
+    const showDerivedBoundary = (FloodFillSegmentationResponse) => {
+      const boundary = FloodFillSegmentationResponse.getDerivedBoundary();
+      self._mapPresenter.showAOI(boundary, false);
     };
 
     const performSecondaryAnalysis = () => {
@@ -298,8 +296,7 @@ class MainPresenter {
         .then(reportAnalysis)
         .then(showIntermediateBurnMetrics)
         .then(waitForSeedPointSubmission)
-        .then(ingestUserSeedPoints);
-      // .then(refineBoundary)
+        .then(refineBurnWithSeedPoints);
       // .then(reportRefinedAnalysis)
       // .then(showDerivedBoundary);
       // .then(performSecondaryAnalysis)

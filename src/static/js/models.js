@@ -148,7 +148,7 @@ class FireAnalysisMetaFormContents {
 }
 
 class FloodFillSegmentationResponse {
-  constructor(executed, message, fireEventName, affiliation, derivedBoundary) {
+  constructor(executed, fireEventName, affiliation, derivedBoundary) {
     const self = this;
     self._executed = executed;
     self._fireEventName = fireEventName;
