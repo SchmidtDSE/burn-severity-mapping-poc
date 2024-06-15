@@ -5,7 +5,8 @@ from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from src.routers.check import connectivity, dns, health, sentry_error
-from src.routers.analyze import spectral_burn_metrics, flood_fill_segmentation
+from src.routers.analyze import spectral_burn_metrics
+from src.routers.refine import flood_fill_segmentation
 from src.routers.upload import drawn_aoi, shapefile_zip
 from src.routers.fetch import rangeland_analysis_platform, ecoclass
 from src.routers.list import derived_products
@@ -34,6 +35,8 @@ app.include_router(dns.router)
 
 ### ANALYZE ###
 app.include_router(spectral_burn_metrics.router)
+
+### REFINE ###
 app.include_router(flood_fill_segmentation.router)
 
 ### UPLOAD ###

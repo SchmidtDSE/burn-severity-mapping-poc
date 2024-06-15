@@ -17,13 +17,7 @@ class Product {
 }
 
 class BurnAnalysisResponse {
-  constructor(
-    executed,
-    fireFound,
-    derivedBoundary,
-    satellitePassInfo,
-    cloudCogPaths
-  ) {
+  constructor(executed, derivedBoundary, satellitePassInfo, cloudCogPaths) {
     const self = this;
     self._executed = executed;
     self._fireFound = fireFound;
@@ -35,11 +29,6 @@ class BurnAnalysisResponse {
   getExecuted() {
     const self = this;
     return self._executed;
-  }
-
-  getFireFound() {
-    const self = this;
-    return self._fireFound;
   }
 
   getDerivedBoundary() {
@@ -158,6 +147,36 @@ class FireAnalysisMetaFormContents {
   }
 }
 
+class FloodFillSegmentationResponse {
+  constructor(executed, message, fireEventName, affiliation, derivedBoundary) {
+    const self = this;
+    self._executed = executed;
+    self._fireEventName = fireEventName;
+    self._affiliation = affiliation;
+    self._derivedBoundary = derivedBoundary;
+  }
+
+  getExecuted() {
+    const self = this;
+    return self._executed;
+  }
+
+  getFireEventName() {
+    const self = this;
+    return self._fireEventName;
+  }
+
+  getAffiliation() {
+    const self = this;
+    return self._affiliation;
+  }
+
+  getDerivedBoundary() {
+    const self = this;
+    return self._derivedBoundary;
+  }
+}
+
 class ApiFacade {
   getDerivedProducts(fireEventName, affiliation) {
     const self = this;
@@ -245,7 +264,6 @@ class ApiFacade {
             (responseJson) =>
               new BurnAnalysisResponse(
                 true,
-                true,
                 responseJson.derived_boundary,
                 responseJson.satellite_pass_information,
                 responseJson.cloud_cog_paths
@@ -261,5 +279,51 @@ class ApiFacade {
     return performFetch().then(interpretResponse);
   }
 
-  // TODO: getEcoclass, getRangelandAnalysis
+  refineFloodFill(metadata, geojson) {
+    const self = this;
+
+    const performFetch = () => {
+      const body = JSON.stringify({
+        geojson: geojson,
+        fire_event_name: metadata.getFireEventName(),
+        affiliation: metadata.getAffiliation(),
+      });
+
+      const request = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: body,
+      };
+
+      return fetch("/api/refine/flood-fill-segmentation", request);
+    };
+
+    const interpretResponse = (response) => {
+      const statusCode = response.status;
+      if (statusCode == 200) {
+        return response.json().then(
+          (responseJson) =>
+            new FloodFillSegmentationResponse(
+              true,
+              true, // Fire was detected
+              responseJson.fire_event_name,
+              responseJson.affiliation,
+              responseJson.derived_boundary
+            )
+        );
+      } else if (statusCode == 204) {
+        return new FloodFillSegmentationResponse(true, false, null, null, null);
+      } else {
+        return new FloodFillSegmentationResponse(
+          false,
+          false,
+          null,
+          null,
+          null
+        );
+      }
+    };
+
+    return performFetch().then(interpretResponse);
+  }
 }

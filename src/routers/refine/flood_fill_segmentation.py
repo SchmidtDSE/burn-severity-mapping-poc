@@ -34,8 +34,8 @@ class FloodFillSegmentationPOSTBody(BaseModel):
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
 @router.post(
-    "/api/analyze/flood-fill-segmentation",
-    tags=["analysis"],
+    "/api/refine/flood-fill-segmentation",
+    tags=["refine"],
     description="Use seed points to segment a burn boundary.",
 )
 def analyze_spectral_burn_metrics(
@@ -114,11 +114,25 @@ def main(
         logger.info(f"Loaded existing metrics stack for {fire_event_name}")
 
         # Use the seed points to perform flood fill
-        geo_client.derive_boundary_flood_fill(
+        derived_boundary = geo_client.derive_boundary_flood_fill(
             seed_points=geojson_seed_points,
             burn_metric="rbr",
             threshold=0.2,
+            inplace=False,
         )
+
+        # save the derived boundary to the FTP server
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
+            tmp_geojson = tmp.name
+            with open(tmp_geojson, "w") as f:
+                f.write(derived_boundary)
+            boundary_s3_path = (
+                f"public/{affiliation}/{fire_event_name}/boundary.geojson"
+            )
+            cloud_static_io_client.upload(
+                source_local_path=tmp_geojson,
+                remote_path=boundary_s3_path,
+            )
 
         # save the cog to the FTP server - this essentially overwrites
         # previous un-segmented boundarie, but those are usually just imprecise
@@ -135,6 +149,8 @@ def main(
             content={
                 "message": f"Cogs segmented using flood-fill for {fire_event_name}",
                 "fire_event_name": fire_event_name,
+                "affiliation": affiliation,
+                "derived_boundary": derived_boundary,
             },
         )
 
