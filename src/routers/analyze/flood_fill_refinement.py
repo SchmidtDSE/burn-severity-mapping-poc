@@ -15,22 +15,17 @@ from src.util.cloud_static_io import CloudStaticIOClient
 router = APIRouter()
 
 
-class AnaylzeBurnPOSTBody(BaseModel):
+class FloodFillRefinementPOSTBody(BaseModel):
     """
     Represents the request body for analyzing burn metrics.
 
     Attributes:
         geojson (str): The GeoJSON data in string format.
-        derive_boundary (bool): Flag indicating whether to derive the boundary. If a shapefile is provided, this will be False.
-            If an AOI is drawn, this will be True.
-        date_ranges (dict): The date ranges for analysis.
         fire_event_name (str): The name of the fire event.
         affiliation (str): The affiliation of the analysis.
     """
 
     geojson: Any
-    derive_boundary: bool
-    date_ranges: dict
     fire_event_name: str
     affiliation: str
 
@@ -39,12 +34,12 @@ class AnaylzeBurnPOSTBody(BaseModel):
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
 @router.post(
-    "/api/analyze/spectral-burn-metrics",
+    "/api/analyze/flood-fill-refinement",
     tags=["analysis"],
-    description="Derive spectral burn metrics from satellite imagery within a boundary.",
+    description="Use seed points to refine a burn boundary.",
 )
 def analyze_spectral_burn_metrics(
-    body: AnaylzeBurnPOSTBody,
+    body: FloodFillRefinementPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
     logger: Logger = Depends(get_cloud_logger),
@@ -62,35 +57,24 @@ def analyze_spectral_burn_metrics(
         JSONResponse: The response containing the analysis results and derived boundary, if applicable.
     """
     sentry_sdk.set_context("fire-event", {"request": body})
-    geojson_boundary = json.loads(body.geojson)
+    geojson_seed_points = json.loads(body.geojson)
 
-    date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
-    derive_boundary = body.derive_boundary
-
-    use_existing_metrics_stack = False
-    if derive_boundary:
-        use_existing_metrics_stack = True
 
     return main(
-        geojson_boundary,
-        date_ranges,
+        geojson_seed_points,
         fire_event_name,
         affiliation,
-        derive_boundary,
         logger,
         cloud_static_io_client,
-        use_existing_metrics_stack,
     )
 
 
 def main(
-    geojson_boundary,
-    date_ranges,
+    geojson_seed_points,
     fire_event_name,
     affiliation,
-    derive_boundary,
     logger,
     cloud_static_io_client,
 ):
@@ -98,45 +82,68 @@ def main(
     ## but will shortly be a different endpoint
 
     logger.info(f"Received analyze-fire-event request for {fire_event_name}")
-    derived_boundary = None
-    satellite_pass_information = None
 
     try:
-        # create a Sentinel2Client instance
-        geo_client = Sentinel2Client(geojson_boundary=geojson_boundary, buffer=0.1)
+        # create a Sentinel2Client instance, without initializing, since we are
+        # getting what we need from the cogs already generated
+        geo_client = Sentinel2Client()
 
-        # get imagery data before and after the fire
-        satellite_pass_information = geo_client.query_fire_event(
-            prefire_date_range=date_ranges["prefire"],
-            postfire_date_range=date_ranges["postfire"],
-            from_bbox=True,
+        ## TODO: Since we are running serverless, and don't have a live database, we are
+        ## required to re-construct the metrics stack from the existing files, in the case
+        ## where the user has identified fire boundaries from our intermediate rbr output.
+        ## This is not ideal, but not sure there is a better solution without using something
+        ## like redis or another live cache.
+        metric_layers = []
+        for metric_name in ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]:
+            with tempfile.NamedTemporaryFile(suffix=".tif", delete=False) as tmp:
+                tmp_tiff = tmp.name
+                cloud_static_io_client.download(
+                    remote_path=f"public/{affiliation}/{fire_event_name}/{metric_name}.tif",
+                    target_local_path=tmp_tiff,
+                )
+
+                metric_layer = rxr.open_rasterio(tmp_tiff)
+                metric_layer = metric_layer.rename({"band": "burn_metric"})
+                metric_layer["burn_metric"] = [metric_name]
+
+                metric_layers.append(metric_layer)
+
+        existing_metrics_stack = xr.concat(metric_layers, dim="band")
+        geo_client.ingest_metrics_stack(existing_metrics_stack)
+
+        logger.info(f"Loaded existing metrics stack for {fire_event_name}")
+
+        # Use the seed points to perform flood fill refinement
+        geo_client.derive_boundary_flood_fill(
+            seed_points=geojson_seed_points,
+            burn_metric="rbr",
+            threshold=0.2,
         )
-        logger.info(f"Obtained imagery for {fire_event_name}")
 
-        # calculate burn metrics
-        geo_client.calc_burn_metrics()
-        logger.info(f"Calculated burn metrics for {fire_event_name}")
-
-        # save the cog to the FTP server
-        cloud_static_io_client.upload_fire_event(
+        # save the cog to the FTP server - this essentially overwrites
+        # previous un-refined boundarie, but those are usually just imprecise
+        # rectangles so this is fine
+        cloud_static_io_client.update_metrics_stack(
             metrics_stack=geo_client.metrics_stack,
             affiliation=affiliation,
             fire_event_name=fire_event_name,
-            prefire_date_range=date_ranges["prefire"],
-            postfire_date_range=date_ranges["postfire"],
-            derive_boundary=derive_boundary,
-            satellite_pass_information=satellite_pass_information,
         )
-        logger.info(f"Cogs uploaded for {fire_event_name}")
+        logger.info(f"Cogs updated for {fire_event_name}")
 
         return JSONResponse(
             status_code=200,
             content={
-                "message": f"Cogs uploaded for {fire_event_name}",
+                "message": f"Cogs refined using flood-fill for {fire_event_name}",
                 "fire_event_name": fire_event_name,
-                "derived_boundary": derived_boundary,
-                "cloud_cog_paths": cloud_static_io_client.cloud_cog_paths,
-                "satellite_pass_information": satellite_pass_information,
+            },
+        )
+
+    except NoFireBoundaryDetectedError as e:
+        logger.info(f"No Fire Boundary Detected for fire event {fire_event_name}")
+        return JSONResponse(
+            status_code=204,
+            content={
+                "message": f"No Fire Boundary Detected for fire event {fire_event_name}"
             },
         )
 

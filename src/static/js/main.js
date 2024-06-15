@@ -170,7 +170,7 @@ class MainPresenter {
       const burnAnalysisResponse = await self._apiFacade.analyzeBurn(
         metadata,
         geojson,
-        self._aoiDrawn
+        null // In both cases, this first call gets the burn metrics from sentinel
       );
 
       return burnAnalysisResponse;
@@ -220,9 +220,16 @@ class MainPresenter {
       return self._indicatorArea.waitForSeedPointSubmission();
     };
 
-    const ingestUserSeedPoints = () => {
+    const refineBurnWithSeedPoints = async () => {
       debugger;
-      const seedPointsJson = self._mapPresenter.exportEditableLayersAsJson();
+      const geojson = self._mapPresenter.exportEditableLayersAsJson();
+      const refinedBurnAnalysisResponse = await self._apiFacade.analyzeBurn(
+        metadata,
+        geojson,
+        self._aoiDrawn
+      );
+
+      return burnAnalysisResponse;
       return self._apiFacade.ingestUserSeedPoints(metadata, seedPointsJson);
     };
 

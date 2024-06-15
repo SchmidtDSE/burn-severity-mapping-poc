@@ -34,7 +34,7 @@ class NoFireBoundaryDetectedError(BaseException):
 class Sentinel2Client:
     def __init__(
         self,
-        geojson_boundary,
+        geojson_boundary=None,
         barc_classifications=None,
         buffer=0.1,
         crs="EPSG:4326",
@@ -327,7 +327,7 @@ class Sentinel2Client:
                 dim="classification_source",
             )
 
-    def derive_boundary(self, metric_name="rbr", inplace=True):
+    def derive_boundary_flood_fill(self, seed_points, metric_name="rbr", inplace=True):
         """
         Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
         This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as `boundary.geojson`
@@ -342,34 +342,16 @@ class Sentinel2Client:
         """
         print("Deriving boundary using metric: {}".format(metric_name))
 
-        # For now, hard code that the chosen point is basically the center of the given AOI
-        jitter_amount = 0.0001
-
-        seed_points = gpd.GeoDataFrame(
-            geometry=[
-                Point(
-                    self.geojson_boundary.centroid.values[0].x
-                    + np.random.normal(0, jitter_amount),
-                    self.geojson_boundary.centroid.values[0].y
-                    + np.random.normal(0, jitter_amount),
-                ),
-                Point(
-                    self.geojson_boundary.centroid.values[0].x
-                    + np.random.normal(0, jitter_amount),
-                    self.geojson_boundary.centroid.values[0].y
-                    + np.random.normal(0, jitter_amount),
-                ),
-            ]
-        )
+        seed_points_gpd = gpd.GeoDataFrame.from_dict(seed_points)
 
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
-        if seed_points is not None:
+        if seed_points_gpd is not None:
             # Add a dim called 'seed' to denote whether the pixel is a seed point
             metric_layer = metric_layer.expand_dims(dim="seed")
             metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)
 
-            for point in seed_points.geometry:
+            for point in seed_points_gpd.geometry:
                 nearest_pixel = metric_layer.sel(x=point.x, y=point.y, method="nearest")
                 nearest_pixel_x = nearest_pixel.x.values
                 nearest_pixel_y = nearest_pixel.y.values

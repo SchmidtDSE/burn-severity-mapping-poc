@@ -394,20 +394,6 @@ class CloudStaticIOClient:
             )
             self.logger.info(f"Uploaded/updated manifest.json")
 
-    def upload_approx_aoi_metrics(
-        self,
-        metrics_stack,
-        fire_event_name,
-        affiliation,
-    ):
-        self.logger.info(f"Uploading approx AOI metrics for {fire_event_name}")
-
-        self.upload_cogs(
-            metrics_stack=metrics_stack,
-            fire_event_name=fire_event_name,
-            affiliation=affiliation,
-        )
-
     def upload_fire_event(
         self,
         metrics_stack,
@@ -450,6 +436,47 @@ class CloudStaticIOClient:
             affiliation=affiliation,
             derive_boundary=derive_boundary,
             satellite_pass_information=satellite_pass_information,
+        )
+
+    def update_fire_event(
+        self,
+        metrics_stack,
+        fire_event_name,
+        affiliation,
+    ):
+        """
+        Updates a fire event in the cloud storage location (uploads COGs and updates the manifest.json file).
+
+        Args:
+            metrics_stack (xr.DataArray): The metrics stack containing the fire event data.
+            fire_event_name (str): The name of the fire event.
+            prefire_date_range (tuple): The date range before the fire event.
+            postfire_date_range (tuple): The date range after the fire event.
+            affiliation (str): The affiliation of the fire event.
+            derive_boundary (bool): Whether to derive the boundary of the fire event.
+
+        Returns:
+            None
+        """
+        self.logger.info(f"Updating fire event {fire_event_name}")
+
+        self.upload_cogs(
+            metrics_stack=metrics_stack,
+            fire_event_name=fire_event_name,
+            affiliation=affiliation,
+        )
+
+        existing_manifest = self.get_manifest()
+        this_manifest = existing_manifest[affiliation][fire_event_name]
+
+        self.update_manifest(
+            fire_event_name=fire_event_name,
+            affiliation=affiliation,
+            derive_boundary=True,
+            bounds=this_manifest["bounds"],
+            prefire_date_range=this_manifest["prefire_date_range"],
+            postfire_date_range=this_manifest["postfire_date_range"],
+            satellite_pass_information=this_manifest["satellite_pass_information"],
         )
 
     def get_manifest(self):
