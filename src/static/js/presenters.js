@@ -196,7 +196,7 @@ class MapPresenter {
   enableSeedMetricInput() {
     const self = this;
 
-    onSeedPointDrawn = (e) => {
+    const onSeedPointDrawn = (e) => {
       const lat = e.layer._latlng.lat;
       const lon = e.layer._latlng.lng;
       const seedPoint = [lat, lon];
@@ -392,7 +392,7 @@ class IndicatorAreaPresenter {
     self._hide("products-loading");
   }
 
-  showSatelliePassInfo(burnAnalysisResponse) {
+  showSatellitePassInfo(burnAnalysisResponse) {
     const satellitePassInfo = burnAnalysisResponse.getSatellitePassInfo();
 
     document.querySelector("#n-prefire-items").innerHTML =
@@ -457,7 +457,7 @@ class IndicatorAreaPresenter {
 
   showBurnAnalysisSuccess(burnAnalysisResponse) {
     const self = this;
-    this.showSatelliePassInfo(burnAnalysisResponse);
+    this.showSatellitePassInfo(burnAnalysisResponse);
     self._hide("burn-analysis-loading");
     self._show("burn-analysis-success");
     self._burnAnalysisStatus = AnalysisStatus.SUCCESS;

@@ -178,12 +178,12 @@ class MainPresenter {
 
     const showIntermediateBurnMetrics = (burnAnalysisResponse) => {
       const self = this;
+      self._indicatorArea.showSatellitePassInfo(burnAnalysisResponse);
+
       const cloudCogPathRbr = burnAnalysisResponse.getCloudCogPaths().rbr;
 
       const intermediateProductTileserverUrl =
         self._cogTileserverUrlPrefix + cloudCogPathRbr;
-
-      debugger;
 
       self._mapPresenter.showIntermediateBurnMetrics(
         intermediateProductTileserverUrl
