@@ -17,11 +17,9 @@ class Product {
 }
 
 class BurnAnalysisResponse {
-  constructor(executed, derivedBoundary, satellitePassInfo, cloudCogPaths) {
+  constructor(executed, satellitePassInfo, cloudCogPaths) {
     const self = this;
     self._executed = executed;
-    self._fireFound = fireFound;
-    self._derivedBoundary = derivedBoundary;
     self._satellitePassInfo = satellitePassInfo;
     self._cloudCogPaths = cloudCogPaths;
   }
@@ -29,11 +27,6 @@ class BurnAnalysisResponse {
   getExecuted() {
     const self = this;
     return self._executed;
-  }
-
-  getDerivedBoundary() {
-    const self = this;
-    return self._derivedBoundary;
   }
 
   getSatellitePassInfo() {
@@ -231,7 +224,7 @@ class ApiFacade {
     return fetch(`/api/upload/shapefile-zip`, request).then(get200Json);
   }
 
-  analyzeBurn(metadata, geojson, useDrawnShape) {
+  analyzeBurn(metadata, geojson) {
     const self = this;
 
     const performFetch = () => {
@@ -239,7 +232,6 @@ class ApiFacade {
         geojson: geojson,
         fire_event_name: metadata.getFireEventName(),
         affiliation: metadata.getAffiliation(),
-        derive_boundary: useDrawnShape,
         date_ranges: {
           prefire: [metadata.getPrefireStart(), metadata.getPrefireEnd()],
           postfire: [metadata.getPostfireStart(), metadata.getPostfireEnd()],
@@ -264,15 +256,14 @@ class ApiFacade {
             (responseJson) =>
               new BurnAnalysisResponse(
                 true,
-                responseJson.derived_boundary,
                 responseJson.satellite_pass_information,
                 responseJson.cloud_cog_paths
               )
           );
       } else if (statusCode == 204) {
-        return new BurnAnalysisResponse(true, false, null, null, null);
+        return new BurnAnalysisResponse(true, null, null);
       } else {
-        return new BurnAnalysisResponse(false, false, null, null, null);
+        return new BurnAnalysisResponse(false, null, null);
       }
     };
 
@@ -312,8 +303,10 @@ class ApiFacade {
             )
         );
       } else if (statusCode == 204) {
+        // Analysis succeeded but no fire was detected
         return new FloodFillSegmentationResponse(true, false, null, null, null);
       } else {
+        // Analysis failed
         return new FloodFillSegmentationResponse(
           false,
           false,

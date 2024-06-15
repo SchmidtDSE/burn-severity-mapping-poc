@@ -18,6 +18,11 @@ class OtsuThreshold(ThresholdingStrategy):
 
     def apply(self, metric_layer):
         threshold = threshold_otsu(metric_layer.values)
+
+        # This might already exist if the user has tried this fire event before
+        if "disturbed" in metric_layer.coords:
+            metric_layer = metric_layer.drop("disturbed")
+
         metric_layer.expand_dims(dim="disturbed")
         metric_layer["disturbed"] = xr.DataArray(
             np.where(metric_layer.values > threshold, True, False),
@@ -54,6 +59,9 @@ class FloodFillSegmentation(SegmentationStrategy):
     def apply(self, metric_layer):
         disturbed_layer_int = metric_layer["disturbed"].values.astype(np.int8)[0, :, :]
         seed_locations = np.where(metric_layer["seed"].values[0, :, :])
+
+        ## BUG: The seed locations tuple needs to be pairs of coordinates, but
+        # for some reason is coming thru as two lists of individual coordinates?
 
         segmented_burns = np.full_like(disturbed_layer_int, fill_value=False)
         for seed_location in seed_locations:

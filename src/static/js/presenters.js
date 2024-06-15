@@ -517,7 +517,6 @@ class IndicatorAreaPresenter {
       seedSubmissionButton.addEventListener(
         "click",
         () => {
-          debugger;
           resolve();
         },
         { once: true }

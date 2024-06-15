@@ -57,7 +57,10 @@ def analyze_spectral_burn_metrics(
         JSONResponse: The response containing the analysis results and derived boundary, if applicable.
     """
     sentry_sdk.set_context("fire-event", {"request": body})
-    geojson_seed_points = json.loads(body.geojson)
+
+    # TODO: No idea where this is getting converted to a dict...
+    # geojson_seed_points = json.loads(body.geojson)
+    geojson_seed_points = body.geojson
 
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
@@ -81,7 +84,7 @@ def main(
     ## NOTE: derive_boundary is accepted for now to maintain compatibility with the frontend,
     ## but will shortly be a different endpoint
 
-    logger.info(f"Received analyze-fire-event request for {fire_event_name}")
+    logger.info(f"Received flood-fill-segmentation request for {fire_event_name}")
 
     try:
         # create a Sentinel2Client instance, without initializing, since we are
@@ -108,7 +111,7 @@ def main(
 
                 metric_layers.append(metric_layer)
 
-        existing_metrics_stack = xr.concat(metric_layers, dim="band")
+        existing_metrics_stack = xr.concat(metric_layers, dim="burn_metric")
         geo_client.ingest_metrics_stack(existing_metrics_stack)
 
         logger.info(f"Loaded existing metrics stack for {fire_event_name}")
@@ -116,8 +119,7 @@ def main(
         # Use the seed points to perform flood fill
         derived_boundary = geo_client.derive_boundary_flood_fill(
             seed_points=geojson_seed_points,
-            burn_metric="rbr",
-            threshold=0.2,
+            metric_name="rbr",
             inplace=False,
         )
 

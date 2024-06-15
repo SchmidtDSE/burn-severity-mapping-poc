@@ -55,7 +55,8 @@ class Sentinel2Client:
         # Oscillating between geojsons and geopandas dataframes, which is a bit messy. Should pick one and stick with it.
         self.geojson_boundary = None
         self.bbox = None
-        self.set_boundary(geojson_boundary)
+        if geojson_boundary is not None:
+            self.set_boundary(geojson_boundary)
 
         if barc_classifications is not None:
             self.barc_classifications = self.ingest_barc_classifications(
@@ -342,7 +343,7 @@ class Sentinel2Client:
         """
         print("Deriving boundary using metric: {}".format(metric_name))
 
-        seed_points_gpd = gpd.GeoDataFrame.from_dict(seed_points)
+        seed_points_gpd = gpd.GeoDataFrame.from_features(seed_points["features"])
 
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 

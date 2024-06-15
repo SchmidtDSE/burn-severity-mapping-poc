@@ -169,8 +169,7 @@ class MainPresenter {
       const geojson = uploadResponse.geojson;
       const burnAnalysisResponse = await self._apiFacade.analyzeBurn(
         metadata,
-        geojson,
-        null // In both cases, this first call gets the burn metrics from sentinel
+        geojson
       );
 
       return burnAnalysisResponse;
@@ -221,16 +220,15 @@ class MainPresenter {
     };
 
     const refineBurnWithSeedPoints = async () => {
-      debugger;
       const geojson = self._mapPresenter.exportEditableLayersAsJson();
       const refineResponse = await self._apiFacade.refineFloodFill(
         metadata,
         geojson
       );
-      return refinedBurnAnalysisResponse;
+      return refineResponse;
     };
 
-    const reportRefinedAnalysis = (refineResponse) => {
+    const reportRefinement = (refineResponse) => {
       return new Promise((resolve, reject) => {
         if (!refineResponse.getExecuted()) {
           self._indicatorArea.showBurnAnalysisFailed();
@@ -296,8 +294,8 @@ class MainPresenter {
         .then(reportAnalysis)
         .then(showIntermediateBurnMetrics)
         .then(waitForSeedPointSubmission)
-        .then(refineBurnWithSeedPoints);
-      // .then(reportRefinedAnalysis)
+        .then(refineBurnWithSeedPoints)
+        .then(reportRefinement);
       // .then(showDerivedBoundary);
       // .then(performSecondaryAnalysis)
       // .then(updateProducts);

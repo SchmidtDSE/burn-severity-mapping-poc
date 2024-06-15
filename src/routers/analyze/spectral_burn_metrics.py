@@ -29,7 +29,6 @@ class AnaylzeBurnPOSTBody(BaseModel):
     """
 
     geojson: Any
-    derive_boundary: bool
     date_ranges: dict
     fire_event_name: str
     affiliation: str
@@ -67,21 +66,14 @@ def analyze_spectral_burn_metrics(
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
-    derive_boundary = body.derive_boundary
-
-    use_existing_metrics_stack = False
-    if derive_boundary:
-        use_existing_metrics_stack = True
 
     return main(
         geojson_boundary,
         date_ranges,
         fire_event_name,
         affiliation,
-        derive_boundary,
         logger,
         cloud_static_io_client,
-        use_existing_metrics_stack,
     )
 
 
@@ -90,7 +82,6 @@ def main(
     date_ranges,
     fire_event_name,
     affiliation,
-    derive_boundary,
     logger,
     cloud_static_io_client,
 ):
@@ -124,7 +115,7 @@ def main(
             fire_event_name=fire_event_name,
             prefire_date_range=date_ranges["prefire"],
             postfire_date_range=date_ranges["postfire"],
-            derive_boundary=derive_boundary,
+            derive_boundary=False,  # will be overwritten to True when we use flood fill later
             satellite_pass_information=satellite_pass_information,
         )
         logger.info(f"Cogs uploaded for {fire_event_name}")
@@ -134,7 +125,6 @@ def main(
             content={
                 "message": f"Cogs uploaded for {fire_event_name}",
                 "fire_event_name": fire_event_name,
-                "derived_boundary": derived_boundary,
                 "cloud_cog_paths": cloud_static_io_client.cloud_cog_paths,
                 "satellite_pass_information": satellite_pass_information,
             },
