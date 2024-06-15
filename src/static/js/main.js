@@ -215,6 +215,11 @@ class MainPresenter {
       });
     };
 
+    const ingestUserSeedPoints = () => {
+      const seedPoints = self._mapPresenter.getSeedPoints();
+      return self._apiFacade.ingestUserSeedPoints(metadata, seedPoints);
+    };
+
     const reportRefinedAnalysis = (refinedBurnAnalysisResponse) => {
       return new Promise((resolve, reject) => {
         if (!refinedBurnAnalysisResponse.getExecuted()) {
@@ -278,8 +283,8 @@ class MainPresenter {
         .then(showAoi)
         .then(analyzeBurn)
         .then(reportAnalysis)
-        .then(showIntermediateBurnMetrics);
-      // .then(ingestUserSeedPoints)
+        .then(showIntermediateBurnMetrics)
+        .then(ingestUserSeedPoints);
       // .then(refineBoundary)
       // .then(reportRefinedAnalysis)
       // .then(showDerivedBoundary);

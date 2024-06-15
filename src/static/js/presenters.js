@@ -59,7 +59,7 @@ class MapPresenter {
     self._aoiControl = null;
   }
 
-  addDrawControl(map, onAoiDrawn, drawOptions = {}) {
+  addDrawControl(map, drawCallback, drawOptions = {}) {
     const editableLayers = new L.FeatureGroup();
     map.addLayer(editableLayers);
 
@@ -79,7 +79,7 @@ class MapPresenter {
       // Add the drawn layer to the editable layers
       editableLayers.addLayer(layer);
 
-      onAoiDrawn();
+      drawCallback(e);
     });
 
     return { editableLayers, drawControl };
