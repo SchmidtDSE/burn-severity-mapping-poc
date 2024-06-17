@@ -141,9 +141,16 @@ class FireAnalysisMetaFormContents {
 }
 
 class FloodFillSegmentationResponse {
-  constructor(executed, fireEventName, affiliation, derivedBoundary) {
+  constructor(
+    executed,
+    fireDetected,
+    fireEventName,
+    affiliation,
+    derivedBoundary
+  ) {
     const self = this;
     self._executed = executed;
+    self._fireDetected = fireDetected;
     self._fireEventName = fireEventName;
     self._affiliation = affiliation;
     self._derivedBoundary = derivedBoundary;
@@ -152,6 +159,11 @@ class FloodFillSegmentationResponse {
   getExecuted() {
     const self = this;
     return self._executed;
+  }
+
+  getFireDetected() {
+    const self = this;
+    return self._fireDetected;
   }
 
   getFireEventName() {
@@ -318,5 +330,54 @@ class ApiFacade {
     };
 
     return performFetch().then(interpretResponse);
+  }
+
+  fetchRangelandAnalysisPlatform(metadata, geojson) {
+    const self = this;
+
+    const body = JSON.stringify({
+      geojson: geojson,
+      ignition_date: metadata.getPrefireStart(),
+      fire_event_name: metadata.getFireEventName(),
+      affiliation: metadata.getAffiliation(),
+    });
+
+    const request = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body,
+    };
+
+    return fetch("/api/fetch/rangeland-analysis-platform", request).then(
+      (response) => {
+        if (response.status !== 200) {
+          throw new Error(`Unexpected response code: ${response.status}`);
+        }
+        return response.json();
+      }
+    );
+  }
+
+  fetchEcoclass(metadata, geojson) {
+    const self = this;
+
+    const body = JSON.stringify({
+      geojson: geojson,
+      fire_event_name: metadata.getFireEventName(),
+      affiliation: metadata.getAffiliation(),
+    });
+
+    const request = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body,
+    };
+
+    return fetch("/api/fetch/ecoclass", request).then((response) => {
+      if (response.status !== 200) {
+        throw new Error(`Unexpected response code: ${response.status}`);
+      }
+      return response.json();
+    });
   }
 }

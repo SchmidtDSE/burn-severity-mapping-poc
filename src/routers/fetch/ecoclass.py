@@ -57,7 +57,7 @@ def fetch_ecoclass(
         tuple: A tuple containing the success message and the HTTP status code.
     """
     fire_event_name = body.fire_event_name
-    geojson_boundary = json.loads(body.geojson)
+    geojson_boundary = body.geojson
     affiliation = body.affiliation
 
     sentry_sdk.set_context("analyze_ecoclass", {"request": body})

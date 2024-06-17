@@ -23,8 +23,10 @@ from src.lib.derive_boundary import (
     FloodFillSegmentation,
 )
 from pyproj import CRS
+import pickle
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
+DEBUG = True
 
 
 class NoFireBoundaryDetectedError(BaseException):

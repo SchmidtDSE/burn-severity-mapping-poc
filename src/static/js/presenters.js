@@ -57,6 +57,7 @@ class MapPresenter {
     self._editableLayers = editableLayers;
     self._drawControl = drawControl;
     self._aoiControl = null;
+    self._intermediateBurnMetricLayer = null;
   }
 
   addDrawControl(map, drawCallback, drawOptions = {}) {
@@ -185,14 +186,22 @@ class MapPresenter {
   showIntermediateBurnMetrics(burnMetricHttpPath) {
     const self = this;
 
-    // Create a new tile layer with the provided URL
-    const metricLayer = L.tileLayer(burnMetricHttpPath, {
+    self._intermediateBurnMetricLayer = L.tileLayer(burnMetricHttpPath, {
       maxZoom: 19,
       pane: "intermediateBurnMetrics",
     });
 
-    // Add the new layer to the map
-    metricLayer.addTo(self._innerMap);
+    self._intermediateBurnMetricLayer.addTo(self._innerMap);
+  }
+
+  removeIntermediateBurnMetrics() {
+    const self = this;
+
+    if (self._innerMap.hasLayer(self._intermediateBurnMetricLayer)) {
+      self._innerMap.removeLayer(self._intermediateBurnMetricLayer);
+    }
+
+    self._intermediateBurnMetricLayer = null;
   }
 
   enableSeedMetricInput() {
@@ -420,7 +429,7 @@ class IndicatorAreaPresenter {
   }
 
   showSkippedAnalyses() {
-    debugger;
+    debugger; // enabled to have a look when something fails
     if (this._uploadStatus == AnalysisStatus.PENDING) {
       this._hide("upload-loading");
       this._show("upload-skipped");
@@ -469,9 +478,9 @@ class IndicatorAreaPresenter {
 
   // Burn Analysis
 
-  showBurnAnalysisSuccess(burnAnalysisResponse) {
+  showBurnAnalysisSuccess() {
+    debugger;
     const self = this;
-    this.showSatellitePassInfo(burnAnalysisResponse);
     self._hide("burn-analysis-loading");
     self._show("burn-analysis-success");
     self._burnAnalysisStatus = AnalysisStatus.SUCCESS;
@@ -503,7 +512,7 @@ class IndicatorAreaPresenter {
   showSeedPointSubmissionPending() {
     const self = this;
     self._hide("seed-point-submission");
-    self._show("burn-analysis-pending");
+    self._show("burn-analysis-loading");
   }
 
   waitForSeedPointSubmission() {

@@ -7,6 +7,7 @@ class MainPresenter {
     self._successCounter = 0;
     self._aoiDrawn = false;
     self._shapefileUploaded = false;
+    self._geojsonBoundary = null;
 
     self._locationFormPresenter = new LocationFormPresenter(
       document.querySelector(".location-search"),
@@ -151,7 +152,7 @@ class MainPresenter {
 
     const showAoi = (uploadResponse) => {
       // Get the GeoJSON, either from drawn AOI or uploaded shapefile
-      const aoi = JSON.parse(uploadResponse.geojson);
+      self._geojsonBoundary = JSON.parse(uploadResponse.geojson);
 
       // Disable editing on the map, and add the drawn/uploaded shape, coloring by whether its final
       self._mapPresenter.disableEditing();
@@ -160,7 +161,7 @@ class MainPresenter {
       // Add the AOI to the map - if we still derive the boundary, then style it red and without fill.
       // We later add the derived boundary to the map, and style it black with fill.
       // Otherwise, style it black and with fill to show its the 'real' boundary.
-      self._mapPresenter.showAOI(aoi, self._aoiDrawn);
+      self._mapPresenter.showAOI(self._geojsonBoundary, self._aoiDrawn);
 
       return uploadResponse;
     };
@@ -193,6 +194,7 @@ class MainPresenter {
     };
 
     const reportAnalysis = (burnAnalysisResponse) => {
+      const self = this;
       return new Promise((resolve, reject) => {
         if (!burnAnalysisResponse.getExecuted()) {
           self._indicatorArea.showBurnAnalysisFailed();
@@ -201,16 +203,12 @@ class MainPresenter {
         }
 
         if (!self._aoiDrawn) {
-          // If we're still deriving the boundary, show the intermediate burn metrics,
-          // and leave th pending indicator as is. We will resolve that later.
-          if (!burnAnalysisResponse.getFireFound()) {
-            self._indicatorArea.showFireNotFound();
-            reject();
-            return;
-          }
-
+          // If we didn't draw the AOI, then this is it, we call it a success
+          // If not, we use the burn analysis results to derive a boundary
+          // before indicating success
           self._indicatorArea.showBurnAnalysisSuccess(burnAnalysisResponse);
         }
+
         resolve(burnAnalysisResponse);
       });
     };
@@ -221,6 +219,7 @@ class MainPresenter {
 
     const refineBurnWithSeedPoints = async () => {
       const geojson = self._mapPresenter.exportEditableLayersAsJson();
+      self._indicatorArea.showSeedPointSubmissionPending();
       const refineResponse = await self._apiFacade.refineFloodFill(
         metadata,
         geojson
@@ -236,26 +235,25 @@ class MainPresenter {
           return;
         }
 
-        if (!refineResponse.getFireFound()) {
+        if (!refineResponse.getFireDetected()) {
           self._indicatorArea.showFireNotFound();
           reject();
           return;
         }
 
-        self._indicatorArea.showSeedPointSubmissionSuccess();
-        self._mapPresenter.showDerivedBoundary(refinedBurnAnalysisResponse);
-        resolve(refinedBurnAnalysisResponse);
-      });
-    };
+        self._indicatorArea.showBurnAnalysisSuccess();
 
-    const showDerivedBoundary = (FloodFillSegmentationResponse) => {
-      const boundary = FloodFillSegmentationResponse.getDerivedBoundary();
-      self._mapPresenter.showAOI(boundary, false);
+        self._geojsonBoundary = refineResponse.getDerivedBoundary();
+        self._mapPresenter.showAOI(self._geojsonBoundary, false);
+        self._mapPresenter.removeIntermediateBurnMetrics();
+
+        resolve(refineResponse);
+      });
     };
 
     const performSecondaryAnalysis = () => {
       const ecoclassFuture = self._apiFacade
-        .getEcoclass(metadata, geojson)
+        .fetchEcoclass(metadata, self._geojsonBoundary)
         .then(
           (x) => {
             self._indicatorArea.showEcoclassSuccess();
@@ -265,7 +263,7 @@ class MainPresenter {
         );
 
       const rangelandFuture = self._apiFacade
-        .getRangelandAnalysis(metadata, geojson)
+        .fetchRangelandAnalysisPlatform(metadata, self._geojsonBoundary)
         .then(
           (x) => {
             self._indicatorArea.showRangelandSuccess();
@@ -295,10 +293,9 @@ class MainPresenter {
         .then(showIntermediateBurnMetrics)
         .then(waitForSeedPointSubmission)
         .then(refineBurnWithSeedPoints)
-        .then(reportRefinement);
-      // .then(showDerivedBoundary);
-      // .then(performSecondaryAnalysis)
-      // .then(updateProducts);
+        .then(reportRefinement)
+        .then(performSecondaryAnalysis)
+        .then(updateProducts);
     };
 
     const predefinedAoiFlow = () => {
@@ -309,9 +306,9 @@ class MainPresenter {
         .then(onUploadSuccess)
         .then(showAoi)
         .then(analyzeBurn)
-        .then(reportAnalysis);
-      // .then(performSecondaryAnalysis)
-      // .then(updateProducts);
+        .then(reportAnalysis)
+        .then(performSecondaryAnalysis)
+        .then(updateProducts);
     };
 
     if (self._aoiDrawn) {
@@ -319,64 +316,5 @@ class MainPresenter {
     } else {
       return predefinedAoiFlow();
     }
-
-    //   return (
-    //     checkState()
-    //       .then(checkMetadata)
-    //       .catch((error) => {
-    //         console.error("Error in checkMetadata:", error);
-    //         throw error;
-    //       })
-    //       .then(showAllLoading)
-    //       .catch((error) => {
-    //         console.error("Error in showLoading:", error);
-    //         throw error;
-    //       })
-    //       // This uploads the shapefile or drawn AOI, with different behavior for each
-    //       .then(uploadShape)
-    //       .catch((error) => {
-    //         console.error("Error in uploadShape:", error);
-    //         onUploadFail();
-    //         throw error;
-    //       })
-    //       .then(onUploadSuccess)
-    //       .catch((error) => {
-    //         console.error("Error in onUploadSuccess:", error);
-    //         throw error;
-    //       })
-    //       // This shows the AOI on the map, with a different style if it's 'final' or not
-    //       .then(showArea)
-    //       .catch((error) => {
-    //         console.error("Error in showArea:", error);
-    //         throw error;
-    //       })
-    //       // This runs the burn analysis, on either the finished boundary (shp upload) or the to-be-derived boundary
-    //       // (since we need the burn metrics to derive the boundary)
-    //       .then(analyzeBurn)
-    //       .catch((error) => {
-    //         console.error("Error in analyzeBurn:", error);
-    //         throw error;
-    //       })
-    //       .then(reportAnalysis)
-    //       .catch((error) => {
-    //         console.error("Error in reportAnalysis:", error);
-    //         throw error;
-    //       })
-    //       .then(showDerivedBoundary)
-    //       .catch((error) => {
-    //         console.error("Error in showDerivedBoundary:", error);
-    //         throw error;
-    //       })
-    //   );
-    //   // .then(performSecondaryAnalysis)
-    //   // .catch((error) => {
-    //   //   console.error("Error in performSecondaryAnalysis:", error);
-    //   //   throw error;
-    //   // })
-    //   // .then(updateProducts)
-    //   // .catch((error) => {
-    //   //   console.error("Error in updateProducts:", error);
-    //   //   throw error;
-    //   // });
   }
 }

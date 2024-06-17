@@ -55,7 +55,7 @@ def fetch_rangeland_analysis_platform(
     Returns:
         JSONResponse: The response containing the status and message.
     """
-    geojson_boundary = json.loads(body.geojson)
+    geojson_boundary = body.geojson
     ignition_date = body.ignition_date
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
