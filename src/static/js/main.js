@@ -54,19 +54,25 @@ class MainPresenter {
     );
 
     return derivedProductsResponseFuture.then((products) => {
-      self._productListPresenter(products);
+      self._productListPresenter.insertProducts(products);
+
+      debugger;
 
       self._mapRbrPresenter.updateUrl(
         self._tileserverEndpoint,
         affiliation,
         fireEventName
       );
+      self._mapRbrPresenter.show();
 
       self._mapDnbrPresenter.updateUrl(
         self._tileserverEndpoint,
         affiliation,
         fireEventName
       );
+      self._mapDnbrPresenter.show();
+
+      self._indicatorArea.hideProductsLoading();
     }, self._makeOnError("Failed to get derived products."));
   }
 
@@ -310,7 +316,6 @@ class MainPresenter {
         .then(performSecondaryAnalysis)
         .then(updateProducts);
     };
-
     if (self._aoiDrawn) {
       return drawnAoiFlow();
     } else {

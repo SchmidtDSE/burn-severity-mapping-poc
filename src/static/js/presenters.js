@@ -304,6 +304,16 @@ class MapLinkPresenter {
     const self = this;
     self._selection.href = newHref;
   }
+
+  show() {
+    const self = this;
+    self._selection.style.display = "block";
+  }
+
+  hide() {
+    const self = this;
+    self._selection.style.display = "none";
+  }
 }
 
 class ProductsListPresenter {
@@ -316,12 +326,12 @@ class ProductsListPresenter {
     const self = this;
     const list = document.createElement("ul");
 
-    const items = products.map((x) => {
+    const items = products.map((product) => {
       const item = document.createElement("li");
       const link = document.createElement("a");
       const text = document.createTextNode(product.getProductType());
 
-      link.href = products.getProductUrl();
+      link.href = product.getProductUrl();
       link.appendChild(text);
       item.appendChild(link);
 
@@ -348,12 +358,12 @@ class FireAnalysisMetaFormPresenter {
 
   getFireEventName() {
     const self = this;
-    return selection.querySelector("#fire_event_name").value;
+    return self._selection.querySelector("#fire_event_name").value;
   }
 
   getAffiliation() {
     const self = this;
-    return selection.querySelector("#affiliation").value;
+    return self._selection.querySelector("#affiliation").value;
   }
 
   getFormContents() {
@@ -412,6 +422,16 @@ class IndicatorAreaPresenter {
     self._hide("ecoclass-analysis-success");
     self._hide("rap-analysis-loading");
     self._hide("rap-analysis-success");
+    self._hide("products-loading");
+  }
+
+  showProductsLoading() {
+    const self = this;
+    self._show("products-loading");
+  }
+
+  hideProductsLoading() {
+    const self = this;
     self._hide("products-loading");
   }
 
