@@ -8,7 +8,8 @@
       "module": "uvicorn",
       "args": ["src.app:app", "--host=0.0.0.0", "--port=5050", "--reload"],
       "justMyCode": true,
-      "envFile": "/workspace/.devcontainer/.env"
+      "envFile": "/workspace/.devcontainer/.env",
+      "python": "/opt/conda/envs/burn-severity/bin/python"
     }
   ]
 }

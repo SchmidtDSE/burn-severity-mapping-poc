@@ -479,7 +479,6 @@ class IndicatorAreaPresenter {
   // Burn Analysis
 
   showBurnAnalysisSuccess() {
-    debugger;
     const self = this;
     self._hide("burn-analysis-loading");
     self._show("burn-analysis-success");

@@ -61,8 +61,7 @@ def fetch_rangeland_analysis_platform(
     affiliation = body.affiliation
 
     sentry_sdk.set_context("analyze_rap", {"request": body})
-    ignition_year = time.strptime(ignition_date, "%Y-%m-%d").tm_year
-
+    ignition_year = time.strptime(ignition_date, "%Y-%m-%dT%H:%M:%S.%fZ").tm_year
     return main(
         geojson_boundary=geojson_boundary,
         ignition_year=ignition_year,
