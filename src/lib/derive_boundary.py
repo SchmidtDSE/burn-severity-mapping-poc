@@ -58,28 +58,27 @@ class SegmentationStrategy(ABC):
 class FloodFillSegmentation(SegmentationStrategy):
     def apply(self, metric_layer):
         disturbed_layer_int = metric_layer["disturbed"].values.astype(np.int8)[0, :, :]
-        seed_locations = np.where(metric_layer["seed"].values[0, :, :])
-
-        ## BUG: The seed locations tuple needs to be pairs of coordinates, but
-        # for some reason is coming thru as two lists of individual coordinates?
+        seed_locations_x, seed_locations_y = np.where(
+            metric_layer["seed"].values[0, :, :]
+        )
+        seed_locations = list(zip(seed_locations_x, seed_locations_y))
 
         segmented_burns = np.full_like(disturbed_layer_int, fill_value=False)
-        for seed_location in seed_locations:
+        for seed_point in seed_locations:
 
             # Skimage needs the seed point as a tuple, for some reason
-            seed_point_tuple = tuple(seed_location.tolist())
-            print(f"Processing seed point: {seed_point_tuple}")
+            print(f"Processing seed point: {seed_point}")
 
             # Skip if the seed point is not in the burn boundary, so we don't
             # get the negative space of the burn boundary
-            if disturbed_layer_int[seed_point_tuple] == 0:
+            if disturbed_layer_int[seed_point] == 0:
                 continue
 
             # Flood fill the burn boundary from the seed point, and combine with
             # the existing segmented burns from other seed points
             burn_boundary_segmented = flood_fill(
                 image=disturbed_layer_int,
-                seed_point=seed_point_tuple,
+                seed_point=seed_point,
                 new_value=True,
             )
             segmented_burns = np.logical_or(segmented_burns, burn_boundary_segmented)

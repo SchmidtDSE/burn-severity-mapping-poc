@@ -85,10 +85,10 @@ class Sentinel2Client:
 
         geojson_bbox = geojson_boundary.bounds.to_numpy()[0]
         self.bbox = [
-            geojson_bbox[0].round(decimals=2) - self.buffer,
-            geojson_bbox[1].round(decimals=2) - self.buffer,
-            geojson_bbox[2].round(decimals=2) + self.buffer,
-            geojson_bbox[3].round(decimals=2) + self.buffer,
+            geojson_bbox[0].round(decimals=8) - self.buffer,
+            geojson_bbox[1].round(decimals=8) + self.buffer,
+            geojson_bbox[2].round(decimals=8) - self.buffer,
+            geojson_bbox[3].round(decimals=8) + self.buffer,
         ]
 
     def ingest_metrics_stack(self, metrics_stack):
@@ -360,24 +360,28 @@ class Sentinel2Client:
                     True
                 )
 
-        boundary_geojson = derive_boundary(
+        geojson_boundary = derive_boundary(
             metric_layer=metric_layer,
             thresholding_strategy=OtsuThreshold(),
             segmentation_strategy=FloodFillSegmentation(),
         )
+        geojson_boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
 
-        if not boundary_geojson:
+        if not geojson_boundary:
             raise NoFireBoundaryDetectedError(
                 "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
             )
 
+        # TODO: this should prob be a method - taking a geojson and clipping the metrics to it,
+        # since the other workflow simply does the same thing with an existing geojson. The only weirdness
+        # is the fact that this is not an inplace operation here, where method prob should be
         self.metrics_stack = self.metrics_stack.rio.clip(
-            self.geojson_boundary.geometry.values, self.geojson_boundary.crs
+            geojson_boundary_gpd.geometry.values, geojson_boundary_gpd.crs
         )
 
         self.metrics_stack = self.metrics_stack.where(self.metrics_stack != 0, np.nan)
 
         if inplace:
-            self.set_boundary(boundary_geojson)
+            self.set_boundary(geojson_boundary)
         else:
-            return boundary_geojson
+            return geojson_boundary

@@ -38,7 +38,7 @@ class FloodFillSegmentationPOSTBody(BaseModel):
     tags=["refine"],
     description="Use seed points to segment a burn boundary.",
 )
-def analyze_spectral_burn_metrics(
+def refine_flood_fill_segmentation(
     body: FloodFillSegmentationPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
@@ -139,7 +139,7 @@ def main(
         # save the cog to the FTP server - this essentially overwrites
         # previous un-segmented boundarie, but those are usually just imprecise
         # rectangles so this is fine
-        cloud_static_io_client.update_metrics_stack(
+        cloud_static_io_client.update_fire_event(
             metrics_stack=geo_client.metrics_stack,
             affiliation=affiliation,
             fire_event_name=fire_event_name,
