@@ -85,11 +85,7 @@ def main(
     logger,
     cloud_static_io_client,
 ):
-    ## NOTE: derive_boundary is accepted for now to maintain compatibility with the frontend,
-    ## but will shortly be a different endpoint
-
     logger.info(f"Received analyze-fire-event request for {fire_event_name}")
-    derived_boundary = None
     satellite_pass_information = None
 
     try:
