@@ -127,7 +127,7 @@ def main(
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
             with open(tmp_geojson, "w") as f:
-                f.write(derived_boundary)
+                f.write(str(derived_boundary))
             boundary_s3_path = (
                 f"public/{affiliation}/{fire_event_name}/boundary.geojson"
             )
