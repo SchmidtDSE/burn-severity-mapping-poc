@@ -88,8 +88,8 @@ class Sentinel2Client:
         geojson_bbox = geojson_boundary.bounds.to_numpy()[0]
         self.bbox = [
             geojson_bbox[0].round(decimals=8) - self.buffer,
-            geojson_bbox[1].round(decimals=8) + self.buffer,
-            geojson_bbox[2].round(decimals=8) - self.buffer,
+            geojson_bbox[1].round(decimals=8) - self.buffer,
+            geojson_bbox[2].round(decimals=8) + self.buffer,
             geojson_bbox[3].round(decimals=8) + self.buffer,
         ]
 
