@@ -56,8 +56,6 @@ class MainPresenter {
     return derivedProductsResponseFuture.then((products) => {
       self._productListPresenter.insertProducts(products);
 
-      debugger;
-
       self._mapRbrPresenter.updateUrl(
         self._tileserverEndpoint,
         affiliation,
