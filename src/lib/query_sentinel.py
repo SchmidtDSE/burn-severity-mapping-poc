@@ -270,9 +270,16 @@ class Sentinel2Client:
         self.prefire_stack = self.arrange_stack(prefire_items)
         self.postfire_stack = self.arrange_stack(postfire_items)
 
+        n_unique_datetimes_prefire = len(
+            np.unique([item.datetime for item in prefire_items])
+        )
+        n_unique_datetimes_postfire = len(
+            np.unique([item.datetime for item in postfire_items])
+        )
+
         return {
-            "n_prefire_passes": len(prefire_items),
-            "n_postfire_passes": len(postfire_items),
+            "n_prefire_passes": len(n_unique_datetimes_prefire),
+            "n_postfire_passes": len(n_unique_datetimes_postfire),
             "latest_pass": max([item.datetime for item in postfire_items]).strftime(
                 format="%Y-%m-%d"
             ),
