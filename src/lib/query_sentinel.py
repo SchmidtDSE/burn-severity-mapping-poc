@@ -278,8 +278,8 @@ class Sentinel2Client:
         )
 
         return {
-            "n_prefire_passes": len(n_unique_datetimes_prefire),
-            "n_postfire_passes": len(n_unique_datetimes_postfire),
+            "n_prefire_passes": n_unique_datetimes_prefire,
+            "n_postfire_passes": n_unique_datetimes_postfire,
             "latest_pass": max([item.datetime for item in postfire_items]).strftime(
                 format="%Y-%m-%d"
             ),
