@@ -74,6 +74,8 @@ def test_upload_cogs(
 ):
     # Create an instance of CloudStaticIOClient
     client = CloudStaticIOClient()
+    client.https_prefix = "https://test-bucket.s3.amazonaws.com"
+    client.cloud_cog_paths = {}
 
     # Mock the logger
     client.logger = MagicMock()
