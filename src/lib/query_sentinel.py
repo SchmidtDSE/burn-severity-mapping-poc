@@ -381,16 +381,15 @@ class Sentinel2Client:
                 "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
             )
 
-        # TODO: this should prob be a method - taking a geojson and clipping the metrics to it,
-        # since the other workflow simply does the same thing with an existing geojson. The only weirdness
-        # is the fact that this is not an inplace operation here, where method prob should be
-        self.metrics_stack = self.metrics_stack.rio.clip(
-            geojson_boundary_gpd.geometry.values, geojson_boundary_gpd.crs
-        )
-
-        self.metrics_stack = self.metrics_stack.where(self.metrics_stack != 0, np.nan)
-
         if inplace:
+
             self.set_boundary(geojson_boundary)
+            self.metrics_stack = self.metrics_stack.rio.clip(
+                geojson_boundary_gpd.geometry.values, geojson_boundary_gpd.crs
+            )
+            self.metrics_stack = self.metrics_stack.where(
+                self.metrics_stack != 0, np.nan
+            )
+
         else:
             return geojson_boundary_gpd

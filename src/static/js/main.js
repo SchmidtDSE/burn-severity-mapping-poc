@@ -56,18 +56,10 @@ class MainPresenter {
     return derivedProductsResponseFuture.then((products) => {
       self._productListPresenter.insertProducts(products);
 
-      self._mapRbrPresenter.updateUrl(
-        self._tileserverEndpoint,
-        affiliation,
-        fireEventName
-      );
+      self._mapRbrPresenter.updateUrl(affiliation, fireEventName);
       self._mapRbrPresenter.show();
 
-      self._mapDnbrPresenter.updateUrl(
-        self._tileserverEndpoint,
-        affiliation,
-        fireEventName
-      );
+      self._mapDnbrPresenter.updateUrl(affiliation, fireEventName);
       self._mapDnbrPresenter.show();
 
       self._indicatorArea.hideProductsLoading();
@@ -246,7 +238,6 @@ class MainPresenter {
         }
 
         self._indicatorArea.showBurnAnalysisSuccess();
-
         self._geojsonBoundary = refineResponse.getDerivedBoundary();
         self._mapPresenter.showAOI(self._geojsonBoundary, false);
         self._mapPresenter.removeIntermediateBurnMetrics();

@@ -117,19 +117,21 @@ def main(
         logger.info(f"Loaded existing metrics stack for {fire_event_name}")
 
         # Use the seed points to perform flood fill
-        derived_boundary = geo_client.derive_boundary_flood_fill(
+        geo_client.derive_boundary_flood_fill(
             seed_points=geojson_seed_points,
             metric_name="rbr",
-            inplace=False,
+            inplace=True,
         )
-
-        derived_boundary_json = derived_boundary.to_json()
 
         # save the derived boundary to the FTP server
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
-            with open(tmp_geojson, "w") as f:
-                f.write(derived_boundary_json)
+
+            ## TODO: This is a little circuitous but, was getting errors trying to
+            ## use .to_json() and saving the result
+            geo_client.geojson_boundary.to_file(tmp_geojson, driver="GeoJSON")
+            derived_boundary_json = json.load(open(tmp_geojson))
+
             boundary_s3_path = (
                 f"public/{affiliation}/{fire_event_name}/boundary.geojson"
             )
@@ -154,7 +156,7 @@ def main(
                 "message": f"Cogs segmented using flood-fill for {fire_event_name}",
                 "fire_event_name": fire_event_name,
                 "affiliation": affiliation,
-                "derived_boundary": derived_boundary,
+                "derived_boundary": derived_boundary_json,
             },
         )
 

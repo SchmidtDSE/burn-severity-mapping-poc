@@ -288,16 +288,16 @@ class MapLinkPresenter {
     self._typeName = typeName;
   }
 
-  updateUrl(tileserverEndpoint, affiliation, fireEventName) {
+  updateUrl(affiliation, fireEventName) {
     const self = this;
-    const newUrl = self._getUrl(tileserverEndpoint, affiliation, fireEventName);
+    const newUrl = self._getUrl(affiliation, fireEventName);
     self._setHref(newUrl);
   }
 
-  _getUrl(tileserverEndpoint, affiliation, fireEventName) {
+  _getUrl(affiliation, fireEventName) {
     const self = this;
     const typeName = self._typeName;
-    return `${tileserverEndpoint}/map/${affiliation}/${fireEventName}/${typeName}`;
+    return `map/${affiliation}/${fireEventName}/${typeName}`;
   }
 
   _setHref(newHref) {
