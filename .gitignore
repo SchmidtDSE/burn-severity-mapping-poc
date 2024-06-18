@@ -17,6 +17,6 @@ gha-creds-*.json
 exploratory/sam_*
 
 # throwaway test files
-tst.*
+tst*.*
 tst/*
 */tst.*

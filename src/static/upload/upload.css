@@ -1,0 +1,68 @@
+.indicator-img {
+  width: 50px;
+  height: 50px;
+}
+.container {
+  display: flex;
+  justify-content: space-between;
+}
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(1, 1fr);
+  grid-gap: 20px;
+}
+.grid-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ccc;
+  padding: 20px;
+}
+.upload-area {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.products-area {
+  border: 1px solid #ccc;
+  padding: 10px;
+  flex-grow: 1;
+}
+.upload-and-products {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 0 0 30%;
+  margin-right: 10px;
+}
+.map-area {
+  flex: 0 0 70%;
+  border: 1px solid #ccc;
+  padding: 10px;
+  min-height: 700px;
+}
+.form-area {
+  flex: 0 0 20%;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 10px;
+}
+.satellite-info-area {
+  flex: 0 0 25%;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 10px;
+}
+.indicator-area {
+  flex: 0 0 50%;
+  display: flex;
+  justify-content: flex-end;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 10px;
+}
+#map {
+  height: 675px;
+  width: 100%;
+}

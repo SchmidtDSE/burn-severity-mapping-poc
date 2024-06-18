@@ -55,14 +55,13 @@ def fetch_rangeland_analysis_platform(
     Returns:
         JSONResponse: The response containing the status and message.
     """
-    geojson_boundary = json.loads(body.geojson)
+    geojson_boundary = body.geojson
     ignition_date = body.ignition_date
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
 
     sentry_sdk.set_context("analyze_rap", {"request": body})
-    ignition_year = time.strptime(ignition_date, "%Y-%m-%d").tm_year
-
+    ignition_year = time.strptime(ignition_date, "%Y-%m-%dT%H:%M:%S.%fZ").tm_year
     return main(
         geojson_boundary=geojson_boundary,
         ignition_year=ignition_year,

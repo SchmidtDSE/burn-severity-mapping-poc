@@ -23,8 +23,10 @@ from src.lib.derive_boundary import (
     FloodFillSegmentation,
 )
 from pyproj import CRS
+import pickle
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
+DEBUG = True
 
 
 class NoFireBoundaryDetectedError(BaseException):
@@ -34,7 +36,7 @@ class NoFireBoundaryDetectedError(BaseException):
 class Sentinel2Client:
     def __init__(
         self,
-        geojson_boundary,
+        geojson_boundary=None,
         barc_classifications=None,
         buffer=0.1,
         crs="EPSG:4326",
@@ -55,7 +57,8 @@ class Sentinel2Client:
         # Oscillating between geojsons and geopandas dataframes, which is a bit messy. Should pick one and stick with it.
         self.geojson_boundary = None
         self.bbox = None
-        self.set_boundary(geojson_boundary)
+        if geojson_boundary is not None:
+            self.set_boundary(geojson_boundary)
 
         if barc_classifications is not None:
             self.barc_classifications = self.ingest_barc_classifications(
@@ -84,11 +87,31 @@ class Sentinel2Client:
 
         geojson_bbox = geojson_boundary.bounds.to_numpy()[0]
         self.bbox = [
-            geojson_bbox[0].round(decimals=2) - self.buffer,
-            geojson_bbox[1].round(decimals=2) - self.buffer,
-            geojson_bbox[2].round(decimals=2) + self.buffer,
-            geojson_bbox[3].round(decimals=2) + self.buffer,
+            geojson_bbox[0].round(decimals=8) - self.buffer,
+            geojson_bbox[1].round(decimals=8) - self.buffer,
+            geojson_bbox[2].round(decimals=8) + self.buffer,
+            geojson_bbox[3].round(decimals=8) + self.buffer,
         ]
+
+    def ingest_metrics_stack(self, metrics_stack):
+        """
+        Ingests the metrics stack and checks for the required metrics.
+
+        Args:
+            metrics_stack (dict): The metrics stack.
+
+        Raises:
+            ValueError: If a required metric is missing from the metrics stack.
+        """
+        required_metrics = ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]
+
+        for metric in required_metrics:
+            if metric not in metrics_stack.burn_metric:
+                raise ValueError(
+                    f"Required metric '{metric}' is missing from the metrics stack."
+                )
+
+        self.metrics_stack = metrics_stack
 
     def get_items(self, date_range, from_bbox=True, max_items=None):
         """
@@ -307,7 +330,7 @@ class Sentinel2Client:
                 dim="classification_source",
             )
 
-    def derive_boundary(self, metric_name="rbr", inplace=True):
+    def derive_boundary_flood_fill(self, seed_points, metric_name="rbr", inplace=True):
         """
         Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
         This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as `boundary.geojson`
@@ -322,34 +345,16 @@ class Sentinel2Client:
         """
         print("Deriving boundary using metric: {}".format(metric_name))
 
-        # For now, hard code that the chosen point is basically the center of the given AOI
-        jitter_amount = 0.0001
-
-        seed_points = gpd.GeoDataFrame(
-            geometry=[
-                Point(
-                    self.geojson_boundary.centroid.values[0].x
-                    + np.random.normal(0, jitter_amount),
-                    self.geojson_boundary.centroid.values[0].y
-                    + np.random.normal(0, jitter_amount),
-                ),
-                Point(
-                    self.geojson_boundary.centroid.values[0].x
-                    + np.random.normal(0, jitter_amount),
-                    self.geojson_boundary.centroid.values[0].y
-                    + np.random.normal(0, jitter_amount),
-                ),
-            ]
-        )
+        seed_points_gpd = gpd.GeoDataFrame.from_features(seed_points["features"])
 
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
-        if seed_points is not None:
+        if seed_points_gpd is not None:
             # Add a dim called 'seed' to denote whether the pixel is a seed point
             metric_layer = metric_layer.expand_dims(dim="seed")
             metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)
 
-            for point in seed_points.geometry:
+            for point in seed_points_gpd.geometry:
                 nearest_pixel = metric_layer.sel(x=point.x, y=point.y, method="nearest")
                 nearest_pixel_x = nearest_pixel.x.values
                 nearest_pixel_y = nearest_pixel.y.values
@@ -357,24 +362,28 @@ class Sentinel2Client:
                     True
                 )
 
-        boundary_geojson = derive_boundary(
+        geojson_boundary = derive_boundary(
             metric_layer=metric_layer,
             thresholding_strategy=OtsuThreshold(),
             segmentation_strategy=FloodFillSegmentation(),
         )
+        geojson_boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
 
-        if not boundary_geojson:
+        if not geojson_boundary:
             raise NoFireBoundaryDetectedError(
                 "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
             )
 
+        # TODO: this should prob be a method - taking a geojson and clipping the metrics to it,
+        # since the other workflow simply does the same thing with an existing geojson. The only weirdness
+        # is the fact that this is not an inplace operation here, where method prob should be
         self.metrics_stack = self.metrics_stack.rio.clip(
-            self.geojson_boundary.geometry.values, self.geojson_boundary.crs
+            geojson_boundary_gpd.geometry.values, geojson_boundary_gpd.crs
         )
 
         self.metrics_stack = self.metrics_stack.where(self.metrics_stack != 0, np.nan)
 
         if inplace:
-            self.set_boundary(boundary_geojson)
+            self.set_boundary(geojson_boundary)
         else:
-            return boundary_geojson
+            return geojson_boundary

@@ -6,7 +6,8 @@ from pydantic import BaseModel
 import tempfile
 import sentry_sdk
 import json
-
+import rioxarray as rxr
+import xarray as xr
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
 from src.lib.query_sentinel import Sentinel2Client, NoFireBoundaryDetectedError
 from src.util.cloud_static_io import CloudStaticIOClient
@@ -28,7 +29,6 @@ class AnaylzeBurnPOSTBody(BaseModel):
     """
 
     geojson: Any
-    derive_boundary: bool
     date_ranges: dict
     fire_event_name: str
     affiliation: str
@@ -66,14 +66,12 @@ def analyze_spectral_burn_metrics(
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
-    derive_boundary = body.derive_boundary
 
     return main(
         geojson_boundary,
         date_ranges,
         fire_event_name,
         affiliation,
-        derive_boundary,
         logger,
         cloud_static_io_client,
     )
@@ -84,13 +82,11 @@ def main(
     date_ranges,
     fire_event_name,
     affiliation,
-    derive_boundary,
     logger,
     cloud_static_io_client,
 ):
-
     logger.info(f"Received analyze-fire-event request for {fire_event_name}")
-    derived_boundary = None
+    satellite_pass_information = None
 
     try:
         # create a Sentinel2Client instance
@@ -108,27 +104,6 @@ def main(
         geo_client.calc_burn_metrics()
         logger.info(f"Calculated burn metrics for {fire_event_name}")
 
-        if derive_boundary:
-            # Derive a boundary from the imagery
-            # TODO [#16]: Derived boundary hardcoded for rbr / .025 threshold
-            # Not sure yet but we will probably want to make this configurable
-            geo_client.derive_boundary("rbr", 0.025)
-            logger.info(f"Derived boundary for {fire_event_name}")
-
-            # Upload the derived boundary
-            with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
-                tmp_geojson = tmp.name
-                with open(tmp_geojson, "w") as f:
-                    f.write(geo_client.geojson_boundary.to_json())
-
-                cloud_static_io_client.upload(
-                    source_local_path=tmp_geojson,
-                    remote_path=f"public/{affiliation}/{fire_event_name}/boundary.geojson",
-                )
-
-            # Return the derived boundary
-            derived_boundary = geo_client.geojson_boundary.to_json()
-
         # save the cog to the FTP server
         cloud_static_io_client.upload_fire_event(
             metrics_stack=geo_client.metrics_stack,
@@ -136,7 +111,7 @@ def main(
             fire_event_name=fire_event_name,
             prefire_date_range=date_ranges["prefire"],
             postfire_date_range=date_ranges["postfire"],
-            derive_boundary=derive_boundary,
+            derive_boundary=False,  # will be overwritten to True when we use flood fill later
             satellite_pass_information=satellite_pass_information,
         )
         logger.info(f"Cogs uploaded for {fire_event_name}")
@@ -146,17 +121,8 @@ def main(
             content={
                 "message": f"Cogs uploaded for {fire_event_name}",
                 "fire_event_name": fire_event_name,
-                "derived_boundary": derived_boundary,
+                "cloud_cog_paths": cloud_static_io_client.cloud_cog_paths,
                 "satellite_pass_information": satellite_pass_information,
-            },
-        )
-
-    except NoFireBoundaryDetectedError as e:
-        logger.info(f"No Fire Boundary Detected for fire event {fire_event_name}")
-        return JSONResponse(
-            status_code=204,
-            content={
-                "message": f"No Fire Boundary Detected for fire event {fire_event_name}"
             },
         )
 

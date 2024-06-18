@@ -57,7 +57,7 @@ def fetch_ecoclass(
         tuple: A tuple containing the success message and the HTTP status code.
     """
     fire_event_name = body.fire_event_name
-    geojson_boundary = json.loads(body.geojson)
+    geojson_boundary = body.geojson
     affiliation = body.affiliation
 
     sentry_sdk.set_context("analyze_ecoclass", {"request": body})
@@ -138,6 +138,7 @@ def main(
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson_path = tmp.name
             with open(tmp_geojson_path, "w") as f:
+                ## TODO: These have ' to " conversion issues
                 f.write(edit_ecoclass_geojson)
 
             cloud_static_io_client.upload(
