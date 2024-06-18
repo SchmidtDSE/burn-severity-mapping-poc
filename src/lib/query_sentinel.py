@@ -393,4 +393,4 @@ class Sentinel2Client:
         if inplace:
             self.set_boundary(geojson_boundary)
         else:
-            return geojson_boundary
+            return geojson_boundary_gpd

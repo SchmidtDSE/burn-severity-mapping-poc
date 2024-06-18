@@ -123,11 +123,13 @@ def main(
             inplace=False,
         )
 
+        derived_boundary_json = derived_boundary.to_json()
+
         # save the derived boundary to the FTP server
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
             with open(tmp_geojson, "w") as f:
-                f.write(str(derived_boundary))
+                f.write(derived_boundary_json)
             boundary_s3_path = (
                 f"public/{affiliation}/{fire_event_name}/boundary.geojson"
             )
