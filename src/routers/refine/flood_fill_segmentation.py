@@ -101,7 +101,7 @@ def main(
             with tempfile.NamedTemporaryFile(suffix=".tif", delete=False) as tmp:
                 tmp_tiff = tmp.name
                 cloud_static_io_client.download(
-                    remote_path=f"public/{affiliation}/{fire_event_name}/{metric_name}.tif",
+                    remote_path=f"public/{affiliation}/{fire_event_name}/intermediate_{metric_name}.tif",
                     target_local_path=tmp_tiff,
                 )
 
