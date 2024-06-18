@@ -248,12 +248,7 @@ class CloudStaticIOClient:
         except Exception as err:
             raise Exception(err)
 
-    def upload_cogs(
-        self,
-        metrics_stack,
-        fire_event_name,
-        affiliation,
-    ):
+    def upload_cogs(self, metrics_stack, fire_event_name, affiliation, final=True):
         """
         Uploads COGs (Cloud-Optimized GeoTIFFs) to a remote location, according to
         `public/{affiliation}/{fire_event_name}/{band_name}.tif`. Also adds
@@ -263,6 +258,7 @@ class CloudStaticIOClient:
             metrics_stack (xarray.DataArray): Stack of metrics data.
             fire_event_name (str): Name of the fire event.
             affiliation (str): Affiliation of the data.
+            final (bool): Whether to prefix 'intermediate_' to resultant tiffs.
 
         Returns:
             None
@@ -279,6 +275,12 @@ class CloudStaticIOClient:
                 with rasterio.open(local_cog_path, "r+") as ds:
                     ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
                     ds.update_tags(ns="rio_overview", resampling="nearest")
+
+                ## TODO: Stupid solution to not having control over GDAL's cache
+                ## We need to be able to invalidate it after we crop, but we can't do that
+                ## and if we disable it entirely, performance is terrible.
+                if not final:
+                    band_name = f"intermediate_{band_name}"
 
                 self.upload(
                     source_local_path=local_cog_path,
@@ -401,7 +403,7 @@ class CloudStaticIOClient:
         prefire_date_range,
         postfire_date_range,
         affiliation,
-        derive_boundary,
+        final,
         satellite_pass_information,
     ):
         """
@@ -413,7 +415,7 @@ class CloudStaticIOClient:
             prefire_date_range (tuple): The date range before the fire event.
             postfire_date_range (tuple): The date range after the fire event.
             affiliation (str): The affiliation of the fire event.
-            derive_boundary (bool): Whether to derive the boundary of the fire event.
+            final (bool): Whether to prefix 'intermediate_' to resultant tiffs.
 
         Returns:
             None
@@ -424,6 +426,7 @@ class CloudStaticIOClient:
             metrics_stack=metrics_stack,
             fire_event_name=fire_event_name,
             affiliation=affiliation,
+            final=final,
         )
 
         bounds = [round(pos, 4) for pos in metrics_stack.rio.bounds()]
@@ -434,7 +437,7 @@ class CloudStaticIOClient:
             prefire_date_range=prefire_date_range,
             postfire_date_range=postfire_date_range,
             affiliation=affiliation,
-            derive_boundary=derive_boundary,
+            derive_boundary=final,
             satellite_pass_information=satellite_pass_information,
         )
 

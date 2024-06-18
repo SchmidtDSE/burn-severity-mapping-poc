@@ -163,10 +163,14 @@ class MainPresenter {
     };
 
     const analyzeBurn = async (uploadResponse) => {
+      const self = this;
       const geojson = uploadResponse.geojson;
+      const final = self._aoiDrawn ? false : true;
+
       const burnAnalysisResponse = await self._apiFacade.analyzeBurn(
         metadata,
-        geojson
+        geojson,
+        final
       );
 
       return burnAnalysisResponse;
@@ -175,11 +179,12 @@ class MainPresenter {
     const showIntermediateBurnMetrics = (burnAnalysisResponse) => {
       const self = this;
       self._indicatorArea.showSatellitePassInfo(burnAnalysisResponse);
-
-      const cloudCogPathRbr = burnAnalysisResponse.getCloudCogPaths().rbr;
+      debugger;
+      const cloudCogPathIntermediateRbr =
+        burnAnalysisResponse.getCloudCogPaths().intermediate_rbr;
 
       const intermediateProductTileserverUrl =
-        self._cogTileserverUrlPrefix + cloudCogPathRbr;
+        self._cogTileserverUrlPrefix + cloudCogPathIntermediateRbr;
 
       self._mapPresenter.showIntermediateBurnMetrics(
         intermediateProductTileserverUrl

@@ -32,6 +32,7 @@ class AnaylzeBurnPOSTBody(BaseModel):
     date_ranges: dict
     fire_event_name: str
     affiliation: str
+    final: bool = True
 
 
 # TODO [#5]: Decide on / implement cloud tasks or other async batch
@@ -56,7 +57,7 @@ def analyze_spectral_burn_metrics(
         cloud_static_io_client (CloudStaticIOClient, optional): The client for interacting with the cloud storage service.  FastAPI handles this as a dependency injection.
         __sentry (None, optional): Sentry client, just needs to be initialized. FastAPI handles this as a dependency injection.
         logger (Logger, optional): Google cloud logger. FastAPI handles this as a dependency injection.
-
+        final (bool, optional): Flag indicating whether this is the final analysis, which simply uploads the COGs to the cloud storage without the 'intermediate_' prefix. Defaults to True.
     Returns:
         JSONResponse: The response containing the analysis results and derived boundary, if applicable.
     """
@@ -66,12 +67,14 @@ def analyze_spectral_burn_metrics(
     date_ranges = body.date_ranges
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
+    final = body.final
 
     return main(
         geojson_boundary,
         date_ranges,
         fire_event_name,
         affiliation,
+        final,
         logger,
         cloud_static_io_client,
     )
@@ -82,6 +85,7 @@ def main(
     date_ranges,
     fire_event_name,
     affiliation,
+    final,
     logger,
     cloud_static_io_client,
 ):
@@ -111,7 +115,7 @@ def main(
             fire_event_name=fire_event_name,
             prefire_date_range=date_ranges["prefire"],
             postfire_date_range=date_ranges["postfire"],
-            derive_boundary=False,  # will be overwritten to True when we use flood fill later
+            final=final,  # will be overwritten to True when we use flood fill later
             satellite_pass_information=satellite_pass_information,
         )
         logger.info(f"Cogs uploaded for {fire_event_name}")

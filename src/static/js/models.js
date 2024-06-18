@@ -236,9 +236,7 @@ class ApiFacade {
     return fetch(`/api/upload/shapefile-zip`, request).then(get200Json);
   }
 
-  analyzeBurn(metadata, geojson) {
-    const self = this;
-
+  analyzeBurn(metadata, geojson, final) {
     const performFetch = () => {
       const body = JSON.stringify({
         geojson: geojson,
@@ -248,6 +246,7 @@ class ApiFacade {
           prefire: [metadata.getPrefireStart(), metadata.getPrefireEnd()],
           postfire: [metadata.getPostfireStart(), metadata.getPostfireEnd()],
         },
+        final: final,
       });
 
       const request = {
