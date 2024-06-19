@@ -28,6 +28,12 @@ import pickle
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 DEBUG = True
 
+if DEBUG:
+    from dask.distributed import Client  ## This wont exist on prod instance
+
+    dask_client = Client()
+    print(f"Dask client started at {dask_client.dashboard_link}")
+
 
 class NoFireBoundaryDetectedError(BaseException):
     pass
@@ -47,7 +53,6 @@ class Sentinel2Client:
         self.pystac_client = PystacClient.open(
             self.path, modifier=planetary_computer.sign_inplace
         )
-
         self.band_nir = band_nir
         self.band_swir = band_swir
         self.crs = crs
@@ -191,6 +196,7 @@ class Sentinel2Client:
         stac_endpoint_crs = items[0].properties["proj:epsg"]
 
         # Filter to our relevant bands and stack (again forcing the above crs, from the endpoint itself)
+        print("About to stack ^")
         stack = stackstac.stack(
             items,
             epsg=stac_endpoint_crs,
@@ -200,6 +206,7 @@ class Sentinel2Client:
         stack.rio.write_crs(stac_endpoint_crs, inplace=True)
 
         # Reduce over the time dimension
+        print("About to reduce stack")
         stack = self.reduce_time_range(stack)
 
         # Buffer the bounds to ensure we get all the data we need, plus a
@@ -213,11 +220,12 @@ class Sentinel2Client:
         stack = stack.rio.clip(bounds_stac_crs, bounds_stac_crs.crs)
 
         # Reproject to our desired CRS
+        print("About to reproject")
         stack = stack.rio.reproject(dst_crs=self.crs, nodata=np.nan)
 
         if (
-            np.unique(stack.sel(band="B8A").values) == 1
-            or np.unique(stack.sel(band="B12").values) == 1
+            np.isnan(stack.sel(band="B8A").values).all()
+            or np.isnan(stack.sel(band="B12").values).all()
         ):
             raise ValueError("No data in the stack")
 
@@ -261,9 +269,11 @@ class Sentinel2Client:
 
         """
         # Get items for pre and post fire range
+        print("About to get prefire items")
         prefire_items = self.get_items(
             prefire_date_range, from_bbox=from_bbox, max_items=max_items
         )
+        print("About to get postfire items")
         postfire_items = self.get_items(
             postfire_date_range, from_bbox=from_bbox, max_items=max_items
         )
@@ -273,7 +283,9 @@ class Sentinel2Client:
                 "Date ranges insufficient for enough imagery to calculate burn metrics"
             )
 
+        print("About to arrange prefire stack")
         self.prefire_stack = self.arrange_stack(prefire_items)
+        print("About to arrange postfire stack")
         self.postfire_stack = self.arrange_stack(postfire_items)
 
         n_unique_datetimes_prefire = len(

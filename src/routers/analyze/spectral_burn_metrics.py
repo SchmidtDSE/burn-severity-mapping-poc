@@ -97,18 +97,23 @@ def main(
         # create a Sentinel2Client instance
         geo_client = Sentinel2Client(geojson_boundary=geojson_boundary, buffer=0.1)
 
+        print("Querying fire event")
+
         # get imagery data before and after the fire
         satellite_pass_information = geo_client.query_fire_event(
             prefire_date_range=date_ranges["prefire"],
             postfire_date_range=date_ranges["postfire"],
             from_bbox=True,
         )
+
+        print("Obtained imagery")
+
         logger.info(f"Obtained imagery for {fire_event_name}")
 
         # calculate burn metrics
         geo_client.calc_burn_metrics()
 
-        if len(np.unique(geo_client.metrics_stack.sel(burn_metric="rbr").values)) > 1:
+        if np.isnan(geo_client.metrics_stack.sel(burn_metric="rbr").values).all():
             ## Intermittent bug where tif is all NA - not sure if here or in saving
             logger.error(f"Error: Burn metrics are all NA for {fire_event_name}")
             raise HTTPException(status_code=400, detail="Burn metrics are all NA")
