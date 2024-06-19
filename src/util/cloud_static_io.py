@@ -61,6 +61,7 @@ class CloudStaticIOClient:
         self.s3_bucket_name = s3_bucket_name
         self.https_prefix = BUCKET_HTTPS_PREFIX.format(s3_bucket_name=s3_bucket_name)
         self.logger = logger
+        self.cloud_cog_paths = {}
 
         self.sts_client = boto3.client("sts")
 
@@ -247,12 +248,7 @@ class CloudStaticIOClient:
         except Exception as err:
             raise Exception(err)
 
-    def upload_cogs(
-        self,
-        metrics_stack,
-        fire_event_name,
-        affiliation,
-    ):
+    def upload_cogs(self, metrics_stack, fire_event_name, affiliation, final=True):
         """
         Uploads COGs (Cloud-Optimized GeoTIFFs) to a remote location, according to
         `public/{affiliation}/{fire_event_name}/{band_name}.tif`. Also adds
@@ -262,6 +258,7 @@ class CloudStaticIOClient:
             metrics_stack (xarray.DataArray): Stack of metrics data.
             fire_event_name (str): Name of the fire event.
             affiliation (str): Affiliation of the data.
+            final (bool): Whether to prefix 'intermediate_' to resultant tiffs.
 
         Returns:
             None
@@ -279,9 +276,20 @@ class CloudStaticIOClient:
                     ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
                     ds.update_tags(ns="rio_overview", resampling="nearest")
 
+                ## TODO: Stupid solution to not having control over GDAL's cache
+                ## We need to be able to invalidate it after we crop, but we can't do that
+                ## and if we disable it entirely, performance is terrible.
+                if not final:
+                    band_name = f"intermediate_{band_name}"
+
                 self.upload(
                     source_local_path=local_cog_path,
                     remote_path=f"public/{affiliation}/{fire_event_name}/{band_name}.tif",
+                )
+
+                self.cloud_cog_paths[band_name] = (
+                    self.https_prefix
+                    + f"/public/{affiliation}/{fire_event_name}/{band_name}.tif"
                 )
 
             # Upload the difference between dNBR and RBR
@@ -341,7 +349,7 @@ class CloudStaticIOClient:
         postfire_date_range,
         affiliation,
         derive_boundary,
-        satellite_pass_information
+        satellite_pass_information,
     ):
         """
         Updates the manifest with the given fire event information for the specified affiliation. If the fire event
@@ -376,7 +384,7 @@ class CloudStaticIOClient:
                 "postfire_date_range": postfire_date_range,
                 "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "derive_boundary": derive_boundary,
-                "satellite_pass_information": derive_boundary,
+                "satellite_pass_information": satellite_pass_information,
             }
 
             # Upload the manifest to our SFTP server
@@ -395,11 +403,52 @@ class CloudStaticIOClient:
         prefire_date_range,
         postfire_date_range,
         affiliation,
-        derive_boundary,
+        final,
         satellite_pass_information,
     ):
         """
         Uploads a fire event to the cloud storage location (uploads COGs and updates the manifest.json file).
+
+        Args:
+            metrics_stack (xr.DataArray): The metrics stack containing the fire event data.
+            fire_event_name (str): The name of the fire event.
+            prefire_date_range (tuple): The date range before the fire event.
+            postfire_date_range (tuple): The date range after the fire event.
+            affiliation (str): The affiliation of the fire event.
+            final (bool): Whether to prefix 'intermediate_' to resultant tiffs.
+
+        Returns:
+            None
+        """
+        self.logger.info(f"Uploading fire event {fire_event_name}")
+
+        self.upload_cogs(
+            metrics_stack=metrics_stack,
+            fire_event_name=fire_event_name,
+            affiliation=affiliation,
+            final=final,
+        )
+
+        bounds = [round(pos, 4) for pos in metrics_stack.rio.bounds()]
+
+        self.update_manifest(
+            fire_event_name=fire_event_name,
+            bounds=bounds,
+            prefire_date_range=prefire_date_range,
+            postfire_date_range=postfire_date_range,
+            affiliation=affiliation,
+            derive_boundary=final,
+            satellite_pass_information=satellite_pass_information,
+        )
+
+    def update_fire_event(
+        self,
+        metrics_stack,
+        fire_event_name,
+        affiliation,
+    ):
+        """
+        Updates a fire event in the cloud storage location (uploads COGs and updates the manifest.json file).
 
         Args:
             metrics_stack (xr.DataArray): The metrics stack containing the fire event data.
@@ -412,7 +461,7 @@ class CloudStaticIOClient:
         Returns:
             None
         """
-        self.logger.info(f"Uploading fire event {fire_event_name}")
+        self.logger.info(f"Updating fire event {fire_event_name}")
 
         self.upload_cogs(
             metrics_stack=metrics_stack,
@@ -420,16 +469,17 @@ class CloudStaticIOClient:
             affiliation=affiliation,
         )
 
-        bounds = [round(pos, 4) for pos in metrics_stack.rio.bounds()]
+        existing_manifest = self.get_manifest()
+        this_manifest = existing_manifest[affiliation][fire_event_name]
 
         self.update_manifest(
             fire_event_name=fire_event_name,
-            bounds=bounds,
-            prefire_date_range=prefire_date_range,
-            postfire_date_range=postfire_date_range,
             affiliation=affiliation,
-            derive_boundary=derive_boundary,
-            satellite_pass_information=satellite_pass_information,
+            derive_boundary=True,
+            bounds=this_manifest["bounds"],
+            prefire_date_range=this_manifest["prefire_date_range"],
+            postfire_date_range=this_manifest["postfire_date_range"],
+            satellite_pass_information=this_manifest["satellite_pass_information"],
         )
 
     def get_manifest(self):

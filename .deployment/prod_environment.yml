@@ -4,7 +4,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python ==3.10
+  - python ==3.10.*
   - google-auth
   - google-cloud-secret-manager
   - google-cloud-logging
@@ -27,6 +27,8 @@ dependencies:
   - pytest
   - pyarrow
   - pip
+  - scikit-learn
+  - scikit-image
   - pip:
       - titiler.core
       - python-multipart

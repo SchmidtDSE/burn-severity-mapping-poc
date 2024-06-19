@@ -1,10 +1,6 @@
 from rasterio import features
 from shapely.ops import unary_union, shape
-from shapely.geometry import MultiPolygon, mapping
-import numpy as np
-from rasterio import features
-from shapely.ops import unary_union, shape
-from shapely.geometry import MultiPolygon, mapping
+from shapely.geometry import MultiPolygon, Polygon, mapping
 import numpy as np
 
 
@@ -35,10 +31,7 @@ def raster_mask_to_geojson(binary_mask):
 
     # Merge polygons and create a convex hull if necessary
     merged = unary_union(results)
-    if isinstance(merged, MultiPolygon):
-        merged = merged.convex_hull
 
-    # Convert the geometry to GeoJSON
     boundary_geojson = {
         "type": "FeatureCollection",
         "features": [

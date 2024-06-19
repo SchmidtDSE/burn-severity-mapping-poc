@@ -1,7 +1,7 @@
 import requests
 import geopandas as gpd
 import rasterio.features
-from shapely.geometry import shape, MultiPolygon
+from shapely.geometry import shape, MultiPolygon, Point
 from shapely.ops import unary_union
 from pystac_client import Client as PystacClient
 from datetime import datetime
@@ -16,8 +16,17 @@ import os
 from .burn_severity import calc_burn_metrics, classify_burn
 from ..util.raster_to_poly import raster_mask_to_geojson
 from src.util.cloud_static_io import CloudStaticIOClient
+from src.lib.derive_boundary import (
+    derive_boundary,
+    OtsuThreshold,
+    SimpleThreshold,
+    FloodFillSegmentation,
+)
+from pyproj import CRS
+import pickle
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
+DEBUG = True
 
 
 class NoFireBoundaryDetectedError(BaseException):
@@ -27,7 +36,7 @@ class NoFireBoundaryDetectedError(BaseException):
 class Sentinel2Client:
     def __init__(
         self,
-        geojson_boundary,
+        geojson_boundary=None,
         barc_classifications=None,
         buffer=0.1,
         crs="EPSG:4326",
@@ -48,7 +57,8 @@ class Sentinel2Client:
         # Oscillating between geojsons and geopandas dataframes, which is a bit messy. Should pick one and stick with it.
         self.geojson_boundary = None
         self.bbox = None
-        self.set_boundary(geojson_boundary)
+        if geojson_boundary is not None:
+            self.set_boundary(geojson_boundary)
 
         if barc_classifications is not None:
             self.barc_classifications = self.ingest_barc_classifications(
@@ -77,11 +87,31 @@ class Sentinel2Client:
 
         geojson_bbox = geojson_boundary.bounds.to_numpy()[0]
         self.bbox = [
-            geojson_bbox[0].round(decimals=2) - self.buffer,
-            geojson_bbox[1].round(decimals=2) - self.buffer,
-            geojson_bbox[2].round(decimals=2) + self.buffer,
-            geojson_bbox[3].round(decimals=2) + self.buffer,
+            geojson_bbox[0].round(decimals=8) - self.buffer,
+            geojson_bbox[1].round(decimals=8) - self.buffer,
+            geojson_bbox[2].round(decimals=8) + self.buffer,
+            geojson_bbox[3].round(decimals=8) + self.buffer,
         ]
+
+    def ingest_metrics_stack(self, metrics_stack):
+        """
+        Ingests the metrics stack and checks for the required metrics.
+
+        Args:
+            metrics_stack (dict): The metrics stack.
+
+        Raises:
+            ValueError: If a required metric is missing from the metrics stack.
+        """
+        required_metrics = ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]
+
+        for metric in required_metrics:
+            if metric not in metrics_stack.burn_metric:
+                raise ValueError(
+                    f"Required metric '{metric}' is missing from the metrics stack."
+                )
+
+        self.metrics_stack = metrics_stack
 
     def get_items(self, date_range, from_bbox=True, max_items=None):
         """
@@ -240,9 +270,16 @@ class Sentinel2Client:
         self.prefire_stack = self.arrange_stack(prefire_items)
         self.postfire_stack = self.arrange_stack(postfire_items)
 
+        n_unique_datetimes_prefire = len(
+            np.unique([item.datetime for item in prefire_items])
+        )
+        n_unique_datetimes_postfire = len(
+            np.unique([item.datetime for item in postfire_items])
+        )
+
         return {
-            "n_prefire_passes": len(prefire_items),
-            "n_postfire_passes": len(postfire_items),
+            "n_prefire_passes": n_unique_datetimes_prefire,
+            "n_postfire_passes": n_unique_datetimes_postfire,
             "latest_pass": max([item.datetime for item in postfire_items]).strftime(
                 format="%Y-%m-%d"
             ),
@@ -300,7 +337,7 @@ class Sentinel2Client:
                 dim="classification_source",
             )
 
-    def derive_boundary(self, metric_name="rbr", threshold=0.025, inplace=True):
+    def derive_boundary_flood_fill(self, seed_points, metric_name="rbr", inplace=True):
         """
         Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
         This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as `boundary.geojson`
@@ -313,48 +350,46 @@ class Sentinel2Client:
         Returns:
             None
         """
+        print("Deriving boundary using metric: {}".format(metric_name))
+
+        seed_points_gpd = gpd.GeoDataFrame.from_features(seed_points["features"])
+
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
-        # Threshold the metric layer to get a binary boundary
-        binary_mask = metric_layer.where(metric_layer >= threshold, 0)
-        binary_mask = binary_mask.where(binary_mask == 0, 1)
+        if seed_points_gpd is not None:
+            # Add a dim called 'seed' to denote whether the pixel is a seed point
+            metric_layer = metric_layer.expand_dims(dim="seed")
+            metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)
 
-        # Smooth the boundary, removing small artifacts
-        filled_mask = binary_fill_holes(binary_mask)
-        smoothed_mask = gaussian_filter(filled_mask, sigma=1)
-        buffered_mask = binary_dilation(smoothed_mask, iterations=1)
-        int_mask = buffered_mask.astype(int)
+            for point in seed_points_gpd.geometry:
+                nearest_pixel = metric_layer.sel(x=point.x, y=point.y, method="nearest")
+                nearest_pixel_x = nearest_pixel.x.values
+                nearest_pixel_y = nearest_pixel.y.values
+                metric_layer["seed"].loc[dict(x=nearest_pixel_x, y=nearest_pixel_y)] = (
+                    True
+                )
 
-        # Convert back to a DataArray
-        boundary_xr = xr.DataArray(
-            int_mask,
-            coords=metric_layer.coords,
-            dims=metric_layer.dims,
-            attrs=metric_layer.attrs,
+        geojson_boundary = derive_boundary(
+            metric_layer=metric_layer,
+            thresholding_strategy=OtsuThreshold(),
+            segmentation_strategy=FloodFillSegmentation(),
         )
-        boundary_xr.rio.write_crs(metric_layer.rio.crs, inplace=True)
+        geojson_boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
 
-        # Convert to geojson
-        # TODO [#18]: More robust conversion from raster to poly
-        # This seems overcomplicated for what a simple polygonize should do, but near as I can tell
-        # there is no out of the box solution in xarray/rioxarray for this. This seems like something we
-        # will do regularly, so we should probably make a util function for it and understand why it's
-        # not a built-in method... must have more complications than I realize currently.
-
-        boundary_geojson = raster_mask_to_geojson(boundary_xr)
-
-        if not boundary_geojson:
+        if not geojson_boundary:
             raise NoFireBoundaryDetectedError(
                 "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
             )
 
-        self.metrics_stack = self.metrics_stack.rio.clip(
-            self.geojson_boundary.geometry.values, self.geojson_boundary.crs
-        )
-
-        self.metrics_stack = self.metrics_stack.where(self.metrics_stack != 0, np.nan)
-
         if inplace:
-            self.set_boundary(boundary_geojson)
+
+            self.set_boundary(geojson_boundary)
+            self.metrics_stack = self.metrics_stack.rio.clip(
+                geojson_boundary_gpd.geometry.values, geojson_boundary_gpd.crs
+            )
+            self.metrics_stack = self.metrics_stack.where(
+                self.metrics_stack != 0, np.nan
+            )
+
         else:
-            return boundary_geojson
+            return geojson_boundary_gpd

@@ -12,3 +12,11 @@ exploratory/*.gdb
 
 # Ignore generated credentials from google-github-actions/auth
 gha-creds-*.json
+
+# Ignore massive segmentanything .pth used for exploratory
+exploratory/sam_*
+
+# throwaway test files
+tst*.*
+tst/*
+*/tst.*
