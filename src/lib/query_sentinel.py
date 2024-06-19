@@ -215,6 +215,12 @@ class Sentinel2Client:
         # Reproject to our desired CRS
         stack = stack.rio.reproject(dst_crs=self.crs, nodata=np.nan)
 
+        if (
+            np.unique(stack.sel(band="B8A").values) == 1
+            or np.unique(stack.sel(band="B12").values) == 1
+        ):
+            raise ValueError("No data in the stack")
+
         return stack
 
     def reduce_time_range(self, range_stack):

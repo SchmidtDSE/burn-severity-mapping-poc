@@ -11,6 +11,7 @@ import xarray as xr
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
 from src.lib.query_sentinel import Sentinel2Client, NoFireBoundaryDetectedError
 from src.util.cloud_static_io import CloudStaticIOClient
+import numpy as np
 
 router = APIRouter()
 
@@ -106,6 +107,12 @@ def main(
 
         # calculate burn metrics
         geo_client.calc_burn_metrics()
+
+        if len(np.unique(geo_client.metrics_stack.sel(burn_metric="rbr").values)) > 1:
+            ## Intermittent bug where tif is all NA - not sure if here or in saving
+            logger.error(f"Error: Burn metrics are all NA for {fire_event_name}")
+            raise HTTPException(status_code=400, detail="Burn metrics are all NA")
+
         logger.info(f"Calculated burn metrics for {fire_event_name}")
 
         # save the cog to the FTP server
