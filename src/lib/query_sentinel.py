@@ -23,7 +23,16 @@ from src.lib.derive_boundary import (
     FloodFillSegmentation,
 )
 from pyproj import CRS
-import pickle
+import dask
+
+dask.config.set(  ## Make super conservative memory settings to see if we can do huge areas serially, essentially
+    {
+        "distributed.worker.memory.target": 0.3,  # target fraction to stay below
+        "distributed.worker.memory.spill": 0.5,  # fraction at which we spill to disk
+        "distributed.worker.memory.pause": 0.6,  # fraction at which we pause worker threads
+        "distributed.worker.memory.terminate": 0.7,  # fraction at which we terminate the worker
+    }
+)
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
 DEBUG = True
@@ -202,6 +211,12 @@ class Sentinel2Client:
             epsg=stac_endpoint_crs,
             resolution=resolution,
             assets=[self.band_nir, self.band_swir],
+            chunksize=(
+                -1,
+                1,
+                512,
+                512,
+            ),  # Recommended by stackstac docs if we're immediately reducing time
         )
         stack.rio.write_crs(stac_endpoint_crs, inplace=True)
 
