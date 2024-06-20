@@ -179,7 +179,6 @@ class MainPresenter {
     const showIntermediateBurnMetrics = (burnAnalysisResponse) => {
       const self = this;
       self._indicatorArea.showSatellitePassInfo(burnAnalysisResponse);
-      debugger;
       const cloudCogPathIntermediateRbr =
         burnAnalysisResponse.getCloudCogPaths().intermediate_rbr;
 

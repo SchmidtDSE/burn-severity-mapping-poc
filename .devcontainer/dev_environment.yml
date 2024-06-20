@@ -5,6 +5,8 @@ channels:
   - defaults
 dependencies:
   - python ==3.10.*
+  - bokeh
+  - dask
   - google-auth
   - google-cloud-secret-manager
   - google-cloud-logging
