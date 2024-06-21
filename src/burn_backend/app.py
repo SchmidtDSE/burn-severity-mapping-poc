@@ -4,16 +4,14 @@ from fastapi.staticfiles import StaticFiles
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
-from src.routers.check import connectivity, dns, health, sentry_error
-from src.routers.analyze import spectral_burn_metrics
-from src.routers.refine import flood_fill_segmentation
-from src.routers.upload import drawn_aoi, shapefile_zip
-from src.routers.fetch import rangeland_analysis_platform, ecoclass
-from src.routers.list import derived_products
-from src.routers.pages import home, map, upload, directory
-from src.routers.batch import batch_analyze_and_fetch
-
-from src.lib.titiler_algorithms import algorithms
+from src.burn_backend.routers.check import connectivity, dns, health, sentry_error
+from src.burn_backend.routers.analyze import spectral_burn_metrics
+from src.burn_backend.routers.refine import flood_fill_segmentation
+from src.burn_backend.routers.upload import drawn_aoi, shapefile_zip
+from src.burn_backend.routers.fetch import rangeland_analysis_platform, ecoclass
+from src.burn_backend.routers.list import derived_products
+from src.burn_backend.routers.pages import home, map, upload, directory
+from src.burn_backend.routers.batch import batch_analyze_and_fetch
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
@@ -52,7 +50,3 @@ app.include_router(batch_analyze_and_fetch.router)
 
 ### LIST ###
 app.include_router(derived_products.router)
-
-### TILESERVER ###
-cog = TilerFactory(process_dependency=algorithms.dependency)
-app.include_router(cog.router, prefix="/cog", tags=["tileserver"])
