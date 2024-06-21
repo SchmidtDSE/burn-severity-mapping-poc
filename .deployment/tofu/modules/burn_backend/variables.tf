@@ -21,3 +21,4 @@ variable "google_workload_identity_pool_id" {
 variable "burn_backend_vpc_connector_id" {
     description = "The ID of the Burn Backend VPC Connector"
     type = string
+}
