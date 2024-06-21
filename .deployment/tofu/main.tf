@@ -55,6 +55,7 @@ module "burn_backend" {
   google_project_number = local.google_project_number
   s3_from_gcp_role_arn = module.static_io.s3_from_gcp_role_arn
   s3_bucket_name = module.static_io.s3_bucket_name
+  google_workload_identity_pool_id = module.common.google_workload_identity_pool_id
   burn_backend_vpc_connector_id = module.common.burn_backend_vpc_connector_id
   gcp_cloud_run_endpoint_titiler = module.titiler.gcp_cloud_run_endpoint_titiler
 }
