@@ -1,4 +1,4 @@
-name: burn-severity-prod
+name: titiler-prod
 
 channels:
   - conda-forge

@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy necessary files into container
 COPY src/ /src/
-COPY .deployment/prod_environment.yml /
+COPY .deployment/burn_backend/prod_environment.yml /
 
 # Create a new conda environment from the environment.yml file 
 RUN mamba env create -f prod_environment.yml && echo "conda env create completed"
@@ -25,4 +25,4 @@ SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
 EXPOSE 8080
 
 # Start the REST API w/ the new environment:
-ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "uvicorn", "src.app:app", "--host=0.0.0.0", "--port=8080"]
+ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "uvicorn", "src.burn_backend.app:app", "--host=0.0.0.0", "--port=8080"]
