@@ -39,7 +39,7 @@ def serve_map(
         TemplateResponse: The template response for the map page.
     """
 
-    tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+    tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND")
     s3_bucket_name = os.getenv("S3_BUCKET_NAME")
     # tileserver_endpoint = "http://localhost:5050"
 

@@ -14,7 +14,7 @@ def upload(
     request: Request,
     mapbox_token: str = Depends(get_mapbox_secret),
 ):
-    tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+    tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND")
     ## TODO: These thresholds should be configurable, and probably should use the same
     ## frontend elements as the threhsold sliders within the map. Going to punt on that for now,
     ## since the map needs a refactor in the vein of the upload refactor.

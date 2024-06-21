@@ -16,7 +16,7 @@ def directory(
     mapbox_token: str = Depends(get_mapbox_secret),
 ):
     manifest_json = json.dumps(manifest)
-    cloud_run_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT")
+    cloud_run_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND")
     return templates.TemplateResponse(
         "directory/directory.html",
         {

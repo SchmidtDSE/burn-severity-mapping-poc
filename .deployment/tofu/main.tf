@@ -53,3 +53,12 @@ module "burn_backend" {
   s3_from_gcp_role_arn = module.static_io.s3_from_gcp_role_arn
   s3_bucket_name = module.static_io.s3_bucket_name
 }
+
+module "titiler" {
+  source = "./modules/titiler"
+  google_project_number = local.google_project_number
+  gcp_service_account_s3_email = module.burn_backend.gcp_service_account_s3_email
+  gcp_cloud_run_client_id = module.burn_backend.gcp_burn_backend_service_account_unique_id
+  aws_account_id = local.aws_account_id
+  oidc_provider_domain_url = local.oidc_provider_domain_url
+}
