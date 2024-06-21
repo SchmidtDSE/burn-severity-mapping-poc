@@ -38,24 +38,30 @@ locals {
 }
 
 # Initialize the modules
-module "static_io" {
-  source = "./modules/static_io"
-  google_project_number = local.google_project_number
-  gcp_service_account_s3_email = module.burn_backend.gcp_service_account_s3_email
-  gcp_cloud_run_client_id = module.burn_backend.gcp_burn_backend_service_account_unique_id
-  aws_account_id = local.aws_account_id
-  oidc_provider_domain_url = local.oidc_provider_domain_url
+
+module "common" {
+  source = "./modules/common"
 }
+
 
 module "burn_backend" {
   source = "./modules/burn_backend"
   google_project_number = local.google_project_number
   s3_from_gcp_role_arn = module.static_io.s3_from_gcp_role_arn
   s3_bucket_name = module.static_io.s3_bucket_name
+  google_workload_identity_pool_id = module.common.google_workload_identity_pool_id
+  burn_backend_vpc_connector_id = module.common.burn_backend_vpc_connector_id
 }
 
 module "titiler" {
   source = "./modules/titiler"
+  google_project_number = local.google_project_number
+  google_workload_identity_pool_id = module.common.google_workload_identity_pool_id
+  burn_backend_vpc_connector_id = module.common.burn_backend_vpc_connector_id
+}
+
+module "static_io" {
+  source = "./modules/static_io"
   google_project_number = local.google_project_number
   gcp_service_account_s3_email = module.burn_backend.gcp_service_account_s3_email
   gcp_cloud_run_client_id = module.burn_backend.gcp_burn_backend_service_account_unique_id
