@@ -3,7 +3,7 @@ steps:
     args:
       - "build"
       - "--tag=us-central1-docker.pkg.dev/dse-nps/burn-backend-prod/prod:latest"
-      - "--file=.deployment/prod.Dockerfile"
+      - "--file=.deployment/burn_backend/prod.Dockerfile"
       - "--no-cache"
       - "."
 
