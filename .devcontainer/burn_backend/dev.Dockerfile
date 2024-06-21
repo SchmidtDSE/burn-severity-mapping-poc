@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy repo into container 
 COPY . /workspace
-WORKDIR /workspace/.devcontainer
+WORKDIR /workspace/.devcontainer/burn_backend
 
 # Get AWS CLI V2
 RUN prebuild/setup_aws.sh

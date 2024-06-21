@@ -1,0 +1,21 @@
+{
+  "name": "Titiler - Dev Container",
+  "dockerComposeFile": "../docker-compose.dev.yml",
+  "service": "titiler",
+  "mounts": ["source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind"],
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "ms-python.black-formatter",
+        "esbenp.prettier-vscode",
+        "googlecloudtools.cloudcode"
+      ]
+    }
+  }
+}

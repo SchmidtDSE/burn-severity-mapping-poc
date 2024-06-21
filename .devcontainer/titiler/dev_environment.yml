@@ -1,0 +1,14 @@
+name: titiler
+
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python ==3.10.*
+  - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
+  - uvicorn
+  - numpy
+  - pip
+  - pip:
+      - titiler.core
+      - python-multipart

@@ -1,15 +1,17 @@
 version: "3.8"
 services:
-  dev_container:
+  burn_backend:
     build:
       context: ../
-      dockerfile: .devcontainer/dev.Dockerfile
+      dockerfile: .devcontainer/burn_backend/dev.Dockerfile
     volumes:
       - ${HOME}/.aws:/root/.aws
     ports:
       - 5050:5050
-
+  
   titiler:
-    image: ghcr.io/developmentseed/titiler:latest
+    build:
+      context: ../
+      dockerfile: .devcontainer/titiler/dev.Dockerfile
     ports:
-      - 8000:80
+      - 8000:8000
