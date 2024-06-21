@@ -94,3 +94,35 @@ resource "google_service_account_iam_binding" "workload_identity_user" {
     "principalSet://iam.googleapis.com/projects/${var.google_project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.pool.workload_identity_pool_id}/attribute.repository/SchmidtDSE/burn-severity-mapping-poc"
   ]
 }
+
+# Give the service account permissions to deploy to Cloud Run, and to Cloud Build, and to the Workload Identity Pool
+resource "google_project_iam_member" "run_admin" {
+  project  = "dse-nps"
+  role     = "roles/run.admin" 
+  member   = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_project_iam_member" "cloudbuild_builder" {
+  project  = "dse-nps"
+  role     = "roles/cloudbuild.builds.builder"
+  member   = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_project_iam_member" "SA_get_access_token" {
+  project  = "dse-nps"
+  role    = "roles/iam.serviceAccountTokenCreator"
+  member   = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_project_iam_member" "run_service_agent" {
+  project  = "dse-nps"
+  role    = "roles/run.serviceAgent"
+  member   = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_project_iam_member" "artifact_registry_writer" {
+  project = "dse-nps"
+  role    = "roles/artifactregistry.writer"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+

@@ -86,11 +86,6 @@ resource "google_cloud_run_service_iam_member" "public" {
   member = "allUsers"
 }
 
-
-## TODO [#20]: Harcoded project string and others - now that tofu outputs are setup up, make more general
-## Will be helpful as we move to other projects and environments
-
-
 # Create the IAM service account for the Cloud Run service
 resource "google_service_account" "burn-backend-service" {
   account_id   = "burn-backend-service-${terraform.workspace}"
@@ -115,36 +110,5 @@ resource "google_project_iam_member" "oidc_token_creator" {
   project = "dse-nps"
   role    = "roles/iam.serviceAccountTokenCreator"
   member  = "serviceAccount:${google_service_account.burn-backend-service.email}"
-}
-
-# Give the service account permissions to deploy to Cloud Run, and to Cloud Build, and to the Workload Identity Pool
-resource "google_project_iam_member" "run_admin" {
-  project  = "dse-nps"
-  role     = "roles/run.admin" 
-  member   = "serviceAccount:${google_service_account.github_actions.email}"
-}
-
-resource "google_project_iam_member" "cloudbuild_builder" {
-  project  = "dse-nps"
-  role     = "roles/cloudbuild.builds.builder"
-  member   = "serviceAccount:${google_service_account.github_actions.email}"
-}
-
-resource "google_project_iam_member" "SA_get_access_token" {
-  project  = "dse-nps"
-  role    = "roles/iam.serviceAccountTokenCreator"
-  member   = "serviceAccount:${google_service_account.github_actions.email}"
-}
-
-resource "google_project_iam_member" "run_service_agent" {
-  project  = "dse-nps"
-  role    = "roles/run.serviceAgent"
-  member   = "serviceAccount:${google_service_account.github_actions.email}"
-}
-
-resource "google_project_iam_member" "artifact_registry_writer" {
-  project = "dse-nps"
-  role    = "roles/artifactregistry.writer"
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 

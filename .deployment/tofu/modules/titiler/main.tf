@@ -4,7 +4,7 @@ resource "google_cloud_run_v2_service" "tf-titiler" {
   location = "us-central1"
 
   template {
-    service_account = google_service_account.burn-backend-service.email
+    service_account = google_service_account.titiler-service.email
     timeout = "3599s" # max timeout is one hour
     containers {
       image = "us-docker.pkg.dev/cloudrun/container/placeholder" # This is a placeholder for first time creation only, replaced by CI/CD in GitHub Actions
@@ -93,4 +93,30 @@ resource "google_artifact_registry_repository" "burn-backend" {
   repository_id = "titiler-${terraform.workspace}"
   format        = "DOCKER"
   location      = "us-central1"
+}
+
+## TODO: Both this and the burn-backend service should either be require authenticated
+## invocations or at least have a rate limit
+
+# Allow unauthenticated invocations
+resource "google_cloud_run_service_iam_member" "public" {
+  service = google_cloud_run_v2_service.tf-rest-burn-severity.name
+  location = google_cloud_run_v2_service.tf-rest-burn-severity.location
+  role = "roles/run.invoker"
+  member = "allUsers"
+}
+
+
+# Create the IAM service account for the Cloud Run service
+resource "google_service_account" "titiler-service" {
+  account_id   = "titiler-service-${terraform.workspace}"
+  display_name = "Cloud Run Service Account for titiler - ${terraform.workspace}"
+  description  = "This service account is used by the titiler service - doesn't need too much, since it retrieves public images from https"
+  project      = "dse-nps"
+}
+
+resource "google_project_iam_member" "log_writer" {
+  project = "dse-nps"
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.titler-service.email}"
 }
