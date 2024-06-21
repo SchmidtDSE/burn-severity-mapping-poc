@@ -44,4 +44,5 @@ jobs:
             gcloud beta run deploy titiler-prod --image us-central1-docker.pkg.dev/dse-nps/titiler-prod/prod --platform managed --region us-central1
           else
             gcloud builds submit --config .deployment/titiler/dev_cloudbuild.yml
-            gcloud
+            gcloud beta run deploy titiler-dev --image us-central1-docker.pkg.dev/dse-nps/titiler-dev/dev --platform managed --region us-central1
+          fi
