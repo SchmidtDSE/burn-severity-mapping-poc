@@ -12,12 +12,6 @@ resource "google_cloud_run_v2_service" "tf-titiler" {
         name  = "ENV"
         value = "CLOUD"
       }
-      ## TODO [#24]: self-referential endpoint, will be solved by refactoring out titiler and/or making fully static
-      env {
-        name  = "GCP_CLOUD_RUN_ENDPOINT_TITILER"
-        # value = "${terraform.workspace}" == "prod" ? "https://tf-rest-burn-severity-ohi6r6qs2a-uc.a.run.app" : "https://tf-rest-burn-severity-dev-ohi6r6qs2a-uc.a.run.app"
-        value = var.gcp_cloud_run_endpoint_titiler
-      }
       env {
         name  = "CPL_VSIL_CURL_ALLOWED_EXTENSIONS"
         value = ".tif,.TIF,.tiff"
@@ -100,8 +94,8 @@ resource "google_artifact_registry_repository" "burn-backend" {
 
 # Allow unauthenticated invocations
 resource "google_cloud_run_service_iam_member" "public" {
-  service = google_cloud_run_v2_service.tf-rest-burn-severity.name
-  location = google_cloud_run_v2_service.tf-rest-burn-severity.location
+  service = google_cloud_run_v2_service.tf-titiler.name
+  location = google_cloud_run_v2_service.tf-titiler.location
   role = "roles/run.invoker"
   member = "allUsers"
 }
@@ -118,5 +112,5 @@ resource "google_service_account" "titiler-service" {
 resource "google_project_iam_member" "log_writer" {
   project = "dse-nps"
   role    = "roles/logging.logWriter"
-  member  = "serviceAccount:${google_service_account.titler-service.email}"
+  member  = "serviceAccount:${google_service_account.titiler-service.email}"
 }
