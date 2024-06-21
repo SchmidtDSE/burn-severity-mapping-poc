@@ -90,23 +90,6 @@ resource "google_cloud_run_service_iam_member" "public" {
 ## TODO [#20]: Harcoded project string and others - now that tofu outputs are setup up, make more general
 ## Will be helpful as we move to other projects and environments
 
-# Create the IAM service account for GitHub Actions
-resource "google_service_account" "github_actions" {
-  account_id  = "github-actions-sa-${terraform.workspace}"
-  display_name = "Github Actions Service Account"
-  description = "This service account is used by GitHub Actions"
-  project     = "dse-nps"
-}
-
-resource "google_service_account_iam_binding" "workload_identity_user" {
-  depends_on = [google_iam_workload_identity_pool_provider.oidc]
-  service_account_id = google_service_account.github_actions.name
-  role               = "roles/iam.workloadIdentityUser"
-  members            = [
-    # "principalSet://iam.googleapis.com/projects/${var.google_project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.pool.workload_identity_pool_id}/attribute.repository/SchmidtDSE/burn-severity-mapping-poc"
-    "principalSet://iam.googleapis.com/projects/${var.google_project_number}/locations/global/workloadIdentityPools/${var.google_workload_identity_pool_id}/attribute.repository/SchmidtDSE/burn-severity-mapping-poc"
-  ]
-}
 
 # Create the IAM service account for the Cloud Run service
 resource "google_service_account" "burn-backend-service" {
