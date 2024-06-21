@@ -41,6 +41,7 @@ locals {
 
 module "common" {
   source = "./modules/common"
+  google_project_number = local.google_project_number
 }
 
 module "titiler" {
