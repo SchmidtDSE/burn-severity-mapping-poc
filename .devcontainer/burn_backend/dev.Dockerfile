@@ -39,4 +39,4 @@ RUN mamba install -n base nb_conda_kernels
 EXPOSE 5050
 
 # Start the proper services - if we aren't developing this service, then start it as uvicorn, otherwise just keep alive
-CMD ["bin/bash", "/workspace/.devcontainer/start_proper_services.sh"]
+CMD ["/bin/bash", "/workspace/.devcontainer/start_proper_services.sh"]
