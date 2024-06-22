@@ -1,4 +1,4 @@
-name: burn-severity
+name: burn-backend-dev
 
 channels:
   - conda-forge

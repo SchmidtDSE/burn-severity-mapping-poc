@@ -4,22 +4,20 @@ services:
     build:
       context: ../
       dockerfile: .devcontainer/titiler/dev.Dockerfile
+      args:
+        - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
     ports:
       - 8080:8080
-    environment:
-      - SERVICE_NAME
-    command: bash -c 'if [ "$$SERVICE_NAME" != "titiler" ]; then uvicorn src.titiler.app:app --host=0.0.0.0 --port=8080; fi'
 
   burn_backend:
     build:
       context: ../
       dockerfile: .devcontainer/burn_backend/dev.Dockerfile
+      args:
+        - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
     volumes:
       - ${HOME}/.aws:/root/.aws
     ports:
       - 5050:5050
-    environment:
-      - SERVICE_NAME
-    command: bash -c 'if [ "$$SERVICE_NAME" != "burn_backend" ]; then uvicorn src.burn.app:app --host=0.0.0.0 --port=5050; fi'
     depends_on:
-      - titiler  
+      - titiler

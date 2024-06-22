@@ -1,5 +1,8 @@
 FROM condaforge/mambaforge
 
+ARG DEVCONTAINER_SERVICE
+RUN echo "DEVCONTAINER_SERVICE: $DEVCONTAINER_SERVICE"
+
 # Set noninteractive mode for apt-get, to avoid hanging on tzdata
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -32,5 +35,8 @@ RUN mamba env create -f dev_environment.yml
 # Install nb_conda_kernels in base env to allow for env discovery in jupyter
 RUN mamba install -n base nb_conda_kernels
 
-# Start a shell w/ this dev environment - need to keep container running w/ docker-compose
-CMD ["tail", "-f", "/dev/null"]
+# Expose port 5050 for the REST API
+EXPOSE 5050
+
+# Start the proper services - if we aren't developing this service, then start it as uvicorn, otherwise just keep alive
+CMD ["bin/bash", "/workspace/.devcontainer/start_proper_services.sh"]

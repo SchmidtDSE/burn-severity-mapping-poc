@@ -19,6 +19,6 @@
     }
   },
   "remoteEnv": {
-    "SERVICE_NAME": "titiler"
+    "DEVCONTAINER_SERVICE": "titiler"
   }
 }
