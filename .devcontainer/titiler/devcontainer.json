@@ -18,5 +18,5 @@
       ]
     }
   },
-  "initializeCommand": "echo DEVCONTAINER_SERVICE=titiler > /.devcontainer/.env"
+  "initializeCommand": "echo DEVCONTAINER_SERVICE=titiler > .devcontainer/.env"
 }
