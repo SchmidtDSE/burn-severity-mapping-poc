@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cd /workspace
+echo "Starting other services to develop with ${DEVCONTAINER_SERVICE}..."
 
 if [ "$DEVCONTAINER_SERVICE" = "burn_backend" ]; then
     # Start a shell to keep container running

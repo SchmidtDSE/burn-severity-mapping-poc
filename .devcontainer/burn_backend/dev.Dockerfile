@@ -1,6 +1,8 @@
 FROM condaforge/mambaforge
 
+# Get the service name from the environment, then set it as an environment variable
 ARG DEVCONTAINER_SERVICE
+ENV DEVCONTAINER_SERVICE=$DEVCONTAINER_SERVICE
 RUN echo "DEVCONTAINER_SERVICE: $DEVCONTAINER_SERVICE"
 
 # Set noninteractive mode for apt-get, to avoid hanging on tzdata
