@@ -183,9 +183,13 @@ class FloodFillSegmentationResponse {
 }
 
 class ApiFacade {
+  constructor(baseUrl) {
+    const self = this;
+    self._baseUrl = baseUrl;
+  }
+
   getDerivedProducts(fireEventName, affiliation) {
     const self = this;
-
     const body = JSON.stringify({
       fire_event_name: fireEventName,
       affiliation: affiliation,
@@ -197,7 +201,7 @@ class ApiFacade {
       body: body,
     };
 
-    return fetch("/api/list/derived-products", request)
+    return fetch(`${self._baseUrl}/api/list/derived-products`, request)
       .then(get200Json)
       .then((response) => {
         return Object.entries(response).map((entry) => {
@@ -212,7 +216,6 @@ class ApiFacade {
     const self = this;
 
     const formData = new URLSearchParams();
-    // formData.append("file", $("#shp_zip")[0].files[0]); TODO: Not needed here?
     formData.append("fire_event_name", metadata.getFireEventName());
     formData.append("affiliation", metadata.getAffiliation());
 
@@ -220,7 +223,9 @@ class ApiFacade {
     formData.append("geojson", drawnGeojsonStr);
 
     const request = { method: "POST", body: formData };
-    return fetch(`/api/upload/drawn-aoi`, request).then(get200Json);
+    return fetch(`${self._baseUrl}/api/upload/drawn-aoi`, request).then(
+      get200Json
+    );
   }
 
   uploadShapefile(metadata, shapefile) {
@@ -233,7 +238,9 @@ class ApiFacade {
     formData.append("derive_boundary", false);
 
     const request = { method: "POST", body: formData };
-    return fetch(`/api/upload/shapefile-zip`, request).then(get200Json);
+    return fetch(`${self._baseUrl}/api/upload/shapefile-zip`, request).then(
+      get200Json
+    );
   }
 
   analyzeBurn(metadata, geojson, final) {
@@ -255,7 +262,10 @@ class ApiFacade {
         body: body,
       };
 
-      return fetch("/api/analyze/spectral-burn-metrics", request);
+      return fetch(
+        `${self._baseUrl}/api/analyze/spectral-burn-metrics`,
+        request
+      );
     };
 
     const interpretResponse = (response) => {
@@ -297,7 +307,10 @@ class ApiFacade {
         body: body,
       };
 
-      return fetch("/api/refine/flood-fill-segmentation", request);
+      return fetch(
+        `${self._baseUrl}/api/refine/flood-fill-segmentation`,
+        request
+      );
     };
 
     const interpretResponse = (response) => {
@@ -347,14 +360,15 @@ class ApiFacade {
       body: body,
     };
 
-    return fetch("/api/fetch/rangeland-analysis-platform", request).then(
-      (response) => {
-        if (response.status !== 200) {
-          throw new Error(`Unexpected response code: ${response.status}`);
-        }
-        return response.json();
+    return fetch(
+      `${self._baseUrl}/api/fetch/rangeland-analysis-platform`,
+      request
+    ).then((response) => {
+      if (response.status !== 200) {
+        throw new Error(`Unexpected response code: ${response.status}`);
       }
-    );
+      return response.json();
+    });
   }
 
   fetchEcoclass(metadata, geojson) {
@@ -372,11 +386,13 @@ class ApiFacade {
       body: body,
     };
 
-    return fetch("/api/fetch/ecoclass", request).then((response) => {
-      if (response.status !== 200) {
-        throw new Error(`Unexpected response code: ${response.status}`);
+    return fetch(`${self._baseUrl}/api/fetch/ecoclass`, request).then(
+      (response) => {
+        if (response.status !== 200) {
+          throw new Error(`Unexpected response code: ${response.status}`);
+        }
+        return response.json();
       }
-      return response.json();
-    });
+    );
   }
 }

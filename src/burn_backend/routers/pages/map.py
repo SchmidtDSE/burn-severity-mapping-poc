@@ -39,7 +39,7 @@ def serve_map(
         TemplateResponse: The template response for the map page.
     """
 
-    tileserver_endpoint = os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND")
+    cloud_run_endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")
     s3_bucket_name = os.getenv("S3_BUCKET_NAME")
     # tileserver_endpoint = "http://localhost:5050"
 
@@ -49,31 +49,31 @@ def serve_map(
     ecoclass_geojson_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson"
     severity_obs_geojson_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/burn_field_observations.geojson"
     cog_tileserver_url_prefix = (
-        tileserver_endpoint
+        cloud_run_endpoint_titiler
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={cog_url}&nodata=-99&return_mask=true"
     )
 
     rap_cog_annual_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_annual_forb_and_grass.tif"
     rap_tileserver_annual_url = (
-        tileserver_endpoint
+        cloud_run_endpoint_titiler
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_annual_url}&nodata=-99&return_mask=true"
     )
 
     rap_cog_perennial_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_perennial_forb_and_grass.tif"
     rap_tileserver_perennial_url = (
-        tileserver_endpoint
+        cloud_run_endpoint_titiler
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_perennial_url}&nodata=-99&return_mask=true"
     )
 
     rap_cog_shrub_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_shrub.tif"
     rap_tileserver_shrub_url = (
-        tileserver_endpoint
+        cloud_run_endpoint_titiler
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_shrub_url}&nodata=-99&return_mask=true"
     )
 
     rap_cog_tree_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/rangeland_analysis_platform_tree.tif"
     rap_tileserver_tree_url = (
-        tileserver_endpoint
+        cloud_run_endpoint_titiler
         + f"/cog/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}.png?url={rap_cog_tree_url}&nodata=-99&return_mask=true"
     )
 
