@@ -99,8 +99,8 @@
     </div>
     <script>
         // Fetch the produced products
-        var cloudRunEndpoint = "{{ cloud_run_endpoint }}";
-        function getProducts(cloudRunEndpoint, affiliation, fireEventName) {
+        var cloudRunEndpointTitiler = "{{ cloud_run_endpoint_titiler }}";
+        function getProducts(cloudRunEndpointTitiler, affiliation, fireEventName) {
             postData = JSON.stringify({
                 fire_event_name: $("#fireNameDropdown").val(),
                 affiliation: $("#affiliationDropdown").val(),
@@ -108,7 +108,7 @@
 
             // If all four requests are successful, get the map url and all derived products
             var derivedProductsResponse = $.ajax({
-            url: "/api/list/derived-products",
+            url: `${cloudRunEndpointTitiler}/api/list/derived-products`,
             type: "post",
             dataType: "json",
             contentType: "application/json",
@@ -121,8 +121,8 @@
                 alert("Failed to get derived products.");
             },
         });
-        var mapRbrUrl = `${cloudRunEndpoint}/map/${affiliation}/${fireEventName}/rbr`;
-        var mapDnbrUrl = `${cloudRunEndpoint}/map/${affiliation}/${fireEventName}/dnbr`;
+        var mapRbrUrl = `${cloudRunEndpointTitiler}/map/${affiliation}/${fireEventName}/rbr`;
+        var mapDnbrUrl = `${cloudRunEndpointTitiler}/map/${affiliation}/${fireEventName}/dnbr`;
 
         return new Promise (function (resolve, reject) {
             $.when(derivedProductsResponse).done(function (products) {

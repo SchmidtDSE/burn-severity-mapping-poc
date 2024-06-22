@@ -23,6 +23,6 @@ def directory(
             "request": request,
             "manifest": manifest_json,
             "mapbox_token": mapbox_token,
-            "cloud_run_endpoint": cloud_run_endpoint,
+            "cloud_run_endpoint_titiler": cloud_run_endpoint_titiler,
         },
     )
