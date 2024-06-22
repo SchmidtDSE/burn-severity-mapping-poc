@@ -1,4 +1,4 @@
-name: titiler
+name: titiler_dev
 
 channels:
   - conda-forge

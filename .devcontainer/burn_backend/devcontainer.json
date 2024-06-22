@@ -17,5 +17,6 @@
         "googlecloudtools.cloudcode"
       ]
     }
-  }
+  },
+  "postCreateCommand": "docker compose exec titiler bash -c 'conda run -n titiler uvicorn src.titiler.app:app --host=0.0.0.0 --port=8080'"
 }

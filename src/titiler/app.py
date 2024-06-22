@@ -13,3 +13,9 @@ add_exception_handlers(app, DEFAULT_STATUS_CODES)
 ### TILESERVER ###
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix="/cog", tags=["tileserver"])
+
+### HEALTHCHECK ###
+@app.get("/healthz", tags=["healthcheck"])
+def ping():
+    """Health check."""
+    return {"ping": "pong!"}

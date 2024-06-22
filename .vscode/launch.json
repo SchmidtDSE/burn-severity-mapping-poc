@@ -2,14 +2,34 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: FastAPI",
+      "name": "Python: Burn Backend FastAPI",
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
-      "args": ["src.app:app", "--host=0.0.0.0", "--port=5050", "--reload"],
+      "args": [
+        "src.burn_backend.app:app",
+        "--host=0.0.0.0",
+        "--port=5050",
+        "--reload"
+      ],
       "justMyCode": true,
       "envFile": "/workspace/.devcontainer/.env",
       "python": "/opt/conda/envs/burn-severity/bin/python"
+    },
+    {
+      "name": "Python: TiTiler FastAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "src.titiler.app:app",
+        "--host=0.0.0.0",
+        "--port=8080",
+        "--reload"
+      ],
+      "justMyCode": true,
+      "envFile": "/workspace/.devcontainer/.env",
+      "python": "/opt/conda/envs/titiler/bin/python"
     }
   ]
 }

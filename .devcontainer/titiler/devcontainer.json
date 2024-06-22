@@ -17,5 +17,6 @@
         "googlecloudtools.cloudcode"
       ]
     }
-  }
+  },
+  "postCreateCommand": "docker compose exec burn_backend bash -c 'conda run -n burn-severity uvicorn src.burn_backend.app:app --host=0.0.0.0 --port=5050'"
 }
