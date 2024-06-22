@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd /workspace
+
 if [ "$DEVCONTAINER_SERVICE" = "burn_backend" ]; then
     # Start a shell to keep container running
     tail -f /dev/null
