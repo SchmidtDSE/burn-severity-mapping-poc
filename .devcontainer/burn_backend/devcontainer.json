@@ -2,6 +2,7 @@
   "name": "Burn Backend - Dev Container",
   "dockerComposeFile": "../docker-compose.dev.yml",
   "service": "burn_backend",
+  "runArgs": ["-e", "SERVICE_NAME=burn_backend"],
   "mounts": ["source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind"],
   "workspaceFolder": "/workspace",
   "customizations": {
