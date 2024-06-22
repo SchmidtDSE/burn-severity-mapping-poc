@@ -1,8 +1,9 @@
 class MainPresenter {
-  constructor(mapboxToken, cogTileserverUrlPrefix) {
+  constructor(mapboxToken, cogTileserverUrlPrefix, burnBackendUrlPrefix) {
     const self = this;
     self._mapboxToken = mapboxToken;
     self._cogTileserverUrlPrefix = cogTileserverUrlPrefix;
+    self._burnBackendUrlPrefix = burnBackendUrlPrefix;
 
     self._successCounter = 0;
     self._aoiDrawn = false;
@@ -42,7 +43,7 @@ class MainPresenter {
 
     self._indicatorArea = new IndicatorAreaPresenter();
 
-    self._apiFacade = new ApiFacade();
+    self._apiFacade = new ApiFacade(self._burnBackendUrlPrefix);
   }
 
   _updateProducts(affiliation, fireEventName) {
