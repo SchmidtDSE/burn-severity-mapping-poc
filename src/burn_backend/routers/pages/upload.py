@@ -30,5 +30,6 @@ def upload(
             "request": request,
             "mapbox_token": mapbox_token,  # for NAIP and Satetllite in V0
             "cog_tileserver_url_prefix": cog_tileserver_url_prefix,
+            "cloud_run_endpoint_burn_backend": cloud_run_endpoint_burn_backend,
         },
     )

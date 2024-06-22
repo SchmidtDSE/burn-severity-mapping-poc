@@ -143,11 +143,13 @@
     <script>
         var mapboxToken = "{{ mapbox_token }}";
         var cogTileserverUrlPrefix = {{ cog_tileserver_url_prefix | tojson | safe}};
+        var burnBackendUrlPrefix = "{{ burn_backend_url_prefix }}";
 
         document.addEventListener("DOMContentLoaded", function() {
             const mainPresenter = new MainPresenter(
                 mapboxToken,
-                cogTileserverUrlPrefix
+                cogTileserverUrlPrefix,
+                burnBackendUrlPrefix
             );
         });
 
