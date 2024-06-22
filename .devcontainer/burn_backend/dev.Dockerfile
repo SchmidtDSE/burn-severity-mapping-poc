@@ -2,12 +2,6 @@
 
 FROM condaforge/mambaforge as builder
 
-# Get the service name from the environment, then set it as an environment variable
-ARG DEVCONTAINER_SERVICE
-ENV DEVCONTAINER_SERVICE=$DEVCONTAINER_SERVICE
-ENV THIS_SERVICE=burn_backend
-RUN echo "DEVCONTAINER_SERVICE: $DEVCONTAINER_SERVICE"
-
 # Set noninteractive mode for apt-get, to avoid hanging on tzdata
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -43,6 +37,12 @@ RUN mamba install -n base nb_conda_kernels
 ### RUNNER ### 
 
 FROM builder as runner
+
+# Get the service name from the environment, then set it as an environment variable
+ARG DEVCONTAINER_SERVICE
+ENV DEVCONTAINER_SERVICE=$DEVCONTAINER_SERVICE
+ENV THIS_SERVICE=burn_backend
+RUN echo "DEVCONTAINER_SERVICE: $DEVCONTAINER_SERVICE"
 
 # Expose port 5050 for the REST API
 EXPOSE 5050
