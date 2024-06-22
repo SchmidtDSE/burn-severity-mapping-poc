@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from titiler.core.factory import TilerFactory
-from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from src.burn_backend.routers.check import connectivity, dns, health, sentry_error
 from src.burn_backend.routers.analyze import spectral_burn_metrics
@@ -15,7 +13,6 @@ from src.burn_backend.routers.batch import batch_analyze_and_fetch
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
-add_exception_handlers(app, DEFAULT_STATUS_CODES)
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 # templates = Jinja2Templates(directory="src/static")
 
@@ -50,3 +47,9 @@ app.include_router(batch_analyze_and_fetch.router)
 
 ### LIST ###
 app.include_router(derived_products.router)
+
+### HEALTHCHECK ###
+@app.get("/healthz", tags=["healthcheck"])
+def ping():
+    """Health check."""
+    return {"ping": "pong!"}
