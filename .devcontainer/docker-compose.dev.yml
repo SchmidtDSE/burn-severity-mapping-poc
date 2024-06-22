@@ -1,5 +1,12 @@
 version: "3.8"
 services:
+  titiler:
+    build:
+      context: ../
+      dockerfile: .devcontainer/titiler/dev.Dockerfile
+    ports:
+      - 8080:8080
+
   burn_backend:
     build:
       context: ../
@@ -8,10 +15,5 @@ services:
       - ${HOME}/.aws:/root/.aws
     ports:
       - 5050:5050
-  
-  titiler:
-    build:
-      context: ../
-      dockerfile: .devcontainer/titiler/dev.Dockerfile
-    ports:
-      - 8080:8080
+    depends_on:
+      - titiler  
