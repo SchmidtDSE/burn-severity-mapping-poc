@@ -18,7 +18,5 @@
       ]
     }
   },
-  "remoteEnv": {
-    "DEVCONTAINER_SERVICE": "burn_backend"
-  }
+  "initializeCommand": "echo DEVCONTAINER_SERVICE=titiler > /workspace/.devcontainer/.env"
 }
