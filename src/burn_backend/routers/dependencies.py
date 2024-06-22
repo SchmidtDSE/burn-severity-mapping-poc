@@ -3,8 +3,8 @@ from logging import Logger
 
 from google.cloud import logging as google_logging
 import sentry_sdk
-from src.util.cloud_static_io import CloudStaticIOClient
-from src.util.gcp_secrets import get_mapbox_secret as gcp_get_mapbox_secret
+from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
+from src.burn_backend.util.gcp_secrets import get_mapbox_secret as gcp_get_mapbox_secret
 import os
 import logging as python_logging
 

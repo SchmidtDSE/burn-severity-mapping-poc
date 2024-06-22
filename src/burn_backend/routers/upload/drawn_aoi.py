@@ -5,7 +5,7 @@ import tempfile
 import sentry_sdk
 
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
-from src.util.cloud_static_io import CloudStaticIOClient
+from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 

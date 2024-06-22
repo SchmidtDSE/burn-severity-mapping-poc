@@ -8,12 +8,12 @@ import json
 import pandas as pd
 
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
-from src.lib.query_soil import (
+from src.burn_backend.lib.query_soil import (
     sdm_get_esa_mapunitid_poly,
     sdm_get_ecoclassid_from_mu_info,
     edit_get_ecoclass_info,
 )
-from src.util.cloud_static_io import CloudStaticIOClient
+from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 

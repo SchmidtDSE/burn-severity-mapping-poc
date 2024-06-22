@@ -9,8 +9,8 @@ import json
 import rioxarray as rxr
 import xarray as xr
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
-from src.lib.query_sentinel import Sentinel2Client, NoFireBoundaryDetectedError
-from src.util.cloud_static_io import CloudStaticIOClient
+from src.burn_backend.lib.query_sentinel import Sentinel2Client, NoFireBoundaryDetectedError
+from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
 import numpy as np
 
 router = APIRouter()

@@ -7,10 +7,10 @@ import sentry_sdk
 import json
 import time
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
-from src.lib.query_rap import (
+from src.burn_backend.lib.query_rap import (
     rap_get_biomass,
 )
-from src.util.cloud_static_io import CloudStaticIOClient
+from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 
