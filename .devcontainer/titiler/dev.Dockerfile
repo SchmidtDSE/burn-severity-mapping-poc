@@ -1,4 +1,6 @@
-FROM condaforge/mambaforge
+### BUILDER ###
+
+FROM condaforge/mambaforge as builder
 
 # Get the service name from the environment, then set it as an environment variable
 ARG DEVCONTAINER_SERVICE
@@ -15,6 +17,10 @@ RUN mamba env create -f dev_environment.yml
 
 # Expose port 8080 for the tile server
 EXPOSE 8080
+
+### RUNNER ###
+
+FROM builder as runner
 
 # Start the proper services - if we aren't developing this service, then start it as uvicorn, otherwise just keep alive
 CMD ["/bin/bash", "/workspace/.devcontainer/start_proper_services.sh"]

@@ -1,4 +1,6 @@
-FROM condaforge/mambaforge
+### BUILDER ###
+
+FROM condaforge/mambaforge as builder
 
 # Get the service name from the environment, then set it as an environment variable
 ARG DEVCONTAINER_SERVICE
@@ -37,6 +39,10 @@ RUN mamba env create -f dev_environment.yml
 
 # Install nb_conda_kernels in base env to allow for env discovery in jupyter
 RUN mamba install -n base nb_conda_kernels
+
+### RUNNER ### 
+
+FROM builder as runner
 
 # Expose port 5050 for the REST API
 EXPOSE 5050
