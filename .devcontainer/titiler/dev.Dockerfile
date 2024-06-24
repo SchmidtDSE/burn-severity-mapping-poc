@@ -22,6 +22,9 @@ RUN common/prebuild/setup_gcloud.sh
 ENV PATH $PATH:/usr/local/google-cloud-sdk/bin
 ENV GRPC_GO_FORCE_USE_IPV4="true"
 
+# Get OpenTofu
+RUN common/prebuild/setup_opentofu.sh
+
 # Create a new conda environment from the environment.yml file 
 WORKDIR /workspace/.devcontainer/titiler
 RUN mamba env create -f dev_environment.yml

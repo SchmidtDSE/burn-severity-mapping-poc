@@ -20,3 +20,6 @@ exploratory/sam_*
 tst*.*
 tst/*
 */tst.*
+
+# .env
+.env

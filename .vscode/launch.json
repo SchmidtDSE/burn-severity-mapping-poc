@@ -13,7 +13,7 @@
         "--reload"
       ],
       "justMyCode": true,
-      "envFile": "/workspace/.devcontainer/.env",
+      "envFile": "/workspace/.devcontainer/burn_backend/.env",
       "python": "/opt/conda/envs/burn-backend-dev/bin/python",
       "console": "integratedTerminal"
     },
@@ -29,7 +29,7 @@
         "--reload"
       ],
       "justMyCode": true,
-      "envFile": "/workspace/.devcontainer/.env",
+      "envFile": "/workspace/.devcontainer/titiler/.env",
       "python": "/opt/conda/envs/titiler-dev/bin/python",
       "console": "integratedTerminal"
     }
