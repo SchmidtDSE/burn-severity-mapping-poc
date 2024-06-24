@@ -5,13 +5,13 @@ from pathlib import Path
 from markdown import markdown
 
 router = APIRouter()
-templates = Jinja2Templates(directory="src/static")
+templates = Jinja2Templates(directory="src/titiler/static")
 
 
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request):
     # Read the markdown file
-    with open(Path("src/static/home/home.md")) as f:
+    with open(Path("src/titiler/static/home/home.md")) as f:
         md_content = f.read()
 
     # Convert markdown to HTML

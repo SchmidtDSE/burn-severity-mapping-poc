@@ -7,7 +7,7 @@ from fastapi.templating import Jinja2Templates
 from src.common.lib.backend_dependencies import get_manifest, get_mapbox_secret
 
 router = APIRouter()
-templates = Jinja2Templates(directory="src/static")
+templates = Jinja2Templates(directory="src/titiler/static")
 
 
 @router.get(
@@ -80,7 +80,7 @@ def serve_map(
     fire_metadata = manifest[affiliation][fire_event_name]
     fire_metadata_json = json.dumps(fire_metadata)
 
-    with open("src/static/map/burn_metric_text.json") as json_file:
+    with open("src/titiler/static/map/burn_metric_text.json") as json_file:
         burn_metric_text = json.load(json_file)
 
     return templates.TemplateResponse(

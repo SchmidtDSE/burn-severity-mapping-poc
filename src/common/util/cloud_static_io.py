@@ -5,10 +5,8 @@ import json
 import datetime
 import rasterio
 from rasterio.enums import Resampling
-import geopandas as gpd
 from google.cloud import logging as cloud_logging
 import tempfile
-import subprocess
 import os
 import boto3
 import google.auth

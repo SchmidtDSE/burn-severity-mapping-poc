@@ -3,10 +3,10 @@ from fastapi.responses import HTMLResponse
 import os
 from fastapi.templating import Jinja2Templates
 import json
-from src.burn_backend.routers.dependencies import get_mapbox_secret, get_manifest
+from src.common.lib.backend_dependencies import get_mapbox_secret, get_manifest
 
 router = APIRouter()
-templates = Jinja2Templates(directory="src/static")
+templates = Jinja2Templates(directory="src/titler/static")
 
 
 @router.get("/directory", response_class=HTMLResponse)
