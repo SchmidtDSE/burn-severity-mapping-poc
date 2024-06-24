@@ -13,7 +13,7 @@ from src.burn_backend.lib.query_soil import (
     sdm_get_ecoclassid_from_mu_info,
     edit_get_ecoclass_info,
 )
-from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
+from src.common.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 

@@ -10,7 +10,7 @@ from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_se
 from src.burn_backend.lib.query_rap import (
     rap_get_biomass,
 )
-from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
+from src.common.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()
 

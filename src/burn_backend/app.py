@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-
 from src.burn_backend.routers.check import connectivity, dns, health, sentry_error
 from src.burn_backend.routers.analyze import spectral_burn_metrics
 from src.burn_backend.routers.refine import flood_fill_segmentation
@@ -41,8 +40,9 @@ app.include_router(batch_analyze_and_fetch.router)
 ### LIST ###
 app.include_router(derived_products.router)
 
+
 ### HEALTHCHECK ###
 @app.get("/healthz", tags=["healthcheck"])
 def ping():
     """Health check."""
-    return {"ping": "pong!"}
+    return {"ping": "pong! Burn backend is up and running."}

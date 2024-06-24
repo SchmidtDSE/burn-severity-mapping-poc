@@ -7,8 +7,8 @@ import tempfile
 import sentry_sdk
 
 from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
-from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
-from src.burn_backend.util.ingest_burn_zip import ingest_esri_zip_file
+from src.common.util.cloud_static_io import CloudStaticIOClient
+from src.common.util.ingest_burn_zip import ingest_esri_zip_file
 
 router = APIRouter()
 

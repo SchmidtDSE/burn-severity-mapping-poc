@@ -1,7 +1,6 @@
 from fastapi import Depends, APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from ..dependencies import get_mapbox_secret, get_manifest
 from pathlib import Path
 from markdown import markdown
 

@@ -21,8 +21,9 @@ app.include_router(directory.router)
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix="/cog", tags=["tileserver"])
 
+
 ### HEALTHCHECK ###
 @app.get("/healthz", tags=["healthcheck"])
 def ping():
     """Health check."""
-    return {"ping": "pong!"}
+    return {"ping": "pong! Titiler is alive and well."}

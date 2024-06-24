@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 import os
 from fastapi.templating import Jinja2Templates
 
-from ..dependencies import get_mapbox_secret, get_manifest
+from ..dependencies import get_mapbox_secret
 
 router = APIRouter()
 templates = Jinja2Templates(directory="src/static")

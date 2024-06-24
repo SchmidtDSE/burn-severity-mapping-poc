@@ -3,10 +3,13 @@ from ..dependencies import (
     get_cloud_static_io_client,
     init_sentry,
 )
-from src.burn_backend.lib.query_sentinel import Sentinel2Client, NoFireBoundaryDetectedError
+from src.burn_backend.lib.query_sentinel import (
+    Sentinel2Client,
+    NoFireBoundaryDetectedError,
+)
 from fastapi import Depends, APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
-from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
+from src.common.util.cloud_static_io import CloudStaticIOClient
 from pydantic import BaseModel
 from logging import Logger
 from typing import Any

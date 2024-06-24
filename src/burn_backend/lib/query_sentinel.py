@@ -15,7 +15,7 @@ from scipy.ndimage import gaussian_filter, binary_fill_holes, binary_dilation
 import os
 from .burn_severity import calc_burn_metrics, classify_burn
 from ..util.raster_to_poly import raster_mask_to_geojson
-from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
+from src.common.util.cloud_static_io import CloudStaticIOClient
 from src.burn_backend.lib.derive_boundary import (
     derive_boundary,
     OtsuThreshold,
