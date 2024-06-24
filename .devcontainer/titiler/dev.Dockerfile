@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install -y \
 COPY . /workspace
 WORKDIR /workspace/.devcontainer
 
+# Get AWS CLI V2
+RUN common/prebuild/setup_aws.sh
+
 # Get gcloud SDK, force GCP to use IPV4, bc IPV6 issue w/ Sonic 
 RUN common/prebuild/setup_gcloud.sh
 ENV PATH $PATH:/usr/local/google-cloud-sdk/bin
