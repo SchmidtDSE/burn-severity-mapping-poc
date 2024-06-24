@@ -4,7 +4,7 @@ import os
 import json
 from fastapi.templating import Jinja2Templates
 
-from ..dependencies import get_manifest, get_mapbox_secret
+from src.common.lib.backend_dependencies import get_manifest, get_mapbox_secret
 
 router = APIRouter()
 templates = Jinja2Templates(directory="src/static")

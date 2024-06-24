@@ -30,7 +30,7 @@
       ],
       "justMyCode": true,
       "envFile": "/workspace/.devcontainer/.env",
-      "python": "/opt/conda/envs/titiler/bin/python",
+      "python": "/opt/conda/envs/titiler-dev/bin/python",
       "console": "integratedTerminal"
     }
   ]

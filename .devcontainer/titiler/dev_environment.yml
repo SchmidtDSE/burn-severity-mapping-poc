@@ -7,6 +7,11 @@ dependencies:
   - python ==3.10.*
   - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - uvicorn
+  - markdown
+  - google-auth
+  - google-cloud-secret-manager
+  - google-cloud-logging
+  - sentry-sdk[fastapi]
   - numpy
   - pip
   - pip:
