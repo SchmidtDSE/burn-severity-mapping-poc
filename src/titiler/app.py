@@ -9,6 +9,7 @@ from src.titiler.routers.pages import home, map, upload, directory
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
+app.mount("/static", StaticFiles(directory="src/titiler/static"), name="static")
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
 ### WEB PAGES ###
