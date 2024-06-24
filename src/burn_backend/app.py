@@ -8,19 +8,12 @@ from src.burn_backend.routers.refine import flood_fill_segmentation
 from src.burn_backend.routers.upload import drawn_aoi, shapefile_zip
 from src.burn_backend.routers.fetch import rangeland_analysis_platform, ecoclass
 from src.burn_backend.routers.list import derived_products
-from src.burn_backend.routers.pages import home, map, upload, directory
 from src.burn_backend.routers.batch import batch_analyze_and_fetch
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 # templates = Jinja2Templates(directory="src/static")
-
-### WEB PAGES ###
-app.include_router(home.router)
-app.include_router(map.router)
-app.include_router(upload.router)
-app.include_router(directory.router)
 
 ### CHECK ###
 app.include_router(health.router)
