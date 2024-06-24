@@ -14,7 +14,8 @@
       ],
       "justMyCode": true,
       "envFile": "/workspace/.devcontainer/.env",
-      "python": "/opt/conda/envs/burn-severity/bin/python"
+      "python": "/opt/conda/envs/burn-backend-dev/bin/python",
+      "console": "integratedTerminal"
     },
     {
       "name": "Python: TiTiler FastAPI",
@@ -29,7 +30,8 @@
       ],
       "justMyCode": true,
       "envFile": "/workspace/.devcontainer/.env",
-      "python": "/opt/conda/envs/titiler/bin/python"
+      "python": "/opt/conda/envs/titiler/bin/python",
+      "console": "integratedTerminal"
     }
   ]
 }

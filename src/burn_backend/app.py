@@ -11,8 +11,6 @@ from src.burn_backend.routers.batch import batch_analyze_and_fetch
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
-app.mount("/static", StaticFiles(directory="src/static"), name="static")
-# templates = Jinja2Templates(directory="src/static")
 
 ### CHECK ###
 app.include_router(health.router)
