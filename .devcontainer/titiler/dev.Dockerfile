@@ -2,12 +2,20 @@
 
 FROM condaforge/mambaforge as builder
 
+# Set noninteractive mode for apt-get, to avoid hanging on tzdata
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Get necessary utils, w/ no-install-recommends and clean up to keep image small
+RUN apt-get update && apt-get install -y \
+    bash \
+    unzip \
+    curl \
+    ssh \
+    --no-install-recommends && rm -rf /var/lib/apt/lists/* 
+
 # Copy repo into container 
 COPY . /workspace
 WORKDIR /workspace/.devcontainer
-
-# Get AWS CLI V2
-RUN common/prebuild/setup_aws.sh
 
 # Get gcloud SDK, force GCP to use IPV4, bc IPV6 issue w/ Sonic 
 RUN common/prebuild/setup_gcloud.sh
