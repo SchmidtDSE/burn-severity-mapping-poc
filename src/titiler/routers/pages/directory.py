@@ -6,7 +6,7 @@ import json
 from src.common.lib.backend_dependencies import get_mapbox_secret, get_manifest
 
 router = APIRouter()
-templates = Jinja2Templates(directory="src/titler/static")
+templates = Jinja2Templates(directory="src/titiler/static")
 
 
 @router.get("/directory", response_class=HTMLResponse)
