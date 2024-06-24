@@ -1,5 +1,5 @@
 import pytest
-import src.lib.burn_severity as burn_severity
+import src.burn_backend.lib.burn_severity as burn_severity
 import xarray as xr
 
 

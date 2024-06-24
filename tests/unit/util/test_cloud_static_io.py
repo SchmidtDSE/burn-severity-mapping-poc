@@ -1,11 +1,11 @@
 import pytest
-from src.util.cloud_static_io import CloudStaticIOClient, BUCKET_HTTPS_PREFIX
+from src.burn_backend.util.cloud_static_io import CloudStaticIOClient, BUCKET_HTTPS_PREFIX
 from unittest.mock import patch, MagicMock, ANY, call, mock_open
 from boto3.session import Session
 
 
-@patch("src.util.cloud_static_io.CloudStaticIOClient.update_manifest")
-@patch("src.util.cloud_static_io.CloudStaticIOClient.upload_cogs")
+@patch("src.burn_backend.util.cloud_static_io.CloudStaticIOClient.update_manifest")
+@patch("src.burn_backend.util.cloud_static_io.CloudStaticIOClient.upload_cogs")
 @patch.object(CloudStaticIOClient, "__init__", return_value=None)
 def test_upload_fire_event(
     mock_init, mock_upload_cogs, mock_update_manifest, test_3d_valid_xarray_epsg_4326

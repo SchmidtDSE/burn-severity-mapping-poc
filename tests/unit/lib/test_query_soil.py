@@ -1,7 +1,7 @@
 import pytest
 import requests
 from unittest.mock import patch, Mock
-from src.lib.query_soil import sdm_get_esa_mapunitid_poly, edit_get_ecoclass_info
+from src.burn_backend.lib.query_soil import sdm_get_esa_mapunitid_poly, edit_get_ecoclass_info
 from shapely.geometry import Polygon
 import geopandas as gpd
 import json

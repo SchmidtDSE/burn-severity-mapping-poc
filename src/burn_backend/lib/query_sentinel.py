@@ -15,8 +15,8 @@ from scipy.ndimage import gaussian_filter, binary_fill_holes, binary_dilation
 import os
 from .burn_severity import calc_burn_metrics, classify_burn
 from ..util.raster_to_poly import raster_mask_to_geojson
-from src.util.cloud_static_io import CloudStaticIOClient
-from src.lib.derive_boundary import (
+from src.burn_backend.util.cloud_static_io import CloudStaticIOClient
+from src.burn_backend.lib.derive_boundary import (
     derive_boundary,
     OtsuThreshold,
     SimpleThreshold,
@@ -337,7 +337,7 @@ class Sentinel2Client:
         """
         Classify the metrics stack based on the given thresholds and threshold source. Note that,
         in v0, we are not actually calling this classify method, we are classifing at runtime using
-        titiler's algorithms (`src.lib.titiler_algorithms`). After classification, we save the
+        titiler's algorithms (`src.titiler.lib.titiler_algorithms`). After classification, we save the
         classification to the `derived_classifications` attribute of the Sentinel2Client.
 
         Parameters:

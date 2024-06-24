@@ -14,11 +14,11 @@ import json
 import datetime
 import tempfile
 
-from src.routers.analyze.spectral_burn_metrics import (
+from src.burn_backend.routers.analyze.spectral_burn_metrics import (
     main as analyze_spectral_burn_metrics,
 )
-from src.routers.fetch.ecoclass import main as fetch_ecoclass
-from src.routers.fetch.rangeland_analysis_platform import main as fetch_rap
+from src.burn_backend.routers.fetch.ecoclass import main as fetch_ecoclass
+from src.burn_backend.routers.fetch.rangeland_analysis_platform import main as fetch_rap
 
 router = APIRouter()
 
