@@ -2,7 +2,7 @@ import xarray as xr
 from scipy.ndimage import binary_fill_holes, gaussian_filter, binary_dilation
 from skimage.filters import threshold_otsu
 from skimage.segmentation import flood_fill, clear_border
-from ..util.raster_to_poly import raster_mask_to_geojson
+from src.burn_backend.util.raster_to_poly import raster_mask_to_geojson
 from abc import ABC, abstractmethod
 import numpy as np
 
