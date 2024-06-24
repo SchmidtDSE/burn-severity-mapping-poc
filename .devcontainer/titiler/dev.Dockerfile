@@ -4,9 +4,18 @@ FROM condaforge/mambaforge as builder
 
 # Copy repo into container 
 COPY . /workspace
-WORKDIR /workspace/.devcontainer/titiler
+WORKDIR /workspace/.devcontainer
+
+# Get AWS CLI V2
+RUN common/prebuild/setup_aws.sh
+
+# Get gcloud SDK, force GCP to use IPV4, bc IPV6 issue w/ Sonic 
+RUN common/prebuild/setup_gcloud.sh
+ENV PATH $PATH:/usr/local/google-cloud-sdk/bin
+ENV GRPC_GO_FORCE_USE_IPV4="true"
 
 # Create a new conda environment from the environment.yml file 
+WORKDIR /workspace/.devcontainer/titiler
 RUN mamba env create -f dev_environment.yml
 
 ### RUNNER ###
