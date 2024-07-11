@@ -54,9 +54,9 @@ resource "google_compute_router_nat" "burn_backend_nat" {
 
 # Create the IAM workload identity pool and provider to auth GitHub Actions
 resource "google_iam_workload_identity_pool" "pool" {
-  workload_identity_pool_id = "github-actions-${terraform.workspace}"
-  display_name = "Github Actions Pool"
-  description  = "Workload identity pool for GitHub actions"
+  workload_identity_pool_id = "github-actions-${terraform.workspace}-${formatdate("YYYYMMDD", timestamp())}"
+  display_name = "GA ${terraform.workspace} - ${formatdate("YYYYMMDD", timestamp())}"
+  description  = "Workload identity pool for GitHub actions - created on ${formatdate("YYYY-MM-DD", timestamp())}"
 }
 
 # Create the OIDC provider for GitHub Actions
