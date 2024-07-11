@@ -4,7 +4,11 @@ from logging import Logger
 import tempfile
 import sentry_sdk
 
-from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
+from src.common.lib.backend_dependencies import (
+    get_cloud_logger,
+    get_cloud_static_io_client,
+    init_sentry,
+)
 from src.common.util.cloud_static_io import CloudStaticIOClient
 
 router = APIRouter()

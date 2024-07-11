@@ -7,7 +7,11 @@ import sentry_sdk
 import json
 import pandas as pd
 
-from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
+from src.common.lib.backend_dependencies import (
+    get_cloud_logger,
+    get_cloud_static_io_client,
+    init_sentry,
+)
 from src.burn_backend.lib.query_soil import (
     sdm_get_esa_mapunitid_poly,
     sdm_get_ecoclassid_from_mu_info,

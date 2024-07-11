@@ -1,5 +1,5 @@
 from fastapi import Depends, APIRouter, HTTPException
-from ..dependencies import get_cloud_logger
+from src.common.lib.backend_dependencies import get_cloud_logger
 from logging import Logger
 
 import socket

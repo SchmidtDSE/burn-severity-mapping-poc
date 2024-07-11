@@ -8,7 +8,11 @@ import sentry_sdk
 import json
 import rioxarray as rxr
 import xarray as xr
-from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
+from src.common.lib.backend_dependencies import (
+    get_cloud_logger,
+    get_cloud_static_io_client,
+    init_sentry,
+)
 from src.burn_backend.lib.query_sentinel import (
     Sentinel2Client,
     NoFireBoundaryDetectedError,

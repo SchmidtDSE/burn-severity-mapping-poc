@@ -1,5 +1,5 @@
-from ..dependencies import (
-    get_cloud_logger_debug,
+from src.common.lib.backend_dependencies import (
+    get_cloud_logger,
     get_cloud_static_io_client,
     init_sentry,
 )
@@ -52,7 +52,7 @@ class BatchAnalyzeAndFetchPOSTBody(BaseModel):
 def analyze_and_fetch(
     body: BatchAnalyzeAndFetchPOSTBody,
     sentry: None = Depends(init_sentry),
-    logger: Logger = Depends(get_cloud_logger_debug),
+    logger: Logger = Depends(get_cloud_logger),
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
 ):
 

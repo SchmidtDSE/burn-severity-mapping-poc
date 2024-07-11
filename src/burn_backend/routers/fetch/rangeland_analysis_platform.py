@@ -6,7 +6,11 @@ from pydantic import BaseModel
 import sentry_sdk
 import json
 import time
-from ..dependencies import get_cloud_logger, get_cloud_static_io_client, init_sentry
+from src.common.lib.backend_dependencies import (
+    get_cloud_logger,
+    get_cloud_static_io_client,
+    init_sentry,
+)
 from src.burn_backend.lib.query_rap import (
     rap_get_biomass,
 )
