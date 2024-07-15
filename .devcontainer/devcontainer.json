@@ -1,0 +1,25 @@
+{
+  "name": "DinD - Dev Container",
+  "build": {
+    "dockerfile": "dev.Dockerfile"
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind",
+    "source=${localEnv:HOME}/.config/gcloud,target=/root/.config/gcloud,type=bind"
+  ],
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "ms-python.black-formatter",
+        "esbenp.prettier-vscode",
+        "googlecloudtools.cloudcode"
+      ]
+    }
+  }
+}
