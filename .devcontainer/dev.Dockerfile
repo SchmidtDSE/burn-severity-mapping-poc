@@ -6,18 +6,17 @@ FROM condaforge/mambaforge as builder
 ### BASE REQUIREMENTS ###
 #########################
 
-# Get necessary utils, w/ no-cache to keep image small
-RUN apt-get update && apt-get install --no-cache \
+# Make debian non-interactive
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Get necessary utils
+RUN apt-get update && apt-get install -y \
     bash \
     unzip \
     curl \
     ca-certificates \
     wget \
     openssh \
-    && rm -rf /var/cache/apk/*
-
-# Install Docker CLI to communicate with the host Docker daemon
-RUN apt-get update && apt-get install -y \
     docker.io \
     && rm -rf /var/lib/apt/lists/*
 
