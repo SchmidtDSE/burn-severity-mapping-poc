@@ -2,6 +2,10 @@
 # trying a docker-in-docker setup to allow for docker compose within the container itself
 FROM condaforge/mambaforge as builder
 
+# Copy repo into container 
+COPY . /workspace
+WORKDIR /workspace/.devcontainer
+
 #########################
 ### BASE REQUIREMENTS ###
 #########################
@@ -14,10 +18,6 @@ RUN common/prebuild/setup_utils.sh
 
 # Get docker and it dependencies
 RUN common/prebuild/setup_docker.sh
-
-# Copy repo into container 
-COPY . /workspace
-WORKDIR /workspace/.devcontainer
 
 ##############################
 ### ENVIRONMENT MANAGEMENT ###
