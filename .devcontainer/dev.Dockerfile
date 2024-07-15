@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     wget \
-    openssh \
+    openssh-client \
     docker.io \
     && rm -rf /var/lib/apt/lists/*
 
