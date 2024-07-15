@@ -2,20 +2,27 @@
 # trying a docker-in-docker setup to allow for docker compose within the container itself
 FROM docker:27-dind
 
-# Set noninteractive mode for apt-get, to avoid hanging on tzdata
-ENV DEBIAN_FRONTEND=noninteractive
+#########################
+### BASE REQUIREMENTS ###
+#########################
 
-# Get necessary utils, w/ no-install-recommends and clean up to keep image small
-RUN apt-get update && apt-get install -y \
+# Get necessary utils, w/ no-cache to keep image small
+RUN apk update && apk add --no-cache \
     bash \
     unzip \
     curl \
-    ssh \
-    --no-install-recommends && rm -rf /var/lib/apt/lists/* 
+    ca-certificates \
+    wget \
+    openssh \
+    && rm -rf /var/cache/apk/*
 
 # Copy repo into container 
 COPY . /workspace
 WORKDIR /workspace/.devcontainer
+
+################################
+### DEVELOPMENT REQUIREMENTS ###
+################################
 
 # Get AWS CLI V2
 RUN common/prebuild/setup_aws.sh
@@ -28,12 +35,23 @@ ENV GRPC_GO_FORCE_USE_IPV4="true"
 # Get OpenTofu
 RUN common/prebuild/setup_opentofu.sh
 
+##############################
+### ENVIRONMENT MANAGEMENT ###
+##############################
+
+# First, get mambaforge
+RUN common/prebuild/setup_mamba.sh
+
 # Create a new conda environment from the environment.yml file 
-WORKDIR /workspace/.devcontainer/burn_backend
 RUN mamba env create -f dev_environment.yml
 
 # Install nb_conda_kernels in base env to allow for env discovery in jupyter
+# Ensure mamba or conda is installed and available in the image before running this
 RUN mamba install -n base nb_conda_kernels
+
+#########################
+### RUNTIME KEEP-ALIVE###
+#########################
 
 # Keep the container running
 CMD ["tail", "-f", "/dev/null"]
