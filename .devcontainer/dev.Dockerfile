@@ -20,13 +20,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Get docker and it dependencies
-RUN apt-get update && apt-get install -y \
-    docker-ce \
-    docker-ce-cli \
-    containerd.io \
-    docker-buildx-plugin \
-    docker-compose-plugin \
-    && rm -rf /var/lib/apt/lists/*
+RUN common/prebuild/setup_docker.sh
 
 # Copy repo into container 
 COPY . /workspace
