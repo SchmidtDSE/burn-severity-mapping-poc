@@ -8,6 +8,14 @@ services:
         - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
     ports:
       - 8080:8080
+    volumes:
+      - type: bind
+        source: ${localEnv:HOME}/.aws
+        target: /root/.aws
+      - type: bind
+        source: ${localEnv:HOME}/.config/gcloud
+        target: /root/.config/gcloud
+
 
   burn_backend:
     build:
@@ -15,9 +23,14 @@ services:
       dockerfile: .devcontainer/burn_backend/dev.Dockerfile
       args:
         - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
-    volumes:
-      - ${HOME}/.aws:/root/.aws
     ports:
       - 5050:5050
+    volumes:
+      - type: bind
+        source: ${localEnv:HOME}/.aws
+        target: /root/.aws
+      - type: bind
+        source: ${localEnv:HOME}/.config/gcloud
+        target: /root/.config/gcloud
     depends_on:
       - titiler

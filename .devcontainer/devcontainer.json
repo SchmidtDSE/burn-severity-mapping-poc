@@ -10,6 +10,10 @@
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" // Docker socket
   ],
   "workspaceFolder": "/workspace",
+  "containerEnv": {
+    "LOCAL_ENV_HOME": "${localEnv:HOME}",
+    "DEVCONTAINER_SERVICE": "burn_backend"
+  },
   "customizations": {
     "vscode": {
       "settings": {

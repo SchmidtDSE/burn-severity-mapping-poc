@@ -23,9 +23,6 @@ RUN common/prebuild/setup_docker.sh
 ### ENVIRONMENT MANAGEMENT ###
 ##############################
 
-# First, get mambaforge
-# RUN common/prebuild/setup_mamba.sh
-
 # Create a new conda environment from the environment.yml file 
 RUN mamba env create -f dev_environment.yml
 
