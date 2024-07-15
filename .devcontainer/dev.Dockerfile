@@ -1,13 +1,13 @@
 # Based on DevPod dev's guidance (Pascal of OpenLoft: https://loft-sh.slack.com/archives/C056ZDZPJ4W/p1720631110300279)
 # trying a docker-in-docker setup to allow for docker compose within the container itself
-FROM docker:27-dind
+FROM condaforge/mambaforge as builder
 
 #########################
 ### BASE REQUIREMENTS ###
 #########################
 
 # Get necessary utils, w/ no-cache to keep image small
-RUN apk update && apk add --no-cache \
+RUN apt-get update && apt-get install --no-cache \
     bash \
     unzip \
     curl \
@@ -15,6 +15,11 @@ RUN apk update && apk add --no-cache \
     wget \
     openssh \
     && rm -rf /var/cache/apk/*
+
+# Install Docker CLI to communicate with the host Docker daemon
+RUN apt-get update && apt-get install -y \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy repo into container 
 COPY . /workspace
@@ -25,7 +30,7 @@ WORKDIR /workspace/.devcontainer
 ##############################
 
 # First, get mambaforge
-RUN common/prebuild/setup_mamba.sh
+# RUN common/prebuild/setup_mamba.sh
 
 # Create a new conda environment from the environment.yml file 
 RUN mamba env create -f dev_environment.yml
