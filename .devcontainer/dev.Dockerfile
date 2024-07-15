@@ -10,14 +10,7 @@ FROM condaforge/mambaforge as builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Get necessary utils
-RUN apt-get update && apt-get install -y \
-    bash \
-    unzip \
-    curl \
-    ca-certificates \
-    wget \
-    openssh-client \
-    && rm -rf /var/lib/apt/lists/*
+RUN common/prebuild/setup_utils.sh
 
 # Get docker and it dependencies
 RUN common/prebuild/setup_docker.sh
