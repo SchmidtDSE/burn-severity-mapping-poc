@@ -18,19 +18,7 @@ RUN apk update && apk add --no-cache \
 
 # Copy repo into container 
 COPY . /workspace
-
-RUN ls -la /workspace
-RUN ls -la /workspace/.devcontainer
-
-
 WORKDIR /workspace/.devcontainer
-
-## debug
-RUN ls -la
-
-RUN ls -la common/
-
-RUN ls -la common/prebuild/
 
 ################################
 ### DEVELOPMENT REQUIREMENTS ###
