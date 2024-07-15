@@ -4,7 +4,7 @@
 set -e
 
 # Download and install Mambaforge version 24.3.0-0 (just a stable version)
-wget -qO- https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Mambaforge-Linux-x86_64.sh mambaforge_install.sh
+wget -qO mambaforge_install.sh https://github.com/conda-forge/miniforge/releases/download/24.3.0-0/Mambaforge-Linux-x86_64.sh
 
 # Make it executable
 chmod +x mambaforge_install.sh
