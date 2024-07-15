@@ -18,6 +18,11 @@ RUN apk update && apk add --no-cache \
 
 # Copy repo into container 
 COPY . /workspace
+
+RUN ls -la /workspace
+RUN ls -la /workspace/.devcontainer
+
+
 WORKDIR /workspace/.devcontainer
 
 ## debug
