@@ -20,6 +20,13 @@ RUN apk update && apk add --no-cache \
 COPY . /workspace
 WORKDIR /workspace/.devcontainer
 
+## debug
+RUN ls -la
+
+RUN ls -la common/
+
+RUN ls -la common/prebuild/
+
 ################################
 ### DEVELOPMENT REQUIREMENTS ###
 ################################
