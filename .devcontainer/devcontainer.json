@@ -1,7 +1,8 @@
 {
   "name": "DinD - Dev Container",
   "build": {
-    "dockerfile": "dev.Dockerfile"
+    "dockerfile": "dev.Dockerfile",
+    "context": "../"
   },
   "mounts": [
     "source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind",
