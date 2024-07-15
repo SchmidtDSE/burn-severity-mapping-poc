@@ -20,6 +20,20 @@ RUN apk update && apk add --no-cache \
 COPY . /workspace
 WORKDIR /workspace/.devcontainer
 
+##############################
+### ENVIRONMENT MANAGEMENT ###
+##############################
+
+# First, get mambaforge
+RUN common/prebuild/setup_mamba.sh
+
+# Create a new conda environment from the environment.yml file 
+RUN mamba env create -f dev_environment.yml
+
+# Install nb_conda_kernels in base env to allow for env discovery in jupyter
+# Ensure mamba or conda is installed and available in the image before running this
+RUN mamba install -n base nb_conda_kernels
+
 ################################
 ### DEVELOPMENT REQUIREMENTS ###
 ################################
@@ -34,20 +48,6 @@ ENV GRPC_GO_FORCE_USE_IPV4="true"
 
 # Get OpenTofu
 RUN common/prebuild/setup_opentofu.sh
-
-##############################
-### ENVIRONMENT MANAGEMENT ###
-##############################
-
-# First, get mambaforge
-RUN common/prebuild/setup_mamba.sh
-
-# Create a new conda environment from the environment.yml file 
-RUN mamba env create -f dev_environment.yml
-
-# Install nb_conda_kernels in base env to allow for env discovery in jupyter
-# Ensure mamba or conda is installed and available in the image before running this
-RUN mamba install -n base nb_conda_kernels
 
 #########################
 ### RUNTIME KEEP-ALIVE###
