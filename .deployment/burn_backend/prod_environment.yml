@@ -22,9 +22,7 @@ dependencies:
   - sentry-sdk[fastapi]
   - smart_open
   - stackstac
-  - titiler.core
   - python-multipart
   - pip
   - pip:
-      - titiler.core
       - python-multipart
