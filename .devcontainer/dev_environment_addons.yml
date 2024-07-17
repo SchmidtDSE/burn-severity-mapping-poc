@@ -8,7 +8,8 @@ dependencies:
   - dask
   - ipykernel
   - ipython
-  - jupyter  - markdown
+  - jupyter
+  - markdown
   - python-multipart
   - rich
   - rich-with-jupyter
