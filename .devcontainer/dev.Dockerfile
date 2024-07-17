@@ -14,10 +14,10 @@ WORKDIR /workspace
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Get necessary utils
-RUN .devcontainer/common/prebuild/setup_utils.sh
+RUN .devcontainer/prebuild/setup_utils.sh
 
 # Get docker and it dependencies
-RUN .devcontainer/common/prebuild/setup_docker.sh
+RUN .devcontainer/prebuild/setup_docker.sh
 
 ##############################
 ### ENVIRONMENT MANAGEMENT ###
@@ -27,11 +27,11 @@ WORKDIR /workspace
 
 # Create the burn-backend-prods's conda environment and add our common dev environment addons
 RUN mamba env create -f .deployment/burn_backend/prod_environment.yml
-RUN mamba env update -f .devcontainer/common/dev_environment_addons.yml -n burn-severity-prod
+RUN mamba env update -f .devcontainer/dev_environment_addons.yml -n burn-severity-prod
 
 # Create the titiler-prod's conda environment and add our common dev environment addons
 RUN mamba env create -f .deployment/titiler/prod_environment.yml
-RUN mamba env update -f .devcontainer/common/dev_environment_addons.yml -n titiler-prod
+RUN mamba env update -f .devcontainer/dev_environment_addons.yml -n titiler-prod
 
 # Install nb_conda_kernels in base env to allow for env discovery in jupyter
 RUN mamba install -n base nb_conda_kernels
@@ -41,15 +41,15 @@ RUN mamba install -n base nb_conda_kernels
 ################################
 
 # Get AWS CLI V2
-RUN .devcontainer/common/prebuild/setup_aws.sh
+RUN .devcontainer/prebuild/setup_aws.sh
 
 # Get gcloud SDK, force GCP to use IPV4, bc IPV6 issue w/ Sonic 
-RUN .devcontainer/common/prebuild/setup_gcloud.sh
+RUN .devcontainer/prebuild/setup_gcloud.sh
 ENV PATH $PATH:/usr/local/google-cloud-sdk/bin
 ENV GRPC_GO_FORCE_USE_IPV4="true"
 
 # Get OpenTofu
-RUN .devcontainer/common/prebuild/setup_opentofu.sh
+RUN .devcontainer/prebuild/setup_opentofu.sh
 
 #########################
 ### RUNTIME KEEP-ALIVE###
