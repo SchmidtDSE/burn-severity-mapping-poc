@@ -23,8 +23,11 @@ RUN common/prebuild/setup_docker.sh
 ### ENVIRONMENT MANAGEMENT ###
 ##############################
 
-# Create a new conda environment from the environment.yml file 
-RUN mamba env create -f dev_environment.yml
+# Create the burn-backend-dev's conda environment
+RUN mamba env create -f burn_backend/dev_environment.yml
+
+# Create the titiler-dev's conda environment
+RUN mamba env create -f titiler/dev_environment.yml
 
 # Install nb_conda_kernels in base env to allow for env discovery in jupyter
 # Ensure mamba or conda is installed and available in the image before running this

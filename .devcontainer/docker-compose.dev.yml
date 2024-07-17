@@ -10,10 +10,10 @@ services:
       - 8080:8080
     volumes:
       - type: bind
-        source: ${localEnv:HOME}/.aws
+        source: ${LOCAL_ENV_HOME}/.aws
         target: /root/.aws
       - type: bind
-        source: ${localEnv:HOME}/.config/gcloud
+        source: ${LOCAL_ENV_HOME}/.config/gcloud
         target: /root/.config/gcloud
 
 
@@ -27,10 +27,10 @@ services:
       - 5050:5050
     volumes:
       - type: bind
-        source: ${localEnv:HOME}/.aws
+        source: ${LOCAL_ENV_HOME}/.aws
         target: /root/.aws
       - type: bind
-        source: ${localEnv:HOME}/.config/gcloud
+        source: ${LOCAL_ENV_HOME}/.config/gcloud
         target: /root/.config/gcloud
     depends_on:
       - titiler
