@@ -3,7 +3,7 @@ services:
   titiler:
     build:
       context: ../
-      dockerfile: .devcontainer/titiler/dev.Dockerfile
+      dockerfile: .deployment/titiler/prod.Dockerfile
       args:
         - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
     ports:
@@ -20,7 +20,7 @@ services:
   burn_backend:
     build:
       context: ../
-      dockerfile: .devcontainer/burn_backend/dev.Dockerfile
+      dockerfile: .deployment/burn_backend/prod.Dockerfile
       args:
         - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
     ports:
