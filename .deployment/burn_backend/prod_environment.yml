@@ -1,4 +1,7 @@
 name: burn-severity-prod
+channels:
+  - conda-forge
+  - defaults
 dependencies:
   - boto3
   - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
@@ -24,5 +27,6 @@ dependencies:
   - stackstac
   - python-multipart
   - pip
+  - uvicorn
   - pip:
       - python-multipart
