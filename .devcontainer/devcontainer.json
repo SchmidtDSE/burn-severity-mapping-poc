@@ -24,7 +24,8 @@
         "ms-toolsai.jupyter",
         "ms-python.black-formatter",
         "esbenp.prettier-vscode",
-        "googlecloudtools.cloudcode"
+        "googlecloudtools.cloudcode",
+        "ms-azuretools.vscode-docker"
       ]
     }
   }
