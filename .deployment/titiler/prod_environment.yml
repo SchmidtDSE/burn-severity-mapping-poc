@@ -3,14 +3,19 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - boto3
   - python ==3.10.*
+  - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
   - google-auth
   - google-cloud-secret-manager
   - google-cloud-logging
   - gdal
-  - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
+  - markdown
   - uvicorn
   - pip
+  - rasterio
+  - sentry-sdk[fastapi]
+  - smart_open
   - pip:
       - titiler.core
       - python-multipart

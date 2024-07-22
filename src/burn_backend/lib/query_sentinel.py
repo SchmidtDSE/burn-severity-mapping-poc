@@ -35,9 +35,9 @@ dask.config.set(  ## Make super conservative memory settings to see if we can do
 )
 
 SENTINEL2_PATH = "https://planetarycomputer.microsoft.com/api/stac/v1"
-DEBUG = True
+DASK_DEBUG = os.getenv("DASK_DEBUG", False)
 
-if DEBUG:
+if DASK_DEBUG:
     from dask.distributed import Client  ## This wont exist on prod instance
 
     dask_client = Client()

@@ -14,7 +14,7 @@
       ],
       "justMyCode": true,
       "envFile": "/workspace/.devcontainer/burn_backend/.env",
-      "python": "/opt/conda/envs/burn-backend-dev/bin/python",
+      "python": "/opt/conda/envs/burn-severity-prod/bin/python",
       "console": "integratedTerminal"
     },
     {
@@ -30,7 +30,7 @@
       ],
       "justMyCode": true,
       "envFile": "/workspace/.devcontainer/titiler/.env",
-      "python": "/opt/conda/envs/titiler-dev/bin/python",
+      "python": "/opt/conda/envs/titiler-prod/bin/python",
       "console": "integratedTerminal"
     }
   ]

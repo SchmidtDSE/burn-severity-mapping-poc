@@ -15,7 +15,8 @@ services:
       - type: bind
         source: ${LOCAL_ENV_HOME}/.config/gcloud
         target: /root/.config/gcloud
-
+    env_file:
+      - .env
 
   burn_backend:
     build:
@@ -32,5 +33,5 @@ services:
       - type: bind
         source: ${LOCAL_ENV_HOME}/.config/gcloud
         target: /root/.config/gcloud
-    depends_on:
-      - titiler
+    env_file:
+      - .env
