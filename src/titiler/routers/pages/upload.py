@@ -14,13 +14,20 @@ def upload(
     request: Request,
     mapbox_token: str = Depends(get_mapbox_secret),
 ):
-    cloud_run_endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")
-    cloud_run_endpoint_burn_backend = os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND")
+
+    if os.getenv("ENV") == "LOCAL":
+        print("Using local endpoints")
+        endpoint_titiler = os.getenv("LOCAL_ENDPOINT_TITILER", "localhost:8081")
+        endpoint_burn_backend = os.getenv("LOCAL_ENDPOINT_BURN_BACKEND", "localhost:5051")
+    else:
+        endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")
+        endpoint_burn_backend = os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND")
+
     ## TODO: These thresholds should be configurable, and probably should use the same
     ## frontend elements as the threhsold sliders within the map. Going to punt on that for now,
     ## since the map needs a refactor in the vein of the upload refactor.
     cog_tileserver_url_prefix = (
-        cloud_run_endpoint_titiler
+        endpoint_titiler
         + '/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png?nodata=-99&return_mask=true&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":-0.025,"max":0.5}}&url='
     )
 
@@ -30,6 +37,6 @@ def upload(
             "request": request,
             "mapbox_token": mapbox_token,  # for NAIP and Satetllite in V0
             "cog_tileserver_url_prefix": cog_tileserver_url_prefix,
-            "cloud_run_endpoint_burn_backend": cloud_run_endpoint_burn_backend,
+            "burn_backend_url": endpoint_burn_backend,
         },
     )
