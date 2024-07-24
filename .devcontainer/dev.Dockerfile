@@ -59,5 +59,5 @@ RUN mamba install -n base nb_conda_kernels
 
 FROM environment AS runtime
 
-# Keep the container running
+# Keep the container running 
 CMD ["tail", "-f", "/dev/null"]
