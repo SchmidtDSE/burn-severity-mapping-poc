@@ -2,7 +2,7 @@
 # Base Stage #
 ##############
 
-FROM condaforge/mambaforge as base
+FROM condaforge/mambaforge AS base
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     bash \
@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 # Environment Stage#
 ####################
 
-FROM base as environment
+FROM base AS environment
 COPY .deployment/burn_backend/prod_environment.yml /
 RUN mamba env create -f prod_environment.yml && echo "conda env create completed"
 
@@ -23,7 +23,7 @@ RUN mamba env create -f prod_environment.yml && echo "conda env create completed
 # Application Stage
 ####################
 
-FROM base as runtime
+FROM base AS runtime
 COPY --from=environment /opt/conda /opt/conda
 COPY src/ /src/
 SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]

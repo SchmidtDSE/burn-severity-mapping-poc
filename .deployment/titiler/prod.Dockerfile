@@ -2,13 +2,13 @@
 # Base Stage #
 ##############
 
-FROM condaforge/mambaforge as base
+FROM condaforge/mambaforge AS base
 
 ####################
 # Environment Stage#
 ####################
 
-FROM base as environment
+FROM base AS environment
 COPY .deployment/titiler/prod_environment.yml /
 RUN mamba env create -f prod_environment.yml && echo "conda env create completed"
 
@@ -16,7 +16,7 @@ RUN mamba env create -f prod_environment.yml && echo "conda env create completed
 # Application Stage
 ####################
 
-FROM base as runtime
+FROM base AS runtime
 # Copy the environment from the environment Stage
 COPY --from=environment /opt/conda /opt/conda
 # Copy application code
