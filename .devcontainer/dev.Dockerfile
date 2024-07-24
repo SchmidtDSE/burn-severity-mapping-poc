@@ -1,6 +1,6 @@
 # Based on DevPod dev's guidance (Pascal of OpenLoft: https://loft-sh.slack.com/archives/C056ZDZPJ4W/p1720631110300279)
 # trying a docker-in-docker setup to allow for docker compose within the container itself
-FROM condaforge/mambaforge AS prebuilder
+FROM condaforge/mambaforge AS base
 
 # Copy repo into container 
 COPY . /workspace
@@ -38,7 +38,7 @@ RUN .devcontainer/prebuild/setup_opentofu.sh
 ### ENVIRONMENT MANAGEMENT ###
 ##############################
 
-FROM prebuilder AS environment
+FROM base AS environment
 
 WORKDIR /workspace
 
@@ -57,7 +57,10 @@ RUN mamba install -n base nb_conda_kernels
 ### RUNTIME KEEP-ALIVE###
 #########################
 
-FROM environment AS runtime
+FROM base AS runtime
+
+# Copy the conda environment from the environment stage
+COPY --from=environment /opt/conda /opt/conda
 
 # Keep the container running 
 CMD ["tail", "-f", "/dev/null"]
