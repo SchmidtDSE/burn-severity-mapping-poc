@@ -7,6 +7,7 @@
   "mounts": [
     "source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind", // AWS credentials
     "source=${localEnv:HOME}/.config/gcloud,target=/root/.config/gcloud,type=bind", // GCP credentials
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind", // SSH keys
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" // Docker socket
   ],
   "workspaceFolder": "/workspace",
