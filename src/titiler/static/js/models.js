@@ -244,6 +244,8 @@ class ApiFacade {
   }
 
   analyzeBurn(metadata, geojson, final) {
+    const self = this;
+
     const performFetch = () => {
       const body = JSON.stringify({
         geojson: geojson,
