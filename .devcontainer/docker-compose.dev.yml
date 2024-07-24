@@ -7,7 +7,7 @@ services:
       args:
         - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
     ports:
-      - 8080:8080
+      - 8081:8080
     volumes:
       - type: bind
         source: ${LOCAL_ENV_HOME}/.aws
@@ -25,7 +25,7 @@ services:
       args:
         - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
     ports:
-      - 5050:5050
+      - 5051:5050
     volumes:
       - type: bind
         source: ${LOCAL_ENV_HOME}/.aws
