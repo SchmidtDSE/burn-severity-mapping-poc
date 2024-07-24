@@ -1,5 +1,8 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.burn_backend.routers.check import connectivity, dns, health, sentry_error
 from src.burn_backend.routers.analyze import spectral_burn_metrics
@@ -11,6 +14,21 @@ from src.burn_backend.routers.batch import batch_analyze_and_fetch
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
+
+## CORS ##
+
+if os.getenv("ENV") == "LOCAL":
+    allowed_origins = [os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")]
+else:
+    allowed_origins = [os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,  # Allows specified origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 ### CHECK ###
 app.include_router(health.router)
