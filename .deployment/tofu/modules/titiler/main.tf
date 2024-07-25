@@ -13,6 +13,14 @@ resource "google_cloud_run_v2_service" "tf-titiler" {
         value = "CLOUD"
       }
       env {
+        name = "GCP_CLOUD_RUN_ENDPOINT_TITILER"
+        value = "" # For now, titiler is running on the same instance as web service, so we call it relatively
+      }
+      env {
+        name = "GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND"
+        value = var.gcp_cloud_run_endpoint_burn_backend
+      }
+      env {
         name  = "CPL_VSIL_CURL_ALLOWED_EXTENSIONS"
         value = ".tif,.TIF,.tiff"
       }

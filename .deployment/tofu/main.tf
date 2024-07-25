@@ -48,6 +48,7 @@ module "titiler" {
   source = "./modules/titiler"
   google_project_number = local.google_project_number
   burn_backend_vpc_connector_id = module.common.burn_backend_vpc_connector_id
+  gcp_cloud_run_endpoint_burn_backend = module.burn_backend.burn_backend_server_endpoint
 }
 
 module "burn_backend" {

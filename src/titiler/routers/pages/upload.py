@@ -20,7 +20,7 @@ def upload(
         endpoint_titiler = os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")
         endpoint_burn_backend = os.getenv("LOCAL_ENDPOINT_BURN_BACKEND", "http://localhost:5051")
     else:
-        endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")
+        endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER", ""),
         endpoint_burn_backend = os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND")
 
     ## TODO: These thresholds should be configurable, and probably should use the same
