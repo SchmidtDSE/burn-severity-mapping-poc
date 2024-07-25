@@ -41,8 +41,8 @@ jobs:
         run: |
           if [ "${{ env.BRANCH_NAME }}" = "master" ]; then
             gcloud builds submit --config .deployment/titiler/prod_cloudbuild.yml
-            gcloud beta run deploy titiler-prod --image us-central1-docker.pkg.dev/dse-nps/titiler-prod/prod --platform managed --region us-central1
+            gcloud beta run deploy tf-titiler-prod --image us-central1-docker.pkg.dev/dse-nps/titiler-prod/prod --platform managed --region us-central1
           else
             gcloud builds submit --config .deployment/titiler/dev_cloudbuild.yml
-            gcloud beta run deploy titiler-dev --image us-central1-docker.pkg.dev/dse-nps/titiler-dev/dev --platform managed --region us-central1
+            gcloud beta run deploy tf-titiler-dev --image us-central1-docker.pkg.dev/dse-nps/titiler-dev/dev --platform managed --region us-central1
           fi
