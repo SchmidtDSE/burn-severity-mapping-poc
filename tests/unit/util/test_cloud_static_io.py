@@ -25,7 +25,7 @@ def test_upload_fire_event(
     prefire_date_range = "test_prefire_range"
     postfire_date_range = "test_postfire_range"
     affiliation = "test_affiliation"
-    derive_boundary = "test_boundary"
+    final = True
     satellite_pass_information = {
         "n_prefire_passes": 4,
         "n_postfire_passes": 4,
@@ -39,8 +39,8 @@ def test_upload_fire_event(
         prefire_date_range,
         postfire_date_range,
         affiliation,
-        derive_boundary,
-        satellite_pass_information=satellite_pass_information,
+        final,
+        satellite_pass_information,
     )
 
     # Assert that __init__, upload_cogs and update_manifest were called with the correct arguments
@@ -49,6 +49,7 @@ def test_upload_fire_event(
         metrics_stack=metrics_stack,
         fire_event_name=fire_event_name,
         affiliation=affiliation,
+        final=final,
     )
     mock_update_manifest.assert_called_once_with(
         fire_event_name=fire_event_name,
@@ -56,7 +57,7 @@ def test_upload_fire_event(
         prefire_date_range=prefire_date_range,
         postfire_date_range=postfire_date_range,
         affiliation=affiliation,
-        derive_boundary=derive_boundary,
+        derive_boundary=final,
         satellite_pass_information=satellite_pass_information,
     )
 
