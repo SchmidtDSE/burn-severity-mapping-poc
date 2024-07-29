@@ -8,6 +8,9 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
     timeout = "3599s" # max timeout is one hour
     containers {
       image = "us-docker.pkg.dev/cloudrun/container/placeholder" # This is a placeholder for first time creation only, replaced by CI/CD in GitHub Actions
+      ports {
+        container_port = 5050
+      }
       env {
         name  = "ENV"
         value = "CLOUD"

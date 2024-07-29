@@ -27,5 +27,5 @@ FROM base AS runtime
 COPY --from=environment /opt/conda /opt/conda
 COPY src/ /src/
 SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
-EXPOSE 8080
-ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "uvicorn", "src.burn_backend.app:app", "--host=0.0.0.0", "--port=8080"]
+EXPOSE 5050
+ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "uvicorn", "src.burn_backend.app:app", "--host=0.0.0.0", "--port=5050"]
