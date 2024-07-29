@@ -2,8 +2,8 @@
 
 import pytest
 from unittest.mock import MagicMock, patch, call
-from src.lib.query_sentinel import Sentinel2Client
-from src.lib.burn_severity import calc_burn_metrics
+from src.burn_backend.lib.query_sentinel import Sentinel2Client
+from src.burn_backend.lib.burn_severity import calc_burn_metrics
 import geopandas as gpd
 from shapely.geometry import Polygon
 import xarray as xr

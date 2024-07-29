@@ -1,0 +1,32 @@
+name: burn-severity-prod
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - boto3
+  - fastapi <0.108.0 #to avoid AssertionError bug w/ titiler
+  - gdal
+  - geopandas
+  - google-auth
+  - google-cloud-logging
+  - google-cloud-secret-manager
+  - google-cloud-tasks
+  - markdown
+  - numpy<2.0.0
+  - planetary-computer
+  - pystac-client
+  - pytest
+  - pyarrow
+  - python ==3.10.*
+  - rasterio
+  - rioxarray
+  - scikit-image
+  - scikit-learn
+  - sentry-sdk[fastapi]
+  - smart_open
+  - stackstac
+  - python-multipart
+  - pip
+  - uvicorn
+  - pip:
+      - python-multipart

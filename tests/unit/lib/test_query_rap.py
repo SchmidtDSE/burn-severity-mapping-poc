@@ -1,5 +1,5 @@
 import pytest
-from src.lib.query_rap import rap_get_biomass
+from src.burn_backend.lib.query_rap import rap_get_biomass
 from unittest.mock import patch
 from rioxarray.raster_array import RasterArray
 import xarray as xr

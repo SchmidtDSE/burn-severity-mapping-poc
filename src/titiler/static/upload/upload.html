@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fire Analysis Upload (DSE Burn Severity V0)</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%221em%22 font-size=%2280%22>🌿</text></svg>"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <link rel="stylesheet" href="/static/upload/upload.css"/>
+</head>
+<body>
+    <div class="container">
+        <div class="upload-and-products">
+            <div class="upload-area">
+                <label for="shp_zip">Zipped Shapefile:</label><br />
+                <input type="file" id="shp_zip" name="shp_zip" /><br />
+            </div>
+            <div class="products-area">
+                <div class="products">
+                    <h3>Derived Products</h3>
+                    <p>
+                        <ul style="list-style: none">
+                            <li><a id="map-rbr" href="" style="font-size: 16px; display: none;"><strong>Interactive Map of Relative Burn Ratio (RBR)</strong></a></li>
+                            <li><a id="map-dnbr" href="" style="font-size: 16px; display: none"><strong>Interactive Map of Delta Normalized Burn Ratio (dNBR)</strong></a></li>
+                        </ul>
+                    </p>
+                    <div id="products-loading" style="display: none;">
+                        <img class="indicator-img" src="/static/assets/spinner.gif"/>
+                    </div>
+                    <div id="products-list"></div>
+                </div>
+            </div>
+        </div>
+        <div class="map-area">
+            <div class="location-search">
+                <input type="text" id="location-input" placeholder="Enter a location"/>
+                <button id="location-button">Go</button>
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="form-area">
+            <form id="fire-analysis-form">
+                <label for="prefire">Prefire Date Range:</label><br />
+                <input type="date" id="prefire-start" name="prefire-start" value="2020-08-05"/>
+                <input type="date" id="prefire-end" name="prefire-end" value="2020-08-15"/><br />
+                <label for="postfire">Postfire Date Range:</label><br />
+                <input type="date" id="postfire-start" name="postfire-start" value="2020-08-24"/>
+                <input type="date" id="postfire-end" name="postfire-end" value="2020-09-04"/><br />
+                <label for="fire_event_name">Fire Event Name:</label><br />
+                <input type="text" id="fire_event_name" name="fire_event_name" value="tst_Dome_TenDay"/><br />
+                <label for="affiliation">Affiliation:</label><br />
+                <input type="text" id="affiliation" name="affiliation" value="dse"/><br />
+                <input type="submit" value="Submit" />
+            </form>
+        </div>
+        <div class="satellite-info-area">
+            <h3>Satellite Observations</h3>
+            <p id="n-prefire-items"></p>
+            <p id="n-postfire-items"></p>
+            <p id="latest-pass"></p>
+        </div>
+        <div class="indicator-area">
+            <div class="grid-container">
+                <!-- AOI uploads -->
+                <div id="upload-loading" style="display: none">
+                    <img class="indicator-img" src="/static/assets/spinner.gif" alt="Uploading shapefile... this may take a few moments."/>
+                    <p>Uploading AOI...</p>
+                </div>
+                <div id="upload-success" style="display: none">
+                    <img class="indicator-img" src="/static/assets/checkmark.png" alt="Upload Success!"/>
+                    <p>Upload Success!</p>
+                </div>
+                <div id="upload-failure" style="display: none">
+                    <img class="indicator-img" src="/static/assets/failure.png" alt="Upload Failed!"/>
+                    <p>Upload Failed!</p>
+                </div>
+                <!-- Burn analysis -->
+                <div id="burn-analysis-loading" style="display: none">
+                    <img class="indicator-img" src="/static/assets/spinner.gif" alt="Analyzing burn area... depending on AOI size, this may take several minutes."/>
+                    <p>Analyzing Disturbance Metrics...</p>
+                </div>
+                <div id="burn-analysis-success" style="display: none">
+                    <img class="indicator-img" src="/static/assets/checkmark.png" alt="Burn Metric Analysis Success!"/>
+                    <p>Disturbance Metric Analysis Success!</p>
+                </div>
+                <div id="burn-analysis-failure" style="display: none">
+                    <img class="indicator-img" src="/static/assets/failure.png" alt="Burn Metric Analysis Failed!"/>
+                    <p>Disturbance Metric Analysis Failed!</p>
+                </div>
+                <div id="burn-analysis-skipped" style="display: none">
+                    <img class="indicator-img" src="/static/assets/skipped.png" alt="Burn Metric Analysis Failed!"/>
+                    <p>Disturbance Metric Analysis Skipped.</p>
+                </div>
+                <!-- Seed point submission - takes the place of burn analysis, when AOI draw flow is active -->
+                <div id="seed-point-submission" style="display: none; cursor: pointer;">
+                    <img class="indicator-img" src="/static/assets/submit.png" alt="Click to submit seed points"/>
+                    <p>Click to submit seed points</p>
+                </div>
+                <!-- Ecoclass analysis -->
+                <div id="ecoclass-analysis-loading" style="display: none">
+                    <img class="indicator-img" src="/static/assets/spinner.gif" alt="Analyzing ecoclassification... depending on AOI size, this may take several minutes."/>
+                    <p>Fetching EDIT cover types...</p>
+                </div>
+                <div id="ecoclass-analysis-success" style="display: none">
+                    <img class="indicator-img" src="/static/assets/checkmark.png" alt="EDIT Ecoclass Analysis Success!"/>
+                    <p>EDIT Successfully Fetched!</p>
+                </div>
+                <div id="ecoclass-analysis-failure" style="display: none">
+                    <img class="indicator-img" src="/static/assets/failure.png" alt="EDIT Ecoclass Analysis Failed!"/>
+                    <p>EDIT Failed!</p>
+                </div>
+                <div id="ecoclass-analysis-skipped" style="display: none">
+                    <img class="indicator-img" src="/static/assets/skipped.png" alt="EDIT Ecoclass Analysis Failed!"/>
+                    <p>EDIT Skipped.</p>
+                </div>
+                <!-- RAP analysis -->
+                <div id="rap-analysis-loading" style="display: none">
+                    <img class="indicator-img" src="/static/assets/spinner.gif" alt="Analyzing RAP... depending on AOI size, this may take several minutes."/>
+                    <p>Fetching RAP...</p>
+                </div>
+                <div id="rap-analysis-success" style="display: none">
+                    <img class="indicator-img" src="/static/assets/checkmark.png" alt="RAP Analysis Success!"/>
+                    <p>RAP Successfully Fetched!</p>
+                </div>
+                <div id="rap-analysis-failure" style="display: none">
+                    <img class="indicator-img" src="/static/assets/failure.png" alt="RAP Analysis Failed!"/>
+                    <p>RAP Failed!</p>
+                </div>
+                <div id="rap-analysis-skipped" style="display: none">
+                    <img class="indicator-img" src="/static/assets/skipped.png" alt="RAP Analysis Failed!"/>
+                    <p>RAP Skipped.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="static/js/main.js"></script>
+    <script src="static/js/presenters.js"></script>
+    <script src="static/js/models.js"></script>
+    <script src="static/js/util.js"></script>
+    <script>
+        var mapboxToken = "{{ mapbox_token }}";
+        var cogTileserverUrlPrefix = {{ cog_tileserver_url_prefix | tojson | safe}};
+        var burnBackendUrl = "{{ burn_backend_url }}";
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const mainPresenter = new MainPresenter(
+                mapboxToken,
+                cogTileserverUrlPrefix,
+                burnBackendUrl
+            );
+        });
+
+</script>
+</body>
+</html>

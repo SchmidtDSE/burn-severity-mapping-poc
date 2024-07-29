@@ -20,3 +20,9 @@ exploratory/sam_*
 tst*.*
 tst/*
 */tst.*
+
+# .env
+.env
+
+# Temporary deprecated envs that we don't yet want to lose
+DEPR_*

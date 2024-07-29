@@ -1,36 +1,66 @@
-FROM condaforge/mambaforge
-
-# Set noninteractive mode for apt-get, to avoid hanging on tzdata
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Get necessary utils, w/ no-install-recommends and clean up to keep image small
-RUN apt-get update && apt-get install -y \
-    bash \
-    unzip \
-    curl \
-    ssh \
-    --no-install-recommends && rm -rf /var/lib/apt/lists/* 
+# Based on DevPod dev's guidance (Pascal of OpenLoft: https://loft-sh.slack.com/archives/C056ZDZPJ4W/p1720631110300279)
+# trying a docker-in-docker setup to allow for docker compose within the container itself
+FROM condaforge/mambaforge AS base
 
 # Copy repo into container 
 COPY . /workspace
-WORKDIR /workspace/.devcontainer
+WORKDIR /workspace
+
+#########################
+### BASE REQUIREMENTS ###
+#########################
+
+# Make debian non-interactive
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Get necessary utils
+RUN .devcontainer/prebuild/setup_utils.sh
+
+# Get docker and it dependencies
+RUN .devcontainer/prebuild/setup_docker.sh
+
+################################
+### DEVELOPMENT REQUIREMENTS ###
+################################
 
 # Get AWS CLI V2
-RUN prebuild/setup_aws.sh
+RUN .devcontainer/prebuild/setup_aws.sh
 
-# Get gcloud SDK, force GCP to use IPV4, bc IPV6 issue w/ Sonic 
-RUN prebuild/setup_gcloud.sh
-ENV PATH $PATH:/usr/local/google-cloud-sdk/bin
+# Get gcloud SDK, force GCP to use IPV4, bc IPV6 issue w/ Sonic
+RUN .devcontainer/prebuild/setup_gcloud.sh
+ENV PATH=$PATH:/usr/local/google-cloud-sdk/bin
 ENV GRPC_GO_FORCE_USE_IPV4="true"
 
 # Get OpenTofu
-RUN prebuild/setup_opentofu.sh
+RUN .devcontainer/prebuild/setup_opentofu.sh
 
-# Create a new conda environment from the environment.yml file 
-RUN mamba env create -f dev_environment.yml
+##############################
+### ENVIRONMENT MANAGEMENT ###
+##############################
+
+FROM base AS environment
+
+WORKDIR /workspace
+
+# Create the burn-backend-prods's conda environment and add our common dev environment addons
+RUN mamba env create -f .deployment/burn_backend/prod_environment.yml
+RUN mamba env update -f .devcontainer/dev_environment_addons.yml -n burn-severity-prod
+
+# Create the titiler-prod's conda environment and add our common dev environment addons
+RUN mamba env create -f .deployment/titiler/prod_environment.yml
+RUN mamba env update -f .devcontainer/dev_environment_addons.yml -n titiler-prod
 
 # Install nb_conda_kernels in base env to allow for env discovery in jupyter
 RUN mamba install -n base nb_conda_kernels
 
-# Start a shell w/ this dev environment - need to keep container running w/ docker-compose
+#########################
+### RUNTIME KEEP-ALIVE###
+#########################
+
+FROM base AS runtime
+
+# Copy the conda environment from the environment stage
+COPY --from=environment /opt/conda /opt/conda
+
+# Keep the container running 
 CMD ["tail", "-f", "/dev/null"]

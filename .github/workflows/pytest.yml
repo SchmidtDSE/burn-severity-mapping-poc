@@ -1,4 +1,4 @@
-name: Build Prod and PyTest
+name: Build Prod and PyTest (Burn Backend)
 
 on:
   pull_request:
@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t prod -f .deployment/prod.Dockerfile .
+      - name: Build Docker image - Burn Backend
+        run: docker build -t prod -f .deployment/burn_backend/prod.Dockerfile .
 
       - name: Create Docker container with pytest.ini
         run: |

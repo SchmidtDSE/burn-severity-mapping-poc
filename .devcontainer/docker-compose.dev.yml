@@ -1,15 +1,37 @@
 version: "3.8"
 services:
-  dev_container:
+  titiler:
     build:
       context: ../
-      dockerfile: .devcontainer/dev.Dockerfile
+      dockerfile: .deployment/titiler/prod.Dockerfile
+      args:
+        - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
+    ports:
+      - 8081:8080
     volumes:
-      - ${HOME}/.aws:/root/.aws
-    ports:
-      - 5050:5050
+      - type: bind
+        source: ${LOCAL_ENV_HOME}/.aws
+        target: /root/.aws
+      - type: bind
+        source: ${LOCAL_ENV_HOME}/.config/gcloud
+        target: /root/.config/gcloud
+    env_file:
+      - .env
 
-  titiler:
-    image: ghcr.io/developmentseed/titiler:latest
+  burn_backend:
+    build:
+      context: ../
+      dockerfile: .deployment/burn_backend/prod.Dockerfile
+      args:
+        - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
     ports:
-      - 8000:80
+      - 5051:5050
+    volumes:
+      - type: bind
+        source: ${LOCAL_ENV_HOME}/.aws
+        target: /root/.aws
+      - type: bind
+        source: ${LOCAL_ENV_HOME}/.config/gcloud
+        target: /root/.config/gcloud
+    env_file:
+      - .env
