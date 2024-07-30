@@ -23,6 +23,14 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
         name  = "S3_BUCKET_NAME"
         value = var.s3_bucket_name
       }
+      env {
+        name = "GCP_CLOUD_RUN_ENDPOINT_TITILER"
+        value = var.gcp_cloud_run_endpoint_titiler
+      }
+      env {
+        name = "GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND"
+        value = ""
+      }
       resources {
         limits = {
           cpu    = "4"
