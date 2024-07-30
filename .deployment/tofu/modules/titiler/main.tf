@@ -122,3 +122,9 @@ resource "google_project_iam_member" "log_writer" {
   role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.titiler-service.email}"
 }
+
+resource "google_project_iam_member" "secret_accessor" {
+  project = "dse-nps"
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.titiler-service.email}"
+}
