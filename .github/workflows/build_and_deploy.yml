@@ -31,10 +31,10 @@ jobs:
         run: |
           if [ "${{ env.BRANCH_NAME }}" = "master" ]; then
             gcloud builds submit --config .deployment/burn_backend/prod_cloudbuild.yml
-            gcloud beta run deploy tf-rest-burn-severity-prod --image us-central1-docker.pkg.dev/dse-nps/burn-backend-prod/prod --platform managed --region us-central1
+            gcloud beta run deploy tf-rest-burn-backend-prod --image us-central1-docker.pkg.dev/dse-nps/burn-backend-prod/prod --platform managed --region us-central1
           else
             gcloud builds submit --config .deployment/burn_backend/dev_cloudbuild.yml
-            gcloud beta run deploy tf-rest-burn-severity-dev --image us-central1-docker.pkg.dev/dse-nps/burn-backend-dev/dev --platform managed --region us-central1
+            gcloud beta run deploy tf-rest-burn-backend-dev --image us-central1-docker.pkg.dev/dse-nps/burn-backend-dev/dev --platform managed --region us-central1
           fi
 
       - name: Build and Deploy - Titiler
