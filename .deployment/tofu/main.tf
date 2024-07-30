@@ -35,6 +35,8 @@ locals {
   aws_account_id = data.aws_caller_identity.current.account_id
   aws_region = data.aws_region.current.name
   oidc_provider_domain_url = "accounts.google.com"
+  titiler_server_endpoint = module.titiler.titiler_server_endpoint
+  burn_backend_server_endpoint = module.burn_backend.burn_backend_server_endpoint
 }
 
 # Initialize the modules
@@ -48,7 +50,7 @@ module "titiler" {
   source = "./modules/titiler"
   google_project_number = local.google_project_number
   burn_backend_vpc_connector_id = module.common.burn_backend_vpc_connector_id
-  gcp_cloud_run_endpoint_burn_backend = module.burn_backend.burn_backend_server_endpoint
+  gcp_cloud_run_endpoint_burn_backend = local.burn_backend_server_endpoint
 }
 
 module "burn_backend" {
@@ -58,7 +60,7 @@ module "burn_backend" {
   s3_bucket_name = module.static_io.s3_bucket_name
   google_workload_identity_pool_id = module.common.google_workload_identity_pool_id
   burn_backend_vpc_connector_id = module.common.burn_backend_vpc_connector_id
-  gcp_cloud_run_endpoint_titiler = module.titiler.titiler_server_endpoint
+  gcp_cloud_run_endpoint_titiler = local.titiler_server_endpoint
 }
 
 
