@@ -35,11 +35,11 @@ locals {
   aws_account_id = data.aws_caller_identity.current.account_id
   aws_region = data.aws_region.current.name
   oidc_provider_domain_url = "accounts.google.com"
-  titiler_server_endpoint = module.titiler.titiler_server_endpoint
+  # This causes a circular dependency - need to figure out how to resolve
+  # titiler_server_endpoint = module.titiler.titiler_server_endpoint
+  titiler_server_endpoint = terraform.workspace == "dev" ? "https://tf-titiler-dev-ohi6r6qs2a-uc.a.run.app" : "https://tf-titiler-prod-ohi6r6qs2a-uc.a.run.app"
   burn_backend_server_endpoint = module.burn_backend.burn_backend_server_endpoint
 }
-
-# Initialize the modules
 
 module "common" {
   source = "./modules/common"
@@ -62,7 +62,6 @@ module "burn_backend" {
   burn_backend_vpc_connector_id = module.common.burn_backend_vpc_connector_id
   gcp_cloud_run_endpoint_titiler = local.titiler_server_endpoint
 }
-
 
 module "static_io" {
   source = "./modules/static_io"

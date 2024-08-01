@@ -33,8 +33,8 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
       }
       resources {
         limits = {
-          cpu    = "4"
-          memory = "2Gi"
+          cpu    = "8"
+          memory = "32Gi"
         }
       }
     }
