@@ -120,3 +120,39 @@ def get_mapbox_secret():
         str: The Mapbox secret.
     """
     return gcp_get_mapbox_secret()
+
+
+def get_endpoint_titiler():
+    """
+    Retrieves the titiler endpoint from environment variables. If local,
+    it will default to http://localhost:8081.
+
+    Returns
+        str: The titiler endpoint.
+    """
+
+    if os.getenv("ENV") == "LOCAL":
+        endpoint_titiler = os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")
+    else:
+        endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER", "")
+
+    return endpoint_titiler
+
+
+def get_endpoint_burn_backend():
+    """
+    Retrieves the burn backend endpoint from environment variables. If local,
+    it will default to http://localhost:5051.
+
+    Returns
+        str: The burn backend endpoint.
+    """
+
+    if os.getenv("ENV") == "LOCAL":
+        endpoint_burn_backend = os.getenv(
+            "LOCAL_ENDPOINT_BURN_BACKEND", "http://localhost:5051"
+        )
+    else:
+        endpoint_burn_backend = os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND", "")
+
+    return endpoint_burn_backend

@@ -4,7 +4,11 @@ import os
 import json
 from fastapi.templating import Jinja2Templates
 
-from src.common.lib.backend_dependencies import get_manifest, get_mapbox_secret
+from src.common.lib.backend_dependencies import (
+    get_manifest,
+    get_mapbox_secret,
+    get_endpoint_titiler,
+)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="src/titiler/static")
@@ -20,6 +24,7 @@ def serve_map(
     affiliation: str,
     manifest: dict = Depends(get_manifest),
     mapbox_token: str = Depends(get_mapbox_secret),
+    endpoint_titiler: str = Depends(get_endpoint_titiler),
 ):
     """
     Serves the map page for the given fire event / affiliation and burn metric. Note that this is
@@ -39,14 +44,7 @@ def serve_map(
         TemplateResponse: The template response for the map page.
     """
 
-    if os.getenv("ENV") == "LOCAL":
-        print("Using local endpoints")
-        endpoint_titiler = os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")
-    else:
-        endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER", "")
-
     s3_bucket_name = os.getenv("S3_BUCKET_NAME")
-    # tileserver_endpoint = "http://localhost:5050"
 
     ## TODO [#21]: Use Tofu Output to construct hardocded cog and geojson urls (in case we change s3 bucket name)
     cog_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"

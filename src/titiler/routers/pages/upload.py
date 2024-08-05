@@ -3,7 +3,11 @@ from fastapi.responses import HTMLResponse
 import os
 from fastapi.templating import Jinja2Templates
 
-from src.common.lib.backend_dependencies import get_mapbox_secret
+from src.common.lib.backend_dependencies import (
+    get_mapbox_secret,
+    get_endpoint_titiler,
+    get_endpoint_burn_backend,
+)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="src/titiler/static")
@@ -13,17 +17,9 @@ templates = Jinja2Templates(directory="src/titiler/static")
 def upload(
     request: Request,
     mapbox_token: str = Depends(get_mapbox_secret),
+    endpoint_titiler: str = Depends(get_endpoint_titiler),
+    endpoint_burn_backend: str = Depends(get_endpoint_burn_backend),
 ):
-
-    if os.getenv("ENV") == "LOCAL":
-        endpoint_titiler = os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")
-        endpoint_burn_backend = os.getenv(
-            "LOCAL_ENDPOINT_BURN_BACKEND", "http://localhost:5051"
-        )
-    else:
-        endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER", "")
-        endpoint_burn_backend = os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND")
-
     ## TODO: These thresholds should be configurable, and probably should use the same
     ## frontend elements as the threhsold sliders within the map. Going to punt on that for now,
     ## since the map needs a refactor in the vein of the upload refactor.
