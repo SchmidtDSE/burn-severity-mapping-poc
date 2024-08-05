@@ -15,10 +15,19 @@ from src.burn_backend.routers.batch import batch_analyze_and_fetch
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
 
-## CORS ##
-
+## CORS / LOCAL DEV ##
 if os.getenv("ENV") == "LOCAL":
+    # Set up CORS for local development
     allowed_origins = [os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")]
+
+    # Set up debugpy
+    import debugpy
+
+    debugpy.listen(("0.0.0.0", 5678))
+    print("Waiting for debugger attach...")
+    debugpy.wait_for_client()
+    print("Debugger attached")
+
 else:
     allowed_origins = [os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")]
 

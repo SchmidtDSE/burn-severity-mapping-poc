@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -6,6 +8,16 @@ from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from src.titiler.lib.titiler_algorithms import algorithms
 from src.titiler.routers.pages import home, map, upload, directory
+
+## LOCAL DEV ##
+if os.getenv("ENV") == "LOCAL":
+    # Set up debugpy
+    import debugpy
+
+    debugpy.listen(("0.0.0.0", 5678))
+    print("Waiting for debugger attach...")
+    debugpy.wait_for_client()
+    print("Debugger attached")
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
