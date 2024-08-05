@@ -19,6 +19,10 @@ FROM base AS environment
 COPY .deployment/burn_backend/prod_environment.yml /
 RUN mamba env create -f prod_environment.yml && echo "conda env create completed"
 
+COPY .devcontainer/scripts/install_debugpy_in_docker.sh /install_debugpy_in_docker.sh
+# This does nothing if env var "ENV" is not "LOCAL"
+RUN ./install_debugpy_in_docker.sh
+
 ####################
 # Application Stage
 ####################
