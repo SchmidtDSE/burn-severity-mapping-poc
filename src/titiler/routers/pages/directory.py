@@ -15,14 +15,19 @@ def directory(
     manifest: dict = Depends(get_manifest),
     mapbox_token: str = Depends(get_mapbox_secret),
 ):
+    if os.getenv("ENV") == "LOCAL":
+        print("Using local endpoints")
+        endpoint_titiler = os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")
+    else:
+        endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER", "")
+
     manifest_json = json.dumps(manifest)
-    cloud_run_endpoint_titiler = os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")
     return templates.TemplateResponse(
         "directory/directory.html",
         {
             "request": request,
             "manifest": manifest_json,
             "mapbox_token": mapbox_token,
-            "cloud_run_endpoint_titiler": cloud_run_endpoint_titiler,
+            "cloud_run_endpoint_titiler": endpoint_titiler,
         },
     )

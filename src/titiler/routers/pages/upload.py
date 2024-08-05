@@ -16,7 +16,6 @@ def upload(
 ):
 
     if os.getenv("ENV") == "LOCAL":
-        print("Using local endpoints")
         endpoint_titiler = os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")
         endpoint_burn_backend = os.getenv(
             "LOCAL_ENDPOINT_BURN_BACKEND", "http://localhost:5051"

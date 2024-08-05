@@ -6,6 +6,7 @@ dependencies:
   - bokeh
   - contextily
   - dask
+  - debugpy
   - ipykernel
   - ipython
   - jupyter
