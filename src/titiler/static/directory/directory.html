@@ -100,7 +100,9 @@
     <script>
         // Fetch the produced products
         var cloudRunEndpointTitiler = "{{ cloud_run_endpoint_titiler }}";
-        function getProducts(cloudRunEndpointTitiler, affiliation, fireEventName) {
+        var cloudRunEndpointBurnBackend = "{{ cloud_run_endpoint_burn_backend }}";
+        
+        function getProducts(cloudRunEndpointBurnBackend, affiliation, fireEventName) {
             postData = JSON.stringify({
                 fire_event_name: $("#fireNameDropdown").val(),
                 affiliation: $("#affiliationDropdown").val(),
@@ -108,7 +110,7 @@
 
             // If all four requests are successful, get the map url and all derived products
             var derivedProductsResponse = $.ajax({
-            url: `${cloudRunEndpointTitiler}/api/list/derived-products`,
+            url: `${cloudRunEndpointBurnBackend}/api/list/derived-products`,
             type: "post",
             dataType: "json",
             contentType: "application/json",
@@ -226,7 +228,7 @@
             var selectedAffiliation = $("#affiliationDropdown").val();
             var selectedFireName = $(this).val();
 
-            var boundaryGeojsonUrl = getProducts(cloudRunEndpoint, selectedAffiliation, selectedFireName).then(
+            var boundaryGeojsonUrl = getProducts(cloudRunEndpointBurnBackend, selectedAffiliation, selectedFireName).then(
                 function (boundaryGeojsonUrl) {
                     fetch(boundaryGeojsonUrl)
                         .then(response => response.json())

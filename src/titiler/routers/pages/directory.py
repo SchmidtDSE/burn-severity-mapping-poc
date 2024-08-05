@@ -7,6 +7,7 @@ from src.common.lib.backend_dependencies import (
     get_mapbox_secret,
     get_manifest,
     get_endpoint_titiler,
+    get_endpoint_burn_backend,
 )
 
 router = APIRouter()
@@ -19,6 +20,7 @@ def directory(
     manifest: dict = Depends(get_manifest),
     mapbox_token: str = Depends(get_mapbox_secret),
     endpoint_titiler: str = Depends(get_endpoint_titiler),
+    endpoint_burn_backend: str = Depends(get_endpoint_burn_backend),
 ):
 
     manifest_json = json.dumps(manifest)
@@ -29,5 +31,6 @@ def directory(
             "manifest": manifest_json,
             "mapbox_token": mapbox_token,
             "cloud_run_endpoint_titiler": endpoint_titiler,
+            "cloud_run_endpoint_burn_backend": endpoint_burn_backend,
         },
     )
