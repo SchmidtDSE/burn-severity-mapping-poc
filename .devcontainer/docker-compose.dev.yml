@@ -6,6 +6,7 @@ services:
       dockerfile: .deployment/titiler/prod.Dockerfile
       args:
         - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
+        - ENV=LOCAL
     ports:
       - 8081:8080
     volumes:
@@ -24,6 +25,7 @@ services:
       dockerfile: .deployment/burn_backend/prod.Dockerfile
       args:
         - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
+        - ENV=LOCAL
     ports:
       - 5051:5050
     volumes:

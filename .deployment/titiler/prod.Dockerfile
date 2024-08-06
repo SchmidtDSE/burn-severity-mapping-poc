@@ -3,6 +3,7 @@
 ##############
 
 FROM condaforge/mambaforge AS base
+ARG ENV=PROD
 
 ####################
 # Environment Stage#
@@ -12,9 +13,9 @@ FROM base AS environment
 COPY .deployment/titiler/prod_environment.yml /
 RUN mamba env create -f prod_environment.yml && echo "conda env create completed"
 
-COPY .devcontainer/scripts/install_debugpy_in_docker.sh /install_debugpy_in_docker.sh
-# This does nothing if env var "ENV" is not "LOCAL"
-RUN ./install_debugpy_in_docker.sh
+# This will only install debugpy if env var ENV is LOCAL at docker build time
+COPY .devcontainer/scripts/install_debugpy_in_titiler.sh /install_debugpy_in_titiler.sh
+RUN ./install_debugpy_in_titiler.sh
 
 ####################
 # Application Stage

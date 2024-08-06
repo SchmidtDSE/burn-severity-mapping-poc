@@ -3,6 +3,9 @@
 ##############
 
 FROM condaforge/mambaforge AS base
+ARG ENV=PROD
+
+# Install system dependencies
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     bash \
@@ -19,9 +22,9 @@ FROM base AS environment
 COPY .deployment/burn_backend/prod_environment.yml /
 RUN mamba env create -f prod_environment.yml && echo "conda env create completed"
 
-COPY .devcontainer/scripts/install_debugpy_in_docker.sh /install_debugpy_in_docker.sh
-# This does nothing if env var "ENV" is not "LOCAL"
-RUN ./install_debugpy_in_docker.sh
+# This will only install debugpy if env var ENV is LOCAL at docker build time
+COPY .devcontainer/scripts/install_debugpy_in_burn_backend.sh /install_debugpy_in_burn_backend.sh
+RUN ./install_debugpy_in_burn_backend.sh
 
 ####################
 # Application Stage
