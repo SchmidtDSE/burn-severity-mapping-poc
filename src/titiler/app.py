@@ -10,11 +10,13 @@ from src.titiler.lib.titiler_algorithms import algorithms
 from src.titiler.routers.pages import home, map, upload, directory
 
 ## LOCAL DEV ##
+print(os.getenv("ENV"))
+
 if os.getenv("ENV") == "LOCAL":
     # Set up debugpy
     import debugpy
 
-    debugpy.listen(("0.0.0.0", 5678))
+    debugpy.listen(("0.0.0.0", 8678))
     print("Waiting for debugger attach...")
     debugpy.wait_for_client()
     print("Debugger attached")

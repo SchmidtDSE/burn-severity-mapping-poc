@@ -18,6 +18,21 @@
       "console": "integratedTerminal"
     },
     {
+      "name": "Python: Attach to Docker Burn Backend",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "/workspace"
+        }
+      ]
+    },
+    {
       "name": "Python: TiTiler FastAPI",
       "type": "debugpy",
       "request": "launch",
@@ -34,32 +49,17 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "Python: Attach to Docker Burn Backend",
-      "type": "debugpy",
-      "request": "attach",
-      "connect": {
-        "host": "localhost",
-        "port": 5678
-      },
-      "pathMappings": [
-        {
-          "localRoot": "${workspaceFolder}",
-          "remoteRoot": "/workspace/src/burn_backend"
-        }
-      ]
-    },
-    {
       "name": "Python: Attach to Docker TiTiler",
       "type": "debugpy",
       "request": "attach",
       "connect": {
         "host": "localhost",
-        "port": 5678
+        "port": 8678
       },
       "pathMappings": [
         {
           "localRoot": "${workspaceFolder}",
-          "remoteRoot": "/workspace/src/titiler"
+          "remoteRoot": "/workspace"
         }
       ]
     }

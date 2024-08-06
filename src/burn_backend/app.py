@@ -14,6 +14,7 @@ from src.burn_backend.routers.batch import batch_analyze_and_fetch
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
+print(os.getenv("ENV"))
 
 ## CORS / LOCAL DEV ##
 if os.getenv("ENV") == "LOCAL":
