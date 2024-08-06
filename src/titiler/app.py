@@ -12,7 +12,7 @@ from src.titiler.routers.pages import home, map, upload, directory
 ## LOCAL DEV ##
 print(os.getenv("ENV"))
 
-if os.getenv("ENV") == "LOCAL":
+if os.getenv("ENV") == "LOCAL" and os.getenv("DEBUG_SERVICE") == "TITILER":
     # Set up debugpy
     import debugpy
 

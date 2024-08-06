@@ -16,5 +16,10 @@ def health(logger: Logger = Depends(get_cloud_logger)):
     Returns:
         Tuple[str, int]: A tuple containing the response message and status code.
     """
+    import debugpy
+
+    x = 3
+    debugpy.breakpoint()
+
     logger.info("Health check endpoint called")
     return "Alive", 200
