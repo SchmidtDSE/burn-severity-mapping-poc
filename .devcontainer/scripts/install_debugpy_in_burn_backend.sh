@@ -7,6 +7,6 @@ if [ "$ENV" != "LOCAL" ]; then
 fi
 
 # Install debugpy in devcontainer-burn_backend
-conda install -n burn-severity-prod debugpy -c conda-forge debugpy -y
+conda install -n burn-severity-prod debugpy -c conda-forge -y
 
 echo "debugpy installed!"
