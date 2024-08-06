@@ -27,8 +27,8 @@
       },
       "pathMappings": [
         {
-          "localRoot": "${workspaceFolder}",
-          "remoteRoot": "/workspace"
+          "localRoot": "${workspaceFolder}/src",
+          "remoteRoot": "/src"
         }
       ]
     },
@@ -58,8 +58,8 @@
       },
       "pathMappings": [
         {
-          "localRoot": "${workspaceFolder}",
-          "remoteRoot": "/workspace"
+          "localRoot": "${workspaceFolder}/src",
+          "remoteRoot": "/src"
         }
       ]
     }
