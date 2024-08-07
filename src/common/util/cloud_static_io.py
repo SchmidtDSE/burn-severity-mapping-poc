@@ -1,4 +1,5 @@
 import smart_open
+import gc
 import time
 import os
 import json
@@ -216,7 +217,7 @@ class CloudStaticIOClient:
         except Exception as err:
             raise Exception(err)
 
-    def upload(self, source_local_path, remote_path):
+    def upload(self, source_local_path, remote_path, keep_local=False):
         """
         Uploads the source files from local to the s3 server.
 
@@ -245,6 +246,11 @@ class CloudStaticIOClient:
 
         except Exception as err:
             raise Exception(err)
+
+        finally:
+            if not keep_local:
+                os.remove(source_local_path)
+            gc.collect()
 
     def upload_cogs(self, metrics_stack, fire_event_name, affiliation, final=True):
         """
