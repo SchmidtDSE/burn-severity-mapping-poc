@@ -2,7 +2,8 @@
 resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
   name     = "tf-rest-burn-backend-${terraform.workspace}"
   location = "us-central1"
-
+  client = "gcloud"
+  client_version = "486.0.0"
   template {
     service_account = google_service_account.burn-backend-service.email
     timeout = "3599s" # max timeout is one hour
@@ -44,7 +45,7 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
       egress = "ALL_TRAFFIC"
     }
     scaling {
-      min_instance_count = 1 # to reduce cold start time
+      min_instance_count = 2 # to reduce cold start time
       max_instance_count = 100
     }
   }
