@@ -34,4 +34,4 @@ SHELL ["conda", "run", "-n", "titiler-prod", "/bin/bash", "-c"]
 EXPOSE 8080
 
 # Start the REST API with the new environment
-ENTRYPOINT ["conda", "run", "-n", "titiler-prod", "uvicorn", "src.titiler.app:app", "--host=0.0.0.0", "--port=8080"]
+ENTRYPOINT ["conda", "run", "-n", "titiler-prod", "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.titiler.app:app", "--bind", "0.0.0.0:8080", "--workers=1"]

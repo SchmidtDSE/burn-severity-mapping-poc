@@ -35,4 +35,4 @@ COPY --from=environment /opt/conda /opt/conda
 COPY src/ /src/
 SHELL ["conda", "run", "-n", "burn-severity-prod", "/bin/bash", "-c"]
 EXPOSE 5050
-ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "uvicorn", "src.burn_backend.app:app", "--host=0.0.0.0", "--port=5050"]
+ENTRYPOINT ["conda", "run", "-n", "burn-severity-prod", "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.burn_backend.app:app", "--bind", "0.0.0.0:5050", "--workers=1"]

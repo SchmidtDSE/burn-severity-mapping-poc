@@ -28,5 +28,6 @@ dependencies:
   - python-multipart
   - pip
   - uvicorn
+  - gunicorn
   - pip:
       - python-multipart
