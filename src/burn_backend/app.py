@@ -5,7 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.burn_backend.routers.check import connectivity, dns, health, sentry_error
+from src.common.routers.check import connectivity, dns, health, sentry_error
+
 from src.burn_backend.routers.analyze import spectral_burn_metrics
 from src.burn_backend.routers.refine import flood_fill_segmentation
 from src.burn_backend.routers.upload import drawn_aoi, shapefile_zip
@@ -67,10 +68,3 @@ app.include_router(batch_analyze_and_fetch.router)
 
 ### LIST ###
 app.include_router(derived_products.router)
-
-
-### HEALTHCHECK ###
-@app.get("/healthz", tags=["healthcheck"])
-def ping():
-    """Health check."""
-    return JSONResponse(content={"ping": "pong! burn_backend is alive and well."})

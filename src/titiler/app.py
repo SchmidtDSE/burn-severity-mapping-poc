@@ -7,6 +7,8 @@ from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 from fastapi.responses import JSONResponse
 
+from src.common.routers.check import connectivity, dns, health, sentry_error
+
 from src.titiler.lib.titiler_algorithms import algorithms
 from src.titiler.routers.pages import home, map, upload, directory
 
@@ -33,13 +35,12 @@ app.include_router(map.router)
 app.include_router(upload.router)
 app.include_router(directory.router)
 
+### CHECK ###
+app.include_router(health.router)
+app.include_router(sentry_error.router)
+app.include_router(connectivity.router)
+app.include_router(dns.router)
+
 ### TILESERVER ###
 cog = TilerFactory(process_dependency=algorithms.dependency)
 app.include_router(cog.router, prefix="/cog", tags=["tileserver"])
-
-
-### HEALTHCHECK ###
-@app.get("/healthz", tags=["healthcheck"])
-def ping():
-    """Health check."""
-    return JSONResponse(content={"ping": "pong! Titiler is alive and well."})
