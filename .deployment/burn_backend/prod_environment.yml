@@ -27,6 +27,7 @@ dependencies:
   - stackstac
   - python-multipart
   - pip
+  - psutil
   - uvicorn
   - gunicorn
   - pip:

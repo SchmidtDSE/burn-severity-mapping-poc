@@ -18,6 +18,7 @@ from src.burn_backend.lib.query_sentinel import (
     NoFireBoundaryDetectedError,
 )
 from src.common.util.cloud_static_io import CloudStaticIOClient
+from src.common.util.report_load_metrics import report_load_metrics
 
 router = APIRouter()
 
@@ -156,6 +157,7 @@ def main(
             fire_event_name=fire_event_name,
         )
         logger.info(f"Cogs updated for {fire_event_name}")
+        report_load_metrics(logger)
 
         return JSONResponse(
             status_code=200,

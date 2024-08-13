@@ -18,6 +18,7 @@ from src.burn_backend.lib.query_sentinel import (
     NoFireBoundaryDetectedError,
 )
 from src.common.util.cloud_static_io import CloudStaticIOClient
+from src.common.util.report_load_metrics import report_load_metrics
 import numpy as np
 
 router = APIRouter()
@@ -137,7 +138,9 @@ def main(
             final=final,  # will be overwritten to True when we use flood fill later
             satellite_pass_information=satellite_pass_information,
         )
+
         logger.info(f"Cogs uploaded for {fire_event_name}")
+        report_load_metrics(logger)
 
         return JSONResponse(
             status_code=200,
