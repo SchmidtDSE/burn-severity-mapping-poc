@@ -52,7 +52,7 @@ class AnaylzeBurnPOSTBody(BaseModel):
     tags=["analysis"],
     description="Derive spectral burn metrics from satellite imagery within a boundary.",
 )
-def analyze_spectral_burn_metrics(
+async def analyze_spectral_burn_metrics(
     body: AnaylzeBurnPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
@@ -78,7 +78,7 @@ def analyze_spectral_burn_metrics(
     affiliation = body.affiliation
     final = body.final
 
-    return main(
+    return await main(
         geojson_boundary,
         date_ranges,
         fire_event_name,
@@ -89,7 +89,7 @@ def analyze_spectral_burn_metrics(
     )
 
 
-def main(
+async def main(
     geojson_boundary,
     date_ranges,
     fire_event_name,

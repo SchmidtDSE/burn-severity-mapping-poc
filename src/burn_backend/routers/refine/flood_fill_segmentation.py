@@ -46,7 +46,7 @@ class FloodFillSegmentationPOSTBody(BaseModel):
     tags=["refine"],
     description="Use seed points to segment a burn boundary.",
 )
-def refine_flood_fill_segmentation(
+async def refine_flood_fill_segmentation(
     body: FloodFillSegmentationPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
@@ -73,7 +73,7 @@ def refine_flood_fill_segmentation(
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
 
-    return main(
+    return await main(
         geojson_seed_points,
         fire_event_name,
         affiliation,
@@ -82,7 +82,7 @@ def refine_flood_fill_segmentation(
     )
 
 
-def main(
+async def main(
     geojson_seed_points,
     fire_event_name,
     affiliation,
