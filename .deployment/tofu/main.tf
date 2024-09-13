@@ -37,8 +37,10 @@ locals {
   oidc_provider_domain_url = "accounts.google.com"
   # This causes a circular dependency - need to figure out how to resolve
   # titiler_server_endpoint = module.titiler.titiler_server_endpoint
-  titiler_server_endpoint = terraform.workspace == "dev" ? "https://tf-titiler-dev-ohi6r6qs2a-uc.a.run.app" : "https://tf-titiler-prod-ohi6r6qs2a-uc.a.run.app"
-  burn_backend_server_endpoint = module.burn_backend.burn_backend_server_endpoint
+  titiler_server_endpoint = terraform.workspace == "dev" ? "https://tf-titiler-dev-113009620257.us-central1.run.app" : "https://tf-titiler-prod-ohi6r6qs2a-uc.a.run.app"
+  # burn_backend_server_endpoint = module.burn_backend.burn_backend_server_endpoint
+  # For now we have a different name for dev before we send final updates to prod, so for now a switch
+  burn_backend_server_endpoint = terraform.workspace == "dev" ? "https://tf-rest-burn-backend-dev-113009620257.us-central1.run.app" : "https://tf-rest-burn-severity-prod-113009620257.us-central1.run.app"
 }
 
 module "common" {
