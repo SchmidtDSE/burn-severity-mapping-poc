@@ -42,8 +42,8 @@ ENTRYPOINT [ \
     "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.titiler.app:app", \
     "--bind", "0.0.0.0:8080", \
     "--workers", "1", \
-    "--access-logfile", "-", \
-    "--error-logfile", "-", \
+    "--access-logfile", "gunicorn_access.log", \
+    "--error-logfile", "gunicorn_error.log", \
     "--log-level", "debug", \
     "--timeout", "0", \
     "--capture-output" \
