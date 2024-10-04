@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from src.common.routers.check import connectivity, dns, health, sentry_error, logs
 
 from src.burn_backend.routers.analyze import spectral_burn_metrics
-from src.burn_backend.routers.refine import flood_fill_segmentation
+from src.burn_backend.routers.refine import segmentation
 from src.burn_backend.routers.upload import drawn_aoi, shapefile_zip
 from src.burn_backend.routers.fetch import rangeland_analysis_platform, ecoclass
 from src.burn_backend.routers.list import derived_products
@@ -88,7 +88,7 @@ app.include_router(logs.router)
 app.include_router(spectral_burn_metrics.router)
 
 ### REFINE ###
-app.include_router(flood_fill_segmentation.router)
+app.include_router(segmentation.router)
 
 ### UPLOAD ###
 app.include_router(drawn_aoi.router)

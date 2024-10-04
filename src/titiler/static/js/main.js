@@ -221,7 +221,7 @@ class MainPresenter {
     const refineBurnWithSeedPoints = async () => {
       const geojson = self._mapPresenter.exportEditableLayersAsJson();
       self._indicatorArea.showSeedPointSubmissionPending();
-      const refineResponse = await self._apiFacade.refineFloodFill(
+      const refineResponse = await self._apiFacade.refineSegmentation(
         metadata,
         geojson
       );

@@ -293,7 +293,7 @@ class ApiFacade {
     return performFetch().then(interpretResponse);
   }
 
-  refineFloodFill(metadata, geojson) {
+  refineSegmentation(metadata, geojson) {
     const self = this;
 
     const performFetch = () => {

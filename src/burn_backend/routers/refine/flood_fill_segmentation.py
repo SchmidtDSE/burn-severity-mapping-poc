@@ -23,7 +23,7 @@ from src.common.util.report_load_metrics import report_load_metrics
 router = APIRouter()
 
 
-class FloodFillSegmentationPOSTBody(BaseModel):
+class SegmentationPOSTBody(BaseModel):
     """
     Represents the request body for analyzing burn metrics.
 
@@ -42,12 +42,12 @@ class FloodFillSegmentationPOSTBody(BaseModel):
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
 @router.post(
-    "/api/refine/flood-fill-segmentation",
+    "/api/refine/segmentation",
     tags=["refine"],
     description="Use seed points to segment a burn boundary.",
 )
-async def refine_flood_fill_segmentation(
-    body: FloodFillSegmentationPOSTBody,
+async def refine_segmentation(
+    body: SegmentationPOSTBody,
     cloud_static_io_client: CloudStaticIOClient = Depends(get_cloud_static_io_client),
     __sentry: None = Depends(init_sentry),
     logger: Logger = Depends(get_cloud_logger),
