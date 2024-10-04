@@ -11,6 +11,7 @@ import xarray as xr
 import numpy as np
 import stackstac
 import tempfile
+import logging
 from scipy.ndimage import gaussian_filter, binary_fill_holes, binary_dilation
 import os
 from .burn_severity import calc_burn_metrics, classify_burn
@@ -236,7 +237,10 @@ class Sentinel2Client:
 
         # Reproject to our desired CRS
         print("About to reproject")
+        # Debug: log to stdout to get docker logs
+        logging.info(f"About to reproject at time {datetime.now()}")
         stack = stack.rio.reproject(dst_crs=self.crs, nodata=np.nan)
+        logging.info(f"Reprojected at time {datetime.now()}")
 
         if (
             np.isnan(stack.sel(band="B8A").values).all()
