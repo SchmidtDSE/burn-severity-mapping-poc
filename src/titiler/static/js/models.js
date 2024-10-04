@@ -140,7 +140,7 @@ class FireAnalysisMetaFormContents {
   }
 }
 
-class FloodFillSegmentationResponse {
+class SegmentationResponse {
   constructor(
     executed,
     fireDetected,
@@ -320,7 +320,7 @@ class ApiFacade {
       if (statusCode == 200) {
         return response.json().then(
           (responseJson) =>
-            new FloodFillSegmentationResponse(
+            new SegmentationResponse(
               true,
               true, // Fire was detected
               responseJson.fire_event_name,
@@ -330,16 +330,10 @@ class ApiFacade {
         );
       } else if (statusCode == 204) {
         // Analysis succeeded but no fire was detected
-        return new FloodFillSegmentationResponse(true, false, null, null, null);
+        return new SegmentationResponse(true, false, null, null, null);
       } else {
         // Analysis failed
-        return new FloodFillSegmentationResponse(
-          false,
-          false,
-          null,
-          null,
-          null
-        );
+        return new SegmentationResponse(false, false, null, null, null);
       }
     };
 
