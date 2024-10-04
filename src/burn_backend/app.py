@@ -24,10 +24,26 @@ from src.burn_backend.routers.batch import batch_analyze_and_fetch
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
 gunicorn_logger = logging.getLogger("gunicorn")
 uvicorn_access_logger = logging.getLogger("uvicorn.access")
+fastapi_logger = logging.getLogger("fastapi")
+
+# Ensure all loggers use the same handlers
 uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
 fastapi_logger.handlers = gunicorn_error_logger.handlers
 
+# Set log level
 fastapi_logger.setLevel(logging.DEBUG)
+
+# Add a stream handler to capture logs to stdout
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+stream_handler.setFormatter(formatter)
+
+# Add the stream handler to all loggers
+gunicorn_error_logger.addHandler(stream_handler)
+gunicorn_logger.addHandler(stream_handler)
+uvicorn_access_logger.addHandler(stream_handler)
+fastapi_logger.addHandler(stream_handler)
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
