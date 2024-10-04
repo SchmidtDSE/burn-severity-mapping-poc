@@ -43,8 +43,9 @@ ENTRYPOINT [ \
     "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.burn_backend.app:app", \
     "--bind", "0.0.0.0:5050", \
     "--workers", "1", \
-    "--access-logfile", "-" \
-    "--error-logfile", "-" \
-    "--log-level", "debug" \
-    "--timeout", "0" \
-    ]
+    "--access-logfile", "-", \
+    "--error-logfile", "-", \
+    "--log-level", "debug", \
+    "--timeout", "0", \
+    "--capture-output" \
+]

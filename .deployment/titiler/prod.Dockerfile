@@ -45,5 +45,6 @@ ENTRYPOINT [ \
     "--access-logfile", "-", \
     "--error-logfile", "-", \
     "--log-level", "debug", \
-    "--timeout", "0" \
+    "--timeout", "0", \
+    "--capture-output" \
 ]
