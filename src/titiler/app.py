@@ -7,7 +7,7 @@ from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 from fastapi.responses import JSONResponse
 
-from src.common.routers.check import connectivity, dns, health, sentry_error
+from src.common.routers.check import connectivity, dns, health, sentry_error, logs
 
 from src.titiler.lib.titiler_algorithms import algorithms
 from src.titiler.routers.pages import home, map, upload, directory
@@ -40,6 +40,7 @@ app.include_router(health.router)
 app.include_router(sentry_error.router)
 app.include_router(connectivity.router)
 app.include_router(dns.router)
+app.include_router(logs.router)
 
 ### TILESERVER ###
 cog = TilerFactory(process_dependency=algorithms.dependency)
