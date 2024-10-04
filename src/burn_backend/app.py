@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.common.routers.check import connectivity, dns, health, sentry_error
+from src.common.routers.check import connectivity, dns, health, sentry_error, logs
 
 from src.burn_backend.routers.analyze import spectral_burn_metrics
 from src.burn_backend.routers.refine import flood_fill_segmentation
@@ -66,6 +66,7 @@ app.include_router(health.router)
 app.include_router(sentry_error.router)
 app.include_router(connectivity.router)
 app.include_router(dns.router)
+app.include_router(logs.router)
 
 ### ANALYZE ###
 app.include_router(spectral_burn_metrics.router)
