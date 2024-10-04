@@ -223,7 +223,7 @@ class MapPresenter {
         circle: false,
         circlemarker: false,
         rectangle: false,
-        polygon: false,
+        polygon: true,
       }
     );
 
