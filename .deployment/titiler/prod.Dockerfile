@@ -5,6 +5,9 @@
 FROM condaforge/mambaforge AS base
 ARG ENV=PROD
 
+# Debug logs for docker
+ENV PYTHONUNBUFFERED=1
+
 ####################
 # Environment Stage#
 ####################
@@ -34,4 +37,14 @@ SHELL ["conda", "run", "-n", "titiler-prod", "/bin/bash", "-c"]
 EXPOSE 8080
 
 # Start the REST API with the new environment
-ENTRYPOINT ["conda", "run", "-n", "titiler-prod", "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.titiler.app:app", "--bind", "0.0.0.0:8080", "--workers=1"]
+ENTRYPOINT [ \
+    "conda", "run", "-n", "titiler-prod", \
+    "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.titiler.app:app", \
+    "--bind", "0.0.0.0:8080", \
+    "--workers", "1", \
+    "--access-logfile", "gunicorn_access.log", \
+    "--error-logfile", "gunicorn_error.log", \
+    "--log-level", "debug", \
+    "--timeout", "0", \
+    "--capture-output" \
+]

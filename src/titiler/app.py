@@ -1,4 +1,6 @@
 import os
+import logging
+from fastapi.logger import logger as fastapi_logger
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -7,10 +9,36 @@ from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 from fastapi.responses import JSONResponse
 
-from src.common.routers.check import connectivity, dns, health, sentry_error
+from src.common.routers.check import connectivity, dns, health, sentry_error, logs
 
 from src.titiler.lib.titiler_algorithms import algorithms
 from src.titiler.routers.pages import home, map, upload, directory
+
+## LOGGING SETUP ##
+
+gunicorn_error_logger = logging.getLogger("gunicorn.error")
+gunicorn_logger = logging.getLogger("gunicorn")
+uvicorn_access_logger = logging.getLogger("uvicorn.access")
+fastapi_logger = logging.getLogger("fastapi")
+
+# Ensure all loggers use the same handlers
+uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
+fastapi_logger.handlers = gunicorn_error_logger.handlers
+
+# Set log level
+fastapi_logger.setLevel(logging.DEBUG)
+
+# Add a stream handler to capture logs to stdout
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+stream_handler.setFormatter(formatter)
+
+# Add the stream handler to all loggers
+gunicorn_error_logger.addHandler(stream_handler)
+gunicorn_logger.addHandler(stream_handler)
+uvicorn_access_logger.addHandler(stream_handler)
+fastapi_logger.addHandler(stream_handler)
 
 ## LOCAL DEV ##
 print(os.getenv("ENV"))
@@ -40,6 +68,7 @@ app.include_router(health.router)
 app.include_router(sentry_error.router)
 app.include_router(connectivity.router)
 app.include_router(dns.router)
+app.include_router(logs.router)
 
 ### TILESERVER ###
 cog = TilerFactory(process_dependency=algorithms.dependency)

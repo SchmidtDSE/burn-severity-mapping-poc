@@ -1,11 +1,15 @@
 import os
+from datetime import datetime
+
+import logging
+from fastapi.logger import logger as fastapi_logger
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.common.routers.check import connectivity, dns, health, sentry_error
+from src.common.routers.check import connectivity, dns, health, sentry_error, logs
 
 from src.burn_backend.routers.analyze import spectral_burn_metrics
 from src.burn_backend.routers.refine import flood_fill_segmentation
@@ -14,8 +18,38 @@ from src.burn_backend.routers.fetch import rangeland_analysis_platform, ecoclass
 from src.burn_backend.routers.list import derived_products
 from src.burn_backend.routers.batch import batch_analyze_and_fetch
 
+
+## LOGGING SETUP ##
+
+gunicorn_error_logger = logging.getLogger("gunicorn.error")
+gunicorn_logger = logging.getLogger("gunicorn")
+uvicorn_access_logger = logging.getLogger("uvicorn.access")
+fastapi_logger = logging.getLogger("fastapi")
+
+# Ensure all loggers use the same handlers
+uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
+fastapi_logger.handlers = gunicorn_error_logger.handlers
+
+# Set log level
+fastapi_logger.setLevel(logging.DEBUG)
+
+# Add a stream handler to capture logs to stdout
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+stream_handler.setFormatter(formatter)
+
+# Add the stream handler to all loggers
+gunicorn_error_logger.addHandler(stream_handler)
+gunicorn_logger.addHandler(stream_handler)
+uvicorn_access_logger.addHandler(stream_handler)
+fastapi_logger.addHandler(stream_handler)
+
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
+logging.info(f"Burn backend api started at time {datetime.now()}")
+logging.warning("This is a warning message")
+
 print(os.getenv("ENV"))
 
 ## CORS / LOCAL DEV ##
@@ -48,6 +82,7 @@ app.include_router(health.router)
 app.include_router(sentry_error.router)
 app.include_router(connectivity.router)
 app.include_router(dns.router)
+app.include_router(logs.router)
 
 ### ANALYZE ###
 app.include_router(spectral_burn_metrics.router)
