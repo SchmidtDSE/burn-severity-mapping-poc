@@ -74,7 +74,7 @@ resource "google_cloud_run_v2_service" "tf-titiler" {
       egress = "ALL_TRAFFIC"
     }
     scaling {
-      min_instance_count = 4 # to reduce cold start time
+      min_instance_count = 1 # 1+ to reduce cold start time, 0 to save cost
       max_instance_count = 100
     }
   }
