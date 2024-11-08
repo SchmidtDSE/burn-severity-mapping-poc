@@ -115,7 +115,7 @@ def derive_boundary(
     metric_layer,
     thresholding_strategy=OtsuThreshold(),
     segmentation_strategy=FloodFillSegmentation(),
-    smoothing_strategy=SmoothingStrategy(),
+    smoothing_strategy=SmoothingStrategy(sigma=10),
 ):
 
     ## TODO: Some part of the spectral index process is creating a buffer of NaN
