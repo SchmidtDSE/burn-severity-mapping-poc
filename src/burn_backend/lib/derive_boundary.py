@@ -154,11 +154,11 @@ def derive_boundary(
     )
 
     burn_boundary_raster_segmented_smoothed = smoothing_strategy.apply(
-        burn_boundary_raster_segmented["disturbed"]
+        burn_boundary_raster_segmented
     )
 
     burn_boundary_polygon = raster_mask_to_geojson(
-        burn_boundary_raster_segmented_smoothed
+        burn_boundary_raster_segmented_smoothed["disturbed"]
     )
 
     return burn_boundary_polygon
