@@ -115,6 +115,7 @@ def derive_boundary(
     metric_layer,
     thresholding_strategy=OtsuThreshold(),
     segmentation_strategy=FloodFillSegmentation(),
+    smoothing_strategy=SmoothingStrategy(),
 ):
 
     ## TODO: Some part of the spectral index process is creating a buffer of NaN
@@ -152,8 +153,12 @@ def derive_boundary(
         burn_boundary_raster_postprocessed
     )
 
-    burn_boundary_polygon = raster_mask_to_geojson(
+    burn_boundary_raster_segmented_smoothed = smoothing_strategy.apply(
         burn_boundary_raster_segmented["disturbed"]
+    )
+
+    burn_boundary_polygon = raster_mask_to_geojson(
+        burn_boundary_raster_segmented_smoothed
     )
 
     return burn_boundary_polygon
