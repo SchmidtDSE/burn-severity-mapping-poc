@@ -91,6 +91,26 @@ class FloodFillSegmentation(SegmentationStrategy):
         return metric_layer
 
 
+## SMOOTHING STRATEGIES
+
+
+class SmoothingStrategy(ABC):
+    @abstractmethod
+    def apply(self, burn_boundary_raster):
+        pass
+
+
+class GaussianSmoothing(SmoothingStrategy):
+    def __init__(self, sigma=1):
+        self.sigma = sigma
+
+    def apply(self, burn_boundary_raster):
+        burn_boundary_raster.values = gaussian_filter(
+            burn_boundary_raster.values, sigma=self.sigma
+        )
+        return burn_boundary_raster
+
+
 def derive_boundary(
     metric_layer,
     thresholding_strategy=OtsuThreshold(),
