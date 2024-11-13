@@ -156,17 +156,12 @@ def derive_boundary(
         burn_boundary_raster_postprocessed
     )
 
-    # tst = burn_boundary_raster_segmented["disturbed"].values[0, :, :]
-    # tst = tst.astype(np.int8)
-    # plt.imsave("test.png", tst)
-
-    # burn_boundary_raster_segmented_smoothed = smoothing_strategy.apply(
-    #     burn_boundary_raster_segmented
-    # )
+    burn_boundary_raster_segmented_smoothed = smoothing_strategy.apply(
+        burn_boundary_raster_segmented
+    )
 
     burn_boundary_polygon = raster_mask_to_geojson(
-        # burn_boundary_raster_segmented_smoothed
-        burn_boundary_raster_segmented["disturbed"]
+        burn_boundary_raster_segmented_smoothed["disturbed"]
     )
 
     return burn_boundary_polygon
