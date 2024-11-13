@@ -6,6 +6,9 @@ from src.burn_backend.util.raster_to_poly import raster_mask_to_geojson
 from abc import ABC, abstractmethod
 import numpy as np
 
+## DEBUG
+import matplotlib.pyplot as plt
+
 
 ## THRESHOLDING STRATEGIES
 class ThresholdingStrategy(ABC):
@@ -115,7 +118,7 @@ def derive_boundary(
     metric_layer,
     thresholding_strategy=OtsuThreshold(),
     segmentation_strategy=FloodFillSegmentation(),
-    smoothing_strategy=SmoothingStrategy(sigma=10),
+    smoothing_strategy=GaussianSmoothing(sigma=10),
 ):
 
     ## TODO: Some part of the spectral index process is creating a buffer of NaN
@@ -153,12 +156,17 @@ def derive_boundary(
         burn_boundary_raster_postprocessed
     )
 
-    burn_boundary_raster_segmented_smoothed = smoothing_strategy.apply(
-        burn_boundary_raster_segmented["disturbed"]
-    )
+    # tst = burn_boundary_raster_segmented["disturbed"].values[0, :, :]
+    # tst = tst.astype(np.int8)
+    # plt.imsave("test.png", tst)
+
+    # burn_boundary_raster_segmented_smoothed = smoothing_strategy.apply(
+    #     burn_boundary_raster_segmented
+    # )
 
     burn_boundary_polygon = raster_mask_to_geojson(
-        burn_boundary_raster_segmented_smoothed
+        # burn_boundary_raster_segmented_smoothed
+        burn_boundary_raster_segmented["disturbed"]
     )
 
     return burn_boundary_polygon

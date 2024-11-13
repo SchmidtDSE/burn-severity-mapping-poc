@@ -17,6 +17,9 @@ services:
       - type: bind
         source: ${LOCAL_ENV_HOME}/.config/gcloud
         target: /root/.config/gcloud
+      - type: bind # For debug images
+        source: /tmp
+        target: /tmp
     env_file:
       - .env
     logging:
@@ -42,6 +45,9 @@ services:
       - type: bind
         source: ${LOCAL_ENV_HOME}/.config/gcloud
         target: /root/.config/gcloud
+      - type: bind # For debug images
+        source: /tmp
+        target: /tmp
     env_file:
       - .env
     logging:
