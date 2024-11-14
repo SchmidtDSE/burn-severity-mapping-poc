@@ -150,6 +150,21 @@ class GaussianSmoothing(SmoothingStrategy):
         return burn_boundary_raster
 
 
+class MedianSmoothing(SmoothingStrategy):
+    def __init__(self, size=3):
+        self.size = size
+
+    def apply(self, disturbed_layer_int):
+        smoothed_disturbed_int = median_filter(disturbed_layer_int, size=self.size)
+        burn_boundary_raster["disturbed"] = xr.DataArray(
+            [smoothed_disturbed_int.astype(bool)],
+            dims=burn_boundary_raster.dims,
+            coords=burn_boundary_raster.coords,
+        )
+
+        return burn_boundary_raster
+
+
 ## PIPELINE
 
 
