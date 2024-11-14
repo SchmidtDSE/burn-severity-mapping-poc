@@ -150,6 +150,9 @@ class GaussianSmoothing(SmoothingStrategy):
         return burn_boundary_raster
 
 
+## PIPELINE
+
+
 class Pipeline:
     def __init__(self):
         self._postprocessing_strategies = []
