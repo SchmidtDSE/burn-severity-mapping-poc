@@ -418,7 +418,7 @@ class Sentinel2Client:
             postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
         )
 
-        geojson_boundary = derive_boundary(metric_layer=metric_layer)
+        geojson_boundary = derive_boundary(metric_layer=metric_layer, pipeline=pipeline)
         geojson_boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
 
         if not geojson_boundary:
