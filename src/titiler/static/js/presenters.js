@@ -206,7 +206,7 @@ class MapPresenter {
 
   enableSeedMetricInput() {
     const self = this;
-    debugger;
+
     const onSeedPointDrawn = (e) => {
       const lat = e.layer._latlng.lat;
       const lon = e.layer._latlng.lng;
