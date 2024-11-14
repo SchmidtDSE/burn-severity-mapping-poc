@@ -169,11 +169,17 @@ class MedianSmoothing(SmoothingStrategy):
 
 
 class Pipeline:
-    def __init__(self):
-        self._postprocessing_strategies = []
-        self._thresholding_strategy = None
-        self._segmentation_strategy = None
-        self._smoothing_strategies = []
+    def __init__(
+        self,
+        thresholding_strategy,
+        segmentation_strategy,
+        smoothing_strategies,
+        postprocessing_strategies,
+    ):
+        self._thresholding_strategy = thresholding_strategy
+        self._segmentation_strategy = segmentation_strategy
+        self._smoothing_strategies = smoothing_strategies
+        self._postprocessing_strategies = postprocessing_strategies
 
     def add_thresholding_strategy(self, thresholding_strategy):
         self._thresholding_strategy = thresholding_strategy
