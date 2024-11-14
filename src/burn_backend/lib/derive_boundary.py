@@ -65,12 +65,6 @@ class PostprocessingStrategy(ABC):
 class FillHoles(PostprocessingStrategy):
     def apply(self, disturbed_layer_int):
         filled_holes = binary_fill_holes(disturbed_layer_int)
-        burn_boundary_raster["disturbed"] = xr.DataArray(
-            [filled_holes.astype(bool)],
-            dims=burn_boundary_raster.dims,
-            coords=burn_boundary_raster.coords,
-        )
-
         return filled_holes
 
 
@@ -79,11 +73,9 @@ class BinaryDilation(PostprocessingStrategy):
         self.iterations = iterations
 
     def apply(self, disturbed_layer_int):
-
         dilated_boundary = binary_dilation(
             disturbed_layer_int, iterations=self.iterations
         )
-
         return dilated_boundary
 
 
@@ -105,7 +97,7 @@ class FloodFillSegmentation(SegmentationStrategy):
 
         segmented_burns = np.full_like(disturbed_layer_int, fill_value=False)
 
-        for seed_point in seed_locations:
+        for seed_point in self.seed_locations:
 
             # Skimage needs the seed point as a tuple, for some reason
             print(f"Processing seed point: {seed_point}")
@@ -142,13 +134,7 @@ class GaussianSmoothing(SmoothingStrategy):
 
     def apply(self, disturbed_layer_int):
         smoothed_disturbed_int = gaussian_filter(disturbed_layer_int, sigma=self.sigma)
-        burn_boundary_raster["disturbed"] = xr.DataArray(
-            [smoothed_disturbed_int.astype(bool)],
-            dims=burn_boundary_raster.dims,
-            coords=burn_boundary_raster.coords,
-        )
-
-        return burn_boundary_raster
+        return smoothed_disturbed_int
 
 
 class MedianSmoothing(SmoothingStrategy):
@@ -157,13 +143,7 @@ class MedianSmoothing(SmoothingStrategy):
 
     def apply(self, disturbed_layer_int):
         smoothed_disturbed_int = median_filter(disturbed_layer_int, size=self.size)
-        burn_boundary_raster["disturbed"] = xr.DataArray(
-            [smoothed_disturbed_int.astype(bool)],
-            dims=burn_boundary_raster.dims,
-            coords=burn_boundary_raster.coords,
-        )
-
-        return burn_boundary_raster
+        return smoothed_disturbed_int
 
 
 ## PIPELINE
