@@ -108,9 +108,16 @@ class GaussianSmoothing(SmoothingStrategy):
         self.sigma = sigma
 
     def apply(self, burn_boundary_raster):
-        burn_boundary_raster.values = gaussian_filter(
-            burn_boundary_raster.values, sigma=self.sigma
+        disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
+            0, :, :
+        ]
+        smoothed_disturbed_int = gaussian_filter(disturbed_layer_int, sigma=self.sigma)
+        burn_boundary_raster["disturbed"] = xr.DataArray(
+            [smoothed_disturbed_int.astype(bool)],
+            dims=burn_boundary_raster.dims,
+            coords=burn_boundary_raster.coords,
         )
+
         return burn_boundary_raster
 
 
@@ -118,7 +125,7 @@ def derive_boundary(
     metric_layer,
     thresholding_strategy=OtsuThreshold(),
     segmentation_strategy=FloodFillSegmentation(),
-    smoothing_strategy=GaussianSmoothing(sigma=10),
+    smoothing_strategy=GaussianSmoothing(sigma=2),
 ):
 
     ## TODO: Some part of the spectral index process is creating a buffer of NaN
