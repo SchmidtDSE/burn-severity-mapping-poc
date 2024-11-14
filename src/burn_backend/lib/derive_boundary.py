@@ -1,6 +1,6 @@
 import xarray as xr
 from scipy.ndimage import binary_fill_holes, gaussian_filter, binary_dilation
-from skimage.filters import threshold_otsu
+from skimage.filters import threshold_otsu, median
 from skimage.segmentation import flood_fill, clear_border
 from src.burn_backend.util.raster_to_poly import raster_mask_to_geojson
 from abc import ABC, abstractmethod
@@ -62,34 +62,8 @@ class PostprocessingStrategy(ABC):
         pass
 
 
-# def postprocess_burn_mask(
-#     burn_mask, fill_holes=False, smooth_sigma=None, buffer_iterations=None
-# ):
-#     burn_mask_values = burn_mask.values
-
-#     # Fill holes in the burn mask
-#     if fill_holes:
-#         burn_mask_values = binary_fill_holes(burn_mask_values)
-
-#     # Smooth the boundary, removing small artifacts
-#     if smooth_sigma:
-#         burn_mask_values = gaussian_filter(burn_mask_values, sigma=smooth_sigma)
-
-#     # Buffer the boundary to ensure it is continuous
-#     if buffer_iterations:
-#         burn_mask_values = binary_dilation(
-#             burn_mask_values, iterations=buffer_iterations
-#         )
-
-#     burn_mask.values = burn_mask_values
-#     return burn_mask
-
-
 class FillHoles(PostprocessingStrategy):
-    def apply(self, burn_boundary_raster):
-        disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
-            0, :, :
-        ]
+    def apply(self, disturbed_layer_int):
         filled_holes = binary_fill_holes(disturbed_layer_int)
         burn_boundary_raster["disturbed"] = xr.DataArray(
             [filled_holes.astype(bool)],
@@ -97,27 +71,20 @@ class FillHoles(PostprocessingStrategy):
             coords=burn_boundary_raster.coords,
         )
 
-        return burn_boundary_raster
+        return filled_holes
 
 
 class BinaryDilation(PostprocessingStrategy):
     def __init__(self, iterations=1):
         self.iterations = iterations
 
-    def apply(self, burn_boundary_raster):
-        disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
-            0, :, :
-        ]
+    def apply(self, disturbed_layer_int):
+
         dilated_boundary = binary_dilation(
             disturbed_layer_int, iterations=self.iterations
         )
-        burn_boundary_raster["disturbed"] = xr.DataArray(
-            [dilated_boundary.astype(bool)],
-            dims=burn_boundary_raster.dims,
-            coords=burn_boundary_raster.coords,
-        )
 
-        return burn_boundary_raster
+        return dilated_boundary
 
 
 ## SEGMENTATION STRATEGIES
@@ -130,8 +97,7 @@ class SegmentationStrategy(ABC):
 
 
 class FloodFillSegmentation(SegmentationStrategy):
-    def apply(self, metric_layer):
-        disturbed_layer_int = metric_layer["disturbed"].values.astype(np.int8)[0, :, :]
+    def apply(self, disturbed_layer_int):
         seed_locations_x, seed_locations_y = np.where(
             metric_layer["seed"].values[0, :, :]
         )
@@ -157,12 +123,7 @@ class FloodFillSegmentation(SegmentationStrategy):
             )
             segmented_burns = np.logical_or(segmented_burns, burn_boundary_segmented)
 
-        metric_layer["disturbed"] = xr.DataArray(
-            [segmented_burns.astype(bool)],
-            dims=metric_layer.dims,
-            coords=metric_layer.coords,
-        )
-        return metric_layer
+        return segmented_burns
 
 
 ## SMOOTHING STRATEGIES
@@ -178,10 +139,7 @@ class GaussianSmoothing(SmoothingStrategy):
     def __init__(self, sigma=1):
         self.sigma = sigma
 
-    def apply(self, burn_boundary_raster):
-        disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
-            0, :, :
-        ]
+    def apply(self, disturbed_layer_int):
         smoothed_disturbed_int = gaussian_filter(disturbed_layer_int, sigma=self.sigma)
         burn_boundary_raster["disturbed"] = xr.DataArray(
             [smoothed_disturbed_int.astype(bool)],
@@ -212,14 +170,32 @@ class Pipeline:
         self._postprocessing_strategies.append(postprocessing_strategy)
 
     def process(self, metric_layer):
+
+        # Apply thresholding strategy - will result in a xr.DataArray with a boolean mask as 'disturbed'
         burn_boundary_raster = self._thresholding_strategy.apply(metric_layer)
-        burn_boundary_raster = self._segmentation_strategy.apply(burn_boundary_raster)
 
-        for smoothing_strategy in self._smoothing_strategies:
-            burn_boundary_raster = smoothing_strategy.apply(burn_boundary_raster)
+        # Here on, we use skimage, which expects an int numpy array
+        disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
+            0, :, :
+        ]
 
+        # Apply segmentation strategie - will result in a binary mask
+        disturbed_layer_int = self._segmentation_strategy.apply(disturbed_layer_int)
+
+        # Apply postprocessing strategies - primarily to fill holes
         for postprocessing_strategy in self._postprocessing_strategies:
-            burn_boundary_raster = postprocessing_strategy.apply(burn_boundary_raster)
+            disturbed_layer_int = postprocessing_strategy.apply(disturbed_layer_int)
+
+        # Apply smoothing strategies - reduce noise / artifacts
+        for smoothing_strategy in self._smoothing_strategies:
+            disturbed_layer_int = smoothing_strategy.apply(disturbed_layer_int)
+
+        # Now, overwrite the original disturbed layer with the processed one
+        burn_boundary_raster["disturbed"] = xr.DataArray(
+            [disturbed_layer_int.astype(bool)],
+            dims=burn_boundary_raster.dims,
+            coords=burn_boundary_raster.coords,
+        )
 
         return burn_boundary_raster
 
