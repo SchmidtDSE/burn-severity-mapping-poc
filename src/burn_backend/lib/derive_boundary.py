@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 
 
 ## THRESHOLDING STRATEGIES
+
+
 class ThresholdingStrategy(ABC):
     @abstractmethod
     def apply(self, metric_layer):
@@ -51,7 +53,76 @@ class SimpleThreshold(ThresholdingStrategy):
         return metric_layer
 
 
+## POSTPROCESSING STRATEGIES
+
+
+class PostprocessingStrategy(ABC):
+    @abstractmethod
+    def apply(self, burn_boundary_raster):
+        pass
+
+
+# def postprocess_burn_mask(
+#     burn_mask, fill_holes=False, smooth_sigma=None, buffer_iterations=None
+# ):
+#     burn_mask_values = burn_mask.values
+
+#     # Fill holes in the burn mask
+#     if fill_holes:
+#         burn_mask_values = binary_fill_holes(burn_mask_values)
+
+#     # Smooth the boundary, removing small artifacts
+#     if smooth_sigma:
+#         burn_mask_values = gaussian_filter(burn_mask_values, sigma=smooth_sigma)
+
+#     # Buffer the boundary to ensure it is continuous
+#     if buffer_iterations:
+#         burn_mask_values = binary_dilation(
+#             burn_mask_values, iterations=buffer_iterations
+#         )
+
+#     burn_mask.values = burn_mask_values
+#     return burn_mask
+
+
+class FillHoles(PostprocessingStrategy):
+    def apply(self, burn_boundary_raster):
+        disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
+            0, :, :
+        ]
+        filled_holes = binary_fill_holes(disturbed_layer_int)
+        burn_boundary_raster["disturbed"] = xr.DataArray(
+            [filled_holes.astype(bool)],
+            dims=burn_boundary_raster.dims,
+            coords=burn_boundary_raster.coords,
+        )
+
+        return burn_boundary_raster
+
+
+class BinaryDilation(PostprocessingStrategy):
+    def __init__(self, iterations=1):
+        self.iterations = iterations
+
+    def apply(self, burn_boundary_raster):
+        disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
+            0, :, :
+        ]
+        dilated_boundary = binary_dilation(
+            disturbed_layer_int, iterations=self.iterations
+        )
+        burn_boundary_raster["disturbed"] = xr.DataArray(
+            [dilated_boundary.astype(bool)],
+            dims=burn_boundary_raster.dims,
+            coords=burn_boundary_raster.coords,
+        )
+
+        return burn_boundary_raster
+
+
 ## SEGMENTATION STRATEGIES
+
+
 class SegmentationStrategy(ABC):
     @abstractmethod
     def apply(self, burn_boundary_raster):
@@ -121,11 +192,49 @@ class GaussianSmoothing(SmoothingStrategy):
         return burn_boundary_raster
 
 
-def derive_boundary(
-    metric_layer,
+class Pipeline:
+    def __init__(self):
+        self._postprocessing_strategies = []
+        self._thresholding_strategy = None
+        self._segmentation_strategy = None
+        self._smoothing_strategies = []
+
+    def add_thresholding_strategy(self, thresholding_strategy):
+        self._thresholding_strategy = thresholding_strategy
+
+    def add_segmentation_strategy(self, segmentation_strategy):
+        self._segmentation_strategy = segmentation_strategy
+
+    def add_smoothing_strategy(self, smoothing_strategy):
+        self._smoothing_strategies.append(smoothing_strategy)
+
+    def add_postprocessing_strategy(self, postprocessing_strategy):
+        self._postprocessing_strategies.append(postprocessing_strategy)
+
+    def process(self, metric_layer):
+        burn_boundary_raster = self._thresholding_strategy.apply(metric_layer)
+        burn_boundary_raster = self._segmentation_strategy.apply(burn_boundary_raster)
+
+        for smoothing_strategy in self._smoothing_strategies:
+            burn_boundary_raster = smoothing_strategy.apply(burn_boundary_raster)
+
+        for postprocessing_strategy in self._postprocessing_strategies:
+            burn_boundary_raster = postprocessing_strategy.apply(burn_boundary_raster)
+
+        return burn_boundary_raster
+
+
+DEFAULT_PIPELINE = Pipeline(
     thresholding_strategy=OtsuThreshold(),
     segmentation_strategy=FloodFillSegmentation(),
-    smoothing_strategy=GaussianSmoothing(sigma=2),
+    smoothing_strategies=[GaussianSmoothing(sigma=2)],
+    postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
+)
+
+
+def derive_boundary(
+    metric_layer,
+    pipeline=DEFAULT_PIPELINE,
 ):
 
     ## TODO: Some part of the spectral index process is creating a buffer of NaN
@@ -153,45 +262,8 @@ def derive_boundary(
         # later we may need to be robust to this
         raise ValueError("NaN values within interior of metric layer")
 
-    burn_boundary_raster = thresholding_strategy.apply(metric_layer)
+    burn_boundary_raster = pipeline.process(metric_layer)
 
-    burn_boundary_raster_postprocessed = postprocess_burn_mask(
-        burn_boundary_raster, fill_holes=True, smooth_sigma=1, buffer_iterations=1
-    )
-
-    burn_boundary_raster_segmented = segmentation_strategy.apply(
-        burn_boundary_raster_postprocessed
-    )
-
-    burn_boundary_raster_segmented_smoothed = smoothing_strategy.apply(
-        burn_boundary_raster_segmented
-    )
-
-    burn_boundary_polygon = raster_mask_to_geojson(
-        burn_boundary_raster_segmented_smoothed["disturbed"]
-    )
+    burn_boundary_polygon = raster_mask_to_geojson(burn_boundary_raster["disturbed"])
 
     return burn_boundary_polygon
-
-
-def postprocess_burn_mask(
-    burn_mask, fill_holes=False, smooth_sigma=None, buffer_iterations=None
-):
-    burn_mask_values = burn_mask.values
-
-    # Fill holes in the burn mask
-    if fill_holes:
-        burn_mask_values = binary_fill_holes(burn_mask_values)
-
-    # Smooth the boundary, removing small artifacts
-    if smooth_sigma:
-        burn_mask_values = gaussian_filter(burn_mask_values, sigma=smooth_sigma)
-
-    # Buffer the boundary to ensure it is continuous
-    if buffer_iterations:
-        burn_mask_values = binary_dilation(
-            burn_mask_values, iterations=buffer_iterations
-        )
-
-    burn_mask.values = burn_mask_values
-    return burn_mask
