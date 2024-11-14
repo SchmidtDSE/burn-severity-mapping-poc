@@ -22,6 +22,10 @@ from src.burn_backend.lib.derive_boundary import (
     OtsuThreshold,
     SimpleThreshold,
     FloodFillSegmentation,
+    GaussianSmoothing,
+    FillHoles,
+    BinaryDilation,
+    Pipeline,
 )
 from pyproj import CRS
 import dask
@@ -399,18 +403,22 @@ class Sentinel2Client:
             metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)
 
             for point in seed_points_gpd.geometry:
+                # Find the nearest pixel to the seed point, we want the index, not the value
                 nearest_pixel = metric_layer.sel(x=point.x, y=point.y, method="nearest")
-                nearest_pixel_x = nearest_pixel.x.values
-                nearest_pixel_y = nearest_pixel.y.values
-                metric_layer["seed"].loc[dict(x=nearest_pixel_x, y=nearest_pixel_y)] = (
-                    True
-                )
+                metric_layer["seed"].loc[
+                    dict(x=nearest_pixel.x.values, y=nearest_pixel.y.values)
+                ] = True
 
-        geojson_boundary = derive_boundary(
-            metric_layer=metric_layer,
+            seed_locations = list(zip(*np.where(metric_layer["seed"].values[0, :, :])))
+
+        pipeline = Pipeline(
             thresholding_strategy=OtsuThreshold(),
-            segmentation_strategy=FloodFillSegmentation(),
+            segmentation_strategy=FloodFillSegmentation(seed_locations=seed_locations),
+            smoothing_strategies=[GaussianSmoothing(sigma=2)],
+            postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
         )
+
+        geojson_boundary = derive_boundary(metric_layer=metric_layer)
         geojson_boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
 
         if not geojson_boundary:

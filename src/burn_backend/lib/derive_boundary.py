@@ -97,13 +97,14 @@ class SegmentationStrategy(ABC):
 
 
 class FloodFillSegmentation(SegmentationStrategy):
+
+    def __init__(self, seed_locations=None):
+        self.seed_locations = seed_locations
+
     def apply(self, disturbed_layer_int):
-        seed_locations_x, seed_locations_y = np.where(
-            metric_layer["seed"].values[0, :, :]
-        )
-        seed_locations = list(zip(seed_locations_x, seed_locations_y))
 
         segmented_burns = np.full_like(disturbed_layer_int, fill_value=False)
+
         for seed_point in seed_locations:
 
             # Skimage needs the seed point as a tuple, for some reason
@@ -197,7 +198,6 @@ class Pipeline:
 
         # Apply thresholding strategy - will result in a xr.DataArray with a boolean mask as 'disturbed'
         burn_boundary_raster = self._thresholding_strategy.apply(metric_layer)
-
         # Here on, we use skimage, which expects an int numpy array
         disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
             0, :, :
