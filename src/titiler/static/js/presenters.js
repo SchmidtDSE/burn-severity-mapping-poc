@@ -229,6 +229,7 @@ class MapPresenter {
   }
 
   exportEditableLayersAsJson() {
+    const self = this;
     return self._editableLayers.toGeoJSON();
   }
 }

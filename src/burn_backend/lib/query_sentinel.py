@@ -378,13 +378,16 @@ class Sentinel2Client:
                 dim="classification_source",
             )
 
-    def derive_boundary_flood_fill(self, seed_points, metric_name="rbr", inplace=True):
+    def derive_boundary_flood_fill(
+        self, user_edits_geojson, metric_name="rbr", inplace=True
+    ):
         """
         Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
         This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as `boundary.geojson`
         within the s3 bucket), and we clip the metrics stack to this boundary.
 
         Args:
+            user_edits_geojson (GeoJSON): User edits to the boundary, will be optionally a polygon but definitely at least one point.
             metric_name (str): Name of the metric layer.
             threshold (float): Threshold value for the metric layer.
 
@@ -393,9 +396,20 @@ class Sentinel2Client:
         """
         print("Deriving boundary using metric: {}".format(metric_name))
 
-        seed_points_gpd = gpd.GeoDataFrame.from_features(seed_points["features"])
+        user_edits_gpd = gpd.GeoDataFrame.from_features(seed_points["features"])
+        seed_points_gpd = user_edits_gpd[user_edits_gpd.geometry.type == "Point"]
+        user_restriction_boundary_gpd = user_edits_gpd[
+            user_edits_gpd.geometry.type == "Polygon"
+        ]
 
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
+
+        if user_restriction_boundary_gpd is not None:
+            # Clip the metric layer to the user restriction boundary
+            metric_layer = metric_layer.rio.clip(
+                user_restriction_boundary_gpd.geometry.values,
+                user_restriction_boundary_gpd.crs,
+            )
 
         if seed_points_gpd is not None:
             # Add a dim called 'seed' to denote whether the pixel is a seed point
