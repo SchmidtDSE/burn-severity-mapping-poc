@@ -207,16 +207,13 @@ class MapPresenter {
   enableSeedMetricInput() {
     const self = this;
 
-    const onSeedPointDrawn = (e) => {
-      const lat = e.layer._latlng.lat;
-      const lon = e.layer._latlng.lng;
-      const seedPoint = [lat, lon];
-      console.log(seedPoint);
+    const onEditClick = (e) => {
+      self._editableLayers.addLayer(e.layer);
     };
 
     const { editableLayers, drawControl } = this.addDrawControl(
       self._innerMap,
-      onSeedPointDrawn,
+      onEditClick,
       {
         polyline: false,
         marker: true,
@@ -232,7 +229,6 @@ class MapPresenter {
   }
 
   exportEditableLayersAsJson() {
-    const self = this;
     return self._editableLayers.toGeoJSON();
   }
 }
