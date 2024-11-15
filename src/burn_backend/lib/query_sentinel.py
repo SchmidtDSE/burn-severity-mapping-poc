@@ -396,7 +396,7 @@ class Sentinel2Client:
         """
         print("Deriving boundary using metric: {}".format(metric_name))
 
-        user_edits_gpd = gpd.GeoDataFrame.from_features(seed_points["features"])
+        user_edits_gpd = gpd.GeoDataFrame.from_features(user_edits_geojson["features"])
         seed_points_gpd = user_edits_gpd[user_edits_gpd.geometry.type == "Point"]
         user_restriction_boundary_gpd = user_edits_gpd[
             user_edits_gpd.geometry.type == "Polygon"
@@ -428,7 +428,7 @@ class Sentinel2Client:
         pipeline = Pipeline(
             thresholding_strategy=OtsuThreshold(),
             segmentation_strategy=FloodFillSegmentation(seed_locations=seed_locations),
-            smoothing_strategies=[GaussianSmoothing(sigma=2)],
+            smoothing_strategies=[GaussianSmoothing(sigma=1)],
             postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
         )
 
