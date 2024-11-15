@@ -68,13 +68,13 @@ async def refine_flood_fill_segmentation(
 
     # TODO: No idea where this is getting converted to a dict...
     # geojson_seed_points = json.loads(body.geojson)
-    geojson_seed_points = body.geojson
+    user_edits_geojson = body.geojson
 
     fire_event_name = body.fire_event_name
     affiliation = body.affiliation
 
     return await main(
-        geojson_seed_points,
+        user_edits_geojson,
         fire_event_name,
         affiliation,
         logger,
@@ -83,7 +83,7 @@ async def refine_flood_fill_segmentation(
 
 
 async def main(
-    geojson_seed_points,
+    user_edits_geojson,
     fire_event_name,
     affiliation,
     logger,
@@ -126,7 +126,7 @@ async def main(
 
         # Use the seed points to perform flood fill
         geo_client.derive_boundary_flood_fill(
-            seed_points=geojson_seed_points,
+            user_edits_geojson=user_edits_geojson,
             metric_name="rbr",
             inplace=True,
         )
