@@ -435,6 +435,13 @@ class Sentinel2Client:
         geojson_boundary = derive_boundary(metric_layer=metric_layer, pipeline=pipeline)
         geojson_boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
 
+        # Only keep polygons that intersect at least one seed point
+        if seed_points_gpd is not None:
+            seed_points = unary_union(seed_points_gpd.geometry)
+            geojson_boundary_gpd = geojson_boundary_gpd[
+                geojson_boundary_gpd.intersects(seed_points)
+            ]
+
         if not geojson_boundary:
             raise NoFireBoundaryDetectedError(
                 "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
