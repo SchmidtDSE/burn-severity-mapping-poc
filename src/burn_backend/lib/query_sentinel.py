@@ -398,7 +398,7 @@ class Sentinel2Client:
         print("Deriving boundary using metric: {}".format(metric_name))
 
         user_edits_gpd = gpd.GeoDataFrame.from_features(user_edits_geojson["features"])
-        seed_points_gpd = user_edits_gpd[user_edits_gpd.geometry.type == "Point"]
+        seed_locations_gpd = user_edits_gpd[user_edits_gpd.geometry.type == "Point"]
         user_restriction_boundary_gpd = user_edits_gpd[
             user_edits_gpd.geometry.type == "Polygon"
         ]
@@ -412,27 +412,27 @@ class Sentinel2Client:
                 user_restriction_boundary_gpd.crs,
             )
 
-        if seed_points_gpd is not None:
+        if seed_locations_gpd is not None:
             # Add a dim called 'seed' to denote whether the pixel is a seed point
             metric_layer = metric_layer.expand_dims(dim="seed")
             metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)
 
-            for point in seed_points_gpd.geometry:
+            for point in seed_locations_gpd.geometry:
                 # Find the nearest pixel to the seed point, we want the index, not the value
                 nearest_pixel = metric_layer.sel(x=point.x, y=point.y, method="nearest")
                 metric_layer["seed"].loc[
                     dict(x=nearest_pixel.x.values, y=nearest_pixel.y.values)
                 ] = True
 
-            seed_locations = list(zip(*np.where(metric_layer["seed"].values[0, :, :])))
+            seed_indices = list(zip(*np.where(metric_layer["seed"].values[0, :, :])))
 
         pipeline = Pipeline(
             thresholding_strategy=OtsuThreshold(),
-            segmentation_strategy=FloodFillSegmentation(seed_locations=seed_locations),
+            segmentation_strategy=FloodFillSegmentation(seed_indices=seed_indices),
             smoothing_strategies=[GaussianSmoothing(sigma=1)],
             postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
             polygon_cleanup_strategies=[
-                RestrictToSeedPoints(seed_locations=seed_locations)
+                RestrictToSeedPoints(seed_locations_gpd=seed_locations_gpd)
             ],
         )
 

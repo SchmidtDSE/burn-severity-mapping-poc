@@ -4,7 +4,10 @@ from skimage.filters import threshold_otsu, median
 from skimage.segmentation import flood_fill, clear_border
 from src.burn_backend.util.raster_to_poly import raster_mask_to_geojson
 from abc import ABC, abstractmethod
+from shapely.ops import unary_union
+from shapely.geometry import MultiPolygon
 import numpy as np
+import geopandas as gpd
 
 ## DEBUG
 import matplotlib.pyplot as plt
@@ -90,28 +93,28 @@ class SegmentationStrategy(ABC):
 
 class FloodFillSegmentation(SegmentationStrategy):
 
-    def __init__(self, seed_locations=None):
-        self.seed_locations = seed_locations
+    def __init__(self, seed_indices=None):
+        self.seed_indices = seed_indices
 
     def apply(self, disturbed_layer_int):
 
         segmented_burns = np.full_like(disturbed_layer_int, fill_value=False)
 
-        for seed_point in self.seed_locations:
+        for seed_index in self.seed_indices:
 
             # Skimage needs the seed point as a tuple, for some reason
-            print(f"Processing seed point: {seed_point}")
+            print(f"Processing seed point at indices: {seed_index}")
 
             # Skip if the seed point is not in the burn boundary, so we don't
             # get the negative space of the burn boundary
-            if disturbed_layer_int[seed_point] == 0:
+            if disturbed_layer_int[seed_index] == 0:
                 continue
 
             # Flood fill the burn boundary from the seed point, and combine with
             # the existing segmented burns from other seed points
             burn_boundary_segmented = flood_fill(
                 image=disturbed_layer_int,
-                seed_point=seed_point,
+                seed_point=seed_index,
                 new_value=True,
             )
             segmented_burns = np.logical_or(segmented_burns, burn_boundary_segmented)
@@ -156,11 +159,11 @@ class PolygonCleanupStrategy(ABC):
 
 
 class RestrictToSeedPoints(PolygonCleanupStrategy):
-    def __init__(self, seed_locations=None):
-        self.seed_locations = seed_locations
+    def __init__(self, seed_locations_gpd=None):
+        self.seed_locations_gpd = seed_locations_gpd
 
     def apply(self, burn_boundary_polygon):
-        seed_locations_shapes = unary_union(seed_locations.geometry)
+        seed_locations_shapes = unary_union(self.seed_locations_gpd.geometry)
 
         # If the burn boundary is a MultiPolygon, we want to keep only the polygons that intersect the seed points
         burn_boundary_polygon = burn_boundary_polygon["geometry"].apply(
