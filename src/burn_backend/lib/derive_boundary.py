@@ -156,7 +156,7 @@ class PolygonCleanupStrategy(ABC):
 
 
 class RestrictToSeedPoints(PolygonCleanupStrategy):
-    def __init__(self, seed_locations):
+    def __init__(self, seed_locations=None):
         self.seed_locations = seed_locations
 
     def apply(self, burn_boundary_polygon):
@@ -259,18 +259,9 @@ class Pipeline:
         return burn_boundary_gpd
 
 
-DEFAULT_PIPELINE = Pipeline(
-    thresholding_strategy=OtsuThreshold(),
-    segmentation_strategy=FloodFillSegmentation(),
-    smoothing_strategies=[GaussianSmoothing(sigma=2)],
-    postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
-    polygon_cleanup_strategies=[RestrictToSeedPoints()],
-)
-
-
 def derive_boundary(
     metric_layer,
-    pipeline=DEFAULT_PIPELINE,
+    pipeline,
 ):
 
     ## TODO: Some part of the spectral index process is creating a buffer of NaN
