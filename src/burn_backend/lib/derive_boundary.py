@@ -172,7 +172,7 @@ class RestrictToSeedPoints(PolygonCleanupStrategy):
                     [
                         polygon
                         for polygon in geom.geoms
-                        if polygon.intersects(seed_points)
+                        if polygon.intersects(seed_locations_shapes)
                     ]
                 )
                 if geom.geom_type == "MultiPolygon"
@@ -180,12 +180,10 @@ class RestrictToSeedPoints(PolygonCleanupStrategy):
             )
         )
 
-        # Drop any empty geometries
+        # Drop any empty geometries - if none remain, return None
         burn_boundary_polygon = burn_boundary_polygon[
-            burn_boundary_polygon["geometry"].apply(lambda geom: not geom.is_empty)
+            burn_boundary_polygon.geometry.apply(lambda geom: not geom.is_empty)
         ]
-
-        # If all geometries are empty, return None
         if burn_boundary_polygon.is_empty.all():
             return None
 
