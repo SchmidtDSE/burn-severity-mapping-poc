@@ -146,6 +146,49 @@ class MedianSmoothing(SmoothingStrategy):
         return smoothed_disturbed_int
 
 
+## POLYGON CLEANUP STRATEGIES
+
+
+class PolygonCleanupStrategy(ABC):
+    @abstractmethod
+    def apply(self, burn_boundary_polygon):
+        pass
+
+
+class RestrictToSeedPoints(PolygonCleanupStrategy):
+    def __init__(self, seed_locations):
+        self.seed_locations = seed_locations
+
+    def apply(self, burn_boundary_polygon):
+        seed_locations_shapes = unary_union(seed_locations.geometry)
+
+        # If the burn boundary is a MultiPolygon, we want to keep only the polygons that intersect the seed points
+        burn_boundary_polygon = burn_boundary_polygon["geometry"].apply(
+            lambda geom: (
+                MultiPolygon(
+                    [
+                        polygon
+                        for polygon in geom.geoms
+                        if polygon.intersects(seed_points)
+                    ]
+                )
+                if geom.geom_type == "MultiPolygon"
+                else geom
+            )
+        )
+
+        # Drop any empty geometries
+        burn_boundary_polygon = burn_boundary_polygon[
+            burn_boundary_polygon["geometry"].apply(lambda geom: not geom.is_empty)
+        ]
+
+        # If all geometries are empty, return None
+        if burn_boundary_polygon.is_empty.all():
+            return None
+
+        return burn_boundary_polygon
+
+
 ## PIPELINE
 
 
@@ -156,11 +199,13 @@ class Pipeline:
         segmentation_strategy,
         smoothing_strategies,
         postprocessing_strategies,
+        polygon_cleanup_strategies,
     ):
         self._thresholding_strategy = thresholding_strategy
         self._segmentation_strategy = segmentation_strategy
         self._smoothing_strategies = smoothing_strategies
         self._postprocessing_strategies = postprocessing_strategies
+        self._polygon_cleanup_strategies = polygon_cleanup_strategies
 
     def add_thresholding_strategy(self, thresholding_strategy):
         self._thresholding_strategy = thresholding_strategy
@@ -201,7 +246,17 @@ class Pipeline:
             coords=burn_boundary_raster.coords,
         )
 
-        return burn_boundary_raster
+        # Convert to a MultiPolygon GeoDataFrame from raster
+        burn_boundary_multipolygon = raster_mask_to_geojson(
+            burn_boundary_raster["disturbed"]
+        )
+        burn_boundary_gpd = gpd.GeoDataFrame.from_features(burn_boundary_multipolygon)
+
+        # Clean up polygon artifacts due to coercion from raster
+        for polygon_cleanup_strategy in self._polygon_cleanup_strategies:
+            burn_boundary_gpd = polygon_cleanup_strategy.apply(burn_boundary_gpd)
+
+        return burn_boundary_gpd
 
 
 DEFAULT_PIPELINE = Pipeline(
@@ -209,6 +264,7 @@ DEFAULT_PIPELINE = Pipeline(
     segmentation_strategy=FloodFillSegmentation(),
     smoothing_strategies=[GaussianSmoothing(sigma=2)],
     postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
+    polygon_cleanup_strategies=[RestrictToSeedPoints()],
 )
 
 
@@ -242,8 +298,6 @@ def derive_boundary(
         # later we may need to be robust to this
         raise ValueError("NaN values within interior of metric layer")
 
-    burn_boundary_raster = pipeline.process(metric_layer)
+    burn_boundary_multipolygon = pipeline.process(metric_layer)
 
-    burn_boundary_polygon = raster_mask_to_geojson(burn_boundary_raster["disturbed"])
-
-    return burn_boundary_polygon
+    return burn_boundary_multipolygon

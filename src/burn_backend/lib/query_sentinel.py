@@ -25,6 +25,7 @@ from src.burn_backend.lib.derive_boundary import (
     GaussianSmoothing,
     FillHoles,
     BinaryDilation,
+    RestrictToSeedPoints,
     Pipeline,
 )
 from pyproj import CRS
@@ -430,26 +431,23 @@ class Sentinel2Client:
             segmentation_strategy=FloodFillSegmentation(seed_locations=seed_locations),
             smoothing_strategies=[GaussianSmoothing(sigma=1)],
             postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
+            polygon_cleanup_strategies=[
+                RestrictToSeedPoints(seed_locations=seed_locations)
+            ],
         )
 
-        geojson_boundary = derive_boundary(metric_layer=metric_layer, pipeline=pipeline)
-        geojson_boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
+        geojson_boundary_gpd = derive_boundary(
+            metric_layer=metric_layer, pipeline=pipeline
+        )
 
-        # Only keep polygons that intersect at least one seed point
-        if seed_points_gpd is not None:
-            seed_points = unary_union(seed_points_gpd.geometry)
-            geojson_boundary_gpd = geojson_boundary_gpd[
-                geojson_boundary_gpd.intersects(seed_points)
-            ]
-
-        if not geojson_boundary:
+        if not geojson_boundary_gpd:
             raise NoFireBoundaryDetectedError(
                 "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
             )
 
         if inplace:
 
-            self.set_boundary(geojson_boundary)
+            self.set_boundary(geojson_boundary.to_json())
             self.metrics_stack = self.metrics_stack.rio.clip(
                 geojson_boundary_gpd.geometry.values, geojson_boundary_gpd.crs
             )
