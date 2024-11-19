@@ -440,14 +440,14 @@ class Sentinel2Client:
             metric_layer=metric_layer, pipeline=pipeline
         )
 
-        if not geojson_boundary_gpd:
+        if geojson_boundary_gpd is None:
             raise NoFireBoundaryDetectedError(
                 "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
             )
 
         if inplace:
 
-            self.set_boundary(geojson_boundary.to_json())
+            self.set_boundary(geojson_boundary_gpd.geometry)
             self.metrics_stack = self.metrics_stack.rio.clip(
                 geojson_boundary_gpd.geometry.values, geojson_boundary_gpd.crs
             )
