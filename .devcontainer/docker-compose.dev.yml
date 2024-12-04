@@ -5,7 +5,6 @@ services:
       context: ../
       dockerfile: .deployment/titiler/prod.Dockerfile
       args:
-        - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
         - ENV=LOCAL
     ports:
       - 8081:8080 # FastAPI
@@ -33,7 +32,6 @@ services:
       context: ../
       dockerfile: .deployment/burn_backend/prod.Dockerfile
       args:
-        - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
         - ENV=LOCAL
     ports:
       - 5051:5050 # FastAPI

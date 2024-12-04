@@ -18,6 +18,7 @@ dependencies:
   - pytest
   - pyarrow
   - python ==3.10.*
+  - pyopenssl==24.0.0
   - rasterio
   - rioxarray
   - scikit-image

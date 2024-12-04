@@ -11,6 +11,7 @@
     "source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind", // AWS credentials
     "source=${localEnv:HOME}/.config/gcloud,target=/root/.config/gcloud,type=bind", // GCP credentials
     "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind" // SSH keys
+    "source=/tmp,target=/tmp,type=bind", // Temp directory for logs, etc.
     // "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" // Docker socket - now handling with above feature
   ],
   "workspaceFolder": "/workspace",
