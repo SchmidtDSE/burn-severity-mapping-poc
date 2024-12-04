@@ -413,19 +413,15 @@ class Sentinel2Client:
             )
 
         if seed_locations_gpd is not None:
-            # Add a dim called 'seed' to denote whether the pixel is a seed point
-            metric_layer = metric_layer.expand_dims(dim="seed")
-            metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)
-
+            seed_indices = []
             for point in seed_locations_gpd.geometry:
                 # Find the nearest pixel to the seed point, we want the index, not the value
                 nearest_pixel = metric_layer.sel(x=point.x, y=point.y, method="nearest")
-                metric_layer["seed"].loc[
-                    dict(x=nearest_pixel.x.values, y=nearest_pixel.y.values)
-                ] = True
+                seed_index = (nearest_pixel.y, nearest_pixel.x)
+                seed_indices.append(seed_index)
 
-            seed_indices = list(zip(*np.where(metric_layer["seed"].values[0, :, :])))
-
+        ## TODO: Seed indices are essentially required at the moment, but this is an artifact
+        ## of flood fill segmentation, so this Pipeline should be more flexible in the future.
         pipeline = Pipeline(
             thresholding_strategy=OtsuThreshold(),
             segmentation_strategy=FloodFillSegmentation(seed_indices=seed_indices),
