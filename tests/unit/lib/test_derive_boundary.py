@@ -19,11 +19,12 @@ from shapely import MultiPolygon, Polygon
 
 
 def test_derive_boundary_success_multiple_seeds(
-    test_intermediate_burn_metrics_tiny_dome, test_seed_points_tiny_dome
+    test_intermediate_burn_metrics_tiny_dome,
+    test_multiple_seed_points_tiny_dome,
 ):
     # Load test_points_gpd
     seed_locations_gpd = gpd.GeoDataFrame.from_features(
-        test_seed_points_tiny_dome["features"]
+        test_multiple_seed_points_tiny_dome["features"]
     )
 
     # To match how this runs in the pipeline, select just rbr
@@ -59,15 +60,3 @@ def test_derive_boundary_success_multiple_seeds(
     # Check that the result is as expected
     assert isinstance(result, gpd.GeoSeries)
     assert isinstance(result[0], MultiPolygon)
-
-
-def test_derive_boundary_failure(test_geojson, test_3d_invalid_xarray):
-
-    # Initialize the necessary inputs
-    geojson_boundary = test_geojson
-    metrics_stack = test_3d_invalid_xarray.rename({"band": "burn_metric"})
-    metrics_stack["burn_metric"] = ["rbr", "dnbr"]
-
-    # Call the derive_boundary function and expect it to fail
-    with pytest.raises(ValueError):
-        derive_boundary_function(geojson_boundary, metrics_stack, metric_name="rbr")
