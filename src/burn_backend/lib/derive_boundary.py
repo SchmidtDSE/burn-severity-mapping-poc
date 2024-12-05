@@ -283,6 +283,7 @@ def derive_boundary(
     # Test test, hello world
 
     # TODO(!urgent): This is a new issue that should be picked up by the github action todo-to-issue and its real serious!
+    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/48
 
     if no_interior_nan_detected:
         # In this case, we aren't missing interior unburned islands, but we still want the original
