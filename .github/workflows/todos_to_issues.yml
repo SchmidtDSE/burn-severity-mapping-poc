@@ -19,18 +19,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Debug - check refs
-        run: |
-          git branch
-          git log --oneline
-          git show-ref
-
       - name: Commit and Push Changes
         run: |
           git add -A
           if [[ `git status --porcelain` ]]; then
             git commit -m "Automatically added GitHub issue links to TODOs"
-            git push origin dev
+            git push
           else
             echo "No changes to commit"
           fi
