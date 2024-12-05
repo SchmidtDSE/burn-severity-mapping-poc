@@ -11,39 +11,43 @@ from src.burn_backend.lib.derive_boundary import (
 )
 import geopandas as gpd
 from shapely.geometry import Point
+import xarray as xr
+
+## TODO(!test): Add test for derive_boundary logic, including restriction polygon
 
 
-def test_derive_boundary_success(test_3d_gradient_circle_xarray_epsg_4326):
-
-    # Initialize the necessary inputs
-    metrics_stack = test_3d_gradient_circle_xarray_epsg_4326.rename(
-        {"band": "burn_metric"}
+def test_derive_boundary_success(
+    test_intermediate_burn_metrics_tiny_dome, test_seed_points_tiny_dome
+):
+    # Load test_points_gpd
+    seed_locations_gpd = gpd.GeoDataFrame.from_features(
+        test_seed_points_tiny_dome["features"]
     )
-    metrics_stack["burn_metric"] = ["rbr", "dnbr"]
 
     # To match how this runs in the pipeline, select just rbr
-    metrics_stack = metrics_stack.sel(burn_metric="rbr")
+    metrics_stack = test_intermediate_burn_metrics_tiny_dome.sel(burn_metric="rbr")
 
-    # valid indices - choose the exact center of the circle, which should be 1
-    metrics_stack_width, metrics_stack_height = metrics_stack.shape
-    valid_seed_indices = [(metrics_stack_width // 2, metrics_stack_height // 2)]
+    # Add a dim called 'seed' to denote whether the pixel is a seed point
+    metric_layer = metric_layer.expand_dims(dim="seed")
+    metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)
 
-    # Create a GeoDataFrame with the valid seed location, using real coordinates from the metrics_stack
-    seed_index_cell = metrics_stack.isel(
-        x=valid_seed_indices[0][0], y=valid_seed_indices[0][1]
-    )
-    valid_seed_location_gpd = gpd.GeoDataFrame(
-        {"geometry": [Point(seed_index_cell["x"].values, seed_index_cell["y"].values)]},
-        crs="EPSG:4326",
-    )
+    for point in seed_locations_gpd.geometry:
+        # Find the nearest pixel to the seed point, we want the index, not the value
+        nearest_pixel = metric_layer.sel(x=point.x, y=point.y, method="nearest")
+        metric_layer["seed"].loc[
+            dict(x=nearest_pixel.x.values, y=nearest_pixel.y.values)
+        ] = True
 
+    seed_indices = list(zip(*np.where(metric_layer["seed"].values[0, :, :])))
+
+    # Define the pipeline
     pipeline = Pipeline(
         thresholding_strategy=OtsuThreshold(),
-        segmentation_strategy=FloodFillSegmentation(seed_indices=valid_seed_indices),
+        segmentation_strategy=FloodFillSegmentation(seed_indices=seed_indices),
         smoothing_strategies=[GaussianSmoothing(sigma=1)],
         postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
         polygon_cleanup_strategies=[
-            RestrictToSeedPoints(seed_locations_gpd=valid_seed_location_gpd)
+            RestrictToSeedPoints(seed_locations_gpd=seed_locations_gpd)
         ],
     )
 
