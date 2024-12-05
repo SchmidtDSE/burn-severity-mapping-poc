@@ -225,8 +225,8 @@ class Pipeline:
         # Apply thresholding strategy - will result in a xr.DataArray with a boolean mask as 'disturbed'
         burn_boundary_raster = self._thresholding_strategy.apply(metric_layer)
 
-        ## TODO: Smelly hard code indexing to remove the seed dimension (0, x, y), which caused annoying dimensionality issues
-        ## when I removed, so leaving for now
+        # TODO(!smelly): Integer indexing to ignore 'seed' layer, which is used to get indices
+        # for skimage segmentation but otherwise not needeed
 
         # Here on, we use skimage, which expects an int numpy array
         disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
@@ -269,17 +269,17 @@ def derive_boundary(
     pipeline,
 ):
 
-    ## TODO(!smelly): Some part of the spectral index process is creating a buffer of NaN
-    ## at the outside edge of the metric layer - not an issue to replace with 0 in this case
-    ## but zeros inside the image will be erroneously identified as unburned islands which is
-    ## a big problem.
+    # TODO(!smelly): Some part of the spectral index process is creating a buffer of NaN
+    # at the outside edge of the metric layer - not an issue to replace with 0 in this case
+    # but zeros inside the image will be erroneously identified as unburned islands which is
+    # a big problem.
     metric_values_exist_binary = np.where(np.isnan(metric_layer.values), 0, 1)
     interior_nan_filled = binary_fill_holes(metric_values_exist_binary)
     no_interior_nan_detected = np.array_equal(
         interior_nan_filled, metric_values_exist_binary
     )
 
-    # TODO (!feat): Improve (and investigate) handling of internal NaNs within derived boundary
+    # TODO(!feat): Improve (and investigate) handling of internal NaNs within derived boundary
     # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/52
     # Internal NaNs are a problem because they may be interpreted as unburned islands, unless we handle
     # them directly. So far so good, it appears we only get these at the edges of the boundary where we
