@@ -15,6 +15,17 @@ from shapely.geometry import Point
 
 def test_derive_boundary_success(test_3d_gradient_circle_xarray_epsg_4326):
 
+    # TODO(smelly): This is bad and I hate it
+    # Here is some more information. Boy it's stinky in here
+
+    # TODO(@GondekNP): Here's something just for you
+    # Talking to yourself?
+
+    # TODO: Stacks on stacks of labels and whatnot
+    # This is complicated.
+    # labels: bug, smelly
+    # asignees: GondekNP
+
     # Initialize the necessary inputs
     metrics_stack = test_3d_gradient_circle_xarray_epsg_4326.rename(
         {"band": "burn_metric"}
