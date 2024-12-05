@@ -38,7 +38,7 @@ class FloodFillSegmentationPOSTBody(BaseModel):
     affiliation: str
 
 
-# TODO [#5]: Decide on / implement cloud tasks or other async batch
+# TODO(!feat): Decide on / implement cloud tasks or other async batch
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
 @router.post(
@@ -66,7 +66,9 @@ async def refine_flood_fill_segmentation(
     """
     sentry_sdk.set_context("fire-event", {"request": body})
 
-    # TODO: No idea where this is getting converted to a dict...
+    # TODO(!smelly): geojson interpreted inconsistently as string or dict by FastAPI in burn-backend?
+    # Likely caused by a frontend issue with the request body - need to investigate
+
     # geojson_seed_points = json.loads(body.geojson)
     user_edits_geojson = body.geojson
 
@@ -89,9 +91,6 @@ async def main(
     logger,
     cloud_static_io_client,
 ):
-    ## NOTE: derive_boundary is accepted for now to maintain compatibility with the frontend,
-    ## but will shortly be a different endpoint
-
     logger.info(f"Received flood-fill-segmentation request for {fire_event_name}")
 
     try:
@@ -99,11 +98,6 @@ async def main(
         # getting what we need from the cogs already generated
         geo_client = Sentinel2Client()
 
-        ## TODO: Since we are running serverless, and don't have a live database, we are
-        ## required to re-construct the metrics stack from the existing files, in the case
-        ## where the user has identified fire boundaries from our intermediate rbr output.
-        ## This is not ideal, but not sure there is a better solution without using something
-        ## like redis or another live cache.
         metric_layers = []
         for metric_name in ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]:
             with tempfile.NamedTemporaryFile(suffix=".tif", delete=False) as tmp:
@@ -131,12 +125,10 @@ async def main(
             inplace=True,
         )
 
-        # save the derived boundary to the FTP server
+        # save the derived boundary to the S3 bucket
         with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as tmp:
             tmp_geojson = tmp.name
 
-            ## TODO: This is a little circuitous but, was getting errors trying to
-            ## use .to_json() and saving the result
             geo_client.geojson_boundary.to_file(tmp_geojson, driver="GeoJSON")
             derived_boundary_json = json.load(open(tmp_geojson))
 

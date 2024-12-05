@@ -98,7 +98,7 @@ resource "google_artifact_registry_repository" "burn-backend" {
   location      = "us-central1"
 }
 
-## TODO: Both this and the burn-backend service should either be require authenticated
+## TODO(!feat): Both this and the burn-backend service should either be require authenticated
 ## invocations or at least have a rate limit
 
 # Allow unauthenticated invocations

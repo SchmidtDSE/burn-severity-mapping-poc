@@ -20,7 +20,8 @@ def upload(
     endpoint_titiler: str = Depends(get_endpoint_titiler),
     endpoint_burn_backend: str = Depends(get_endpoint_burn_backend),
 ):
-    ## TODO: These thresholds should be configurable, and probably should use the same
+    ## TODO(!feat): Reuse UI elements from Map for Upload page
+    ## these thresholds should be configurable, and probably should use the same
     ## frontend elements as the threhsold sliders within the map. Going to punt on that for now,
     ## since the map needs a refactor in the vein of the upload refactor.
     cog_tileserver_url_prefix = (

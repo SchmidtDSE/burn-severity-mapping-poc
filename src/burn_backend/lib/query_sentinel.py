@@ -73,7 +73,7 @@ class Sentinel2Client:
         self.crs = crs
         self.buffer = buffer
 
-        # TODO [#17]: Settle on standards for storing polygons
+        # TODO(!feat): Settle on standards for storing polygons
         # Oscillating between geojsons and geopandas dataframes, which is a bit messy. Should pick one and stick with it.
         self.geojson_boundary = None
         self.bbox = None
@@ -99,7 +99,7 @@ class Sentinel2Client:
             None
         """
         boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
-        # TODO [#7]: Generalize Sentinel2Client to accept any CRS
+        # TODO(!feat): Generalize Sentinel2Client to accept any CRS
         # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
         if not boundary_gpd.crs:
             geojson_boundary = boundary_gpd.set_crs("EPSG:4326")
@@ -147,7 +147,7 @@ class Sentinel2Client:
         """
         date_range_fmt = "{}/{}".format(date_range[0], date_range[1])
 
-        # TODO [#14]: Cloud cover response to smoke
+        # TODO(!feat): Cloud cover response to smoke
         # Right now we don't give any mind to smoke occlusion, but we should considering we will have bias if smoke occludes our imagery
 
         query = {
@@ -266,7 +266,7 @@ class Sentinel2Client:
             xarray.DataArray: The reduced range stack.
         """
 
-        # TODO [#30]: Think about best practice for reducing time dimension pre/post fire
+        # TODO(!feat): Think about best practice for reducing time dimension pre/post fire
         # This will probably get a bit more sophisticated, but for now, just take the median
         # We will probably run into issues of cloud occlusion, and for really long fire events,
         # we might want to look into time-series effects of greenup, drying, etc, in the adjacent
@@ -426,7 +426,7 @@ class Sentinel2Client:
 
             seed_indices = list(zip(*np.where(metric_layer["seed"].values[0, :, :])))
 
-        ## TODO: Seed indices are essentially required at the moment, but this is an artifact
+        ## TODO(!smelly): Seed indices are essentially required at the moment, but this is an artifact
         ## of flood fill segmentation, so this Pipeline should be more flexible in the future.
         pipeline = Pipeline(
             thresholding_strategy=OtsuThreshold(),

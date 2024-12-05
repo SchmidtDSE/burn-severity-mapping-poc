@@ -38,38 +38,6 @@ def test_get_items(test_geojson, test_stac_item_collection):
     )
 
 
-## TODO Why does rio.reproject call the original stac assets from planetary computer, even when reprojecting a local computed RasterArray?:
-## rio.reproject fails with picked item collection because it is calling the original stac assets from planetary computer
-## This makes very little sense since the thing being reprojected has already had some computation done on it, so we aren't
-## reprojecting the original stac assets at all.
-
-# @patch.object(RasterArray, "reproject", MagicMock())
-# def test_arrange_stack(test_geojson, test_stac_item_collection):
-#     # Initialize Sentinel2Client
-#     client = Sentinel2Client(test_geojson)
-
-#     # Stack the test item collection
-#     stack = client.arrange_stack(test_stac_item_collection)
-
-#     assert all(stack.band.values == ["B8A", "B12"])
-#     assert stack.dims == ("band", "y", "x")
-
-#     test_bounds = gpd.GeoDataFrame.from_features(test_geojson["features"]).bounds
-#     test_minx, test_miny, test_maxx, test_maxy = (
-#         test_bounds.minx[0],
-#         test_bounds.miny[0],
-#         test_bounds.maxx[0],
-#         test_bounds.maxy[0],
-#     )
-
-#     stack_minx, stack_miny, stack_maxx, stack_maxy = stack.rio.bounds()
-
-#     assert np.isclose(stack_minx, test_minx, rtol=1e-5)
-#     assert np.isclose(stack_miny, test_miny, rtol=1e-5)
-#     assert np.isclose(stack_maxx, test_maxx, rtol=1e-5)
-#     assert np.isclose(stack_maxy, test_maxy, rtol=1e-5)
-
-
 def test_reduce_time_range(test_geojson, test_4d_valid_xarray_epsg_4326):
     # Initialize Sentinel2Client
     client = Sentinel2Client(test_geojson)
@@ -141,29 +109,6 @@ def test_calc_burn_metrics(test_geojson, test_3d_valid_xarray_epsg_4326):
             for metric in ["nbr_prefire", "nbr_postfire", "dnbr", "rdnbr", "rbr"]
         ]
     )
-
-
-## TODO: Needs a rework for the new derived boundary approach w/ seeds
-
-# def test_derive_boundary(test_geojson, test_3d_valid_xarray_epsg_4326):
-#     # Initialize Sentinel2Client
-#     client = Sentinel2Client(test_geojson)
-
-#     # Initialize metrics stack
-#     metrics_stack = test_3d_valid_xarray_epsg_4326.rename({"band": "burn_metric"})
-#     metrics_stack["burn_metric"] = ["rbr", "dnbr"]
-#     client.metrics_stack = metrics_stack
-
-#     # Save the initial boundary
-#     initial_boundary = client.geojson_boundary
-
-#     # Call the derive_boundary method
-#     client.derive_boundary(metric_name="rbr")
-
-#     # Check that the boundary was updated
-#     assert all(
-#         (initial_boundary.bounds != client.geojson_boundary.bounds).values[0].tolist()
-#     )
 
 
 def test_ingest_metrics_stack(test_geojson, test_3d_valid_xarray_epsg_4326):

@@ -269,7 +269,7 @@ def derive_boundary(
     pipeline,
 ):
 
-    ## TODO: Some part of the spectral index process is creating a buffer of NaN
+    ## TODO(!smelly): Some part of the spectral index process is creating a buffer of NaN
     ## at the outside edge of the metric layer - not an issue to replace with 0 in this case
     ## but zeros inside the image will be erroneously identified as unburned islands which is
     ## a big problem.
@@ -279,11 +279,10 @@ def derive_boundary(
         interior_nan_filled, metric_values_exist_binary
     )
 
-    # TODO: This is a new issue that should be picked up by the github action todo-to-issue
-    # Test test, hello world
-
-    # TODO(!urgent): This is a new issue that should be picked up by the github action todo-to-issue and its real serious!
-    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/48
+    # TODO (!feat): Improve (and investigate) handling of internal NaNs within derived boundary
+    # Internal NaNs are a problem because they may be interpreted as unburned islands, unless we handle
+    # them directly. So far so good, it appears we only get these at the edges of the boundary where we
+    # may have interpolation issues, so this is very conservative, but a little hacky.
 
     if no_interior_nan_detected:
         # In this case, we aren't missing interior unburned islands, but we still want the original
