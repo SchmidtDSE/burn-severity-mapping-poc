@@ -430,8 +430,8 @@ class Sentinel2Client:
 
             seed_indices = list(zip(*np.where(metric_layer["seed"].values[0, :, :])))
 
-        ## TODO(!smelly): Seed indices are essentially required at the moment, but this is an artifact
-        ## of flood fill segmentation, so this Pipeline should be more flexible in the future.
+        # TODO(!smelly): Seed indices are essentially required at the moment, but this is an artifact
+        # of flood fill segmentation, so this Pipeline should be more flexible in the future.
         pipeline = Pipeline(
             thresholding_strategy=OtsuThreshold(),
             segmentation_strategy=FloodFillSegmentation(seed_indices=seed_indices),

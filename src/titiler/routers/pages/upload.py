@@ -20,11 +20,11 @@ def upload(
     endpoint_titiler: str = Depends(get_endpoint_titiler),
     endpoint_burn_backend: str = Depends(get_endpoint_burn_backend),
 ):
-    ## TODO(!feat): Reuse UI elements from Map for Upload page
-    #Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/62
-    ## these thresholds should be configurable, and probably should use the same
-    ## frontend elements as the threhsold sliders within the map. Going to punt on that for now,
-    ## since the map needs a refactor in the vein of the upload refactor.
+    # TODO(!feat): Reuse UI elements from Map for Upload page
+    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/62
+    # these thresholds should be configurable, and probably should use the same
+    # frontend elements as the threhsold sliders within the map. Going to punt on that for now,
+    # since the map needs a refactor in the vein of the upload refactor.
     cog_tileserver_url_prefix = (
         endpoint_titiler
         + '/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png?nodata=-99&return_mask=true&algorithm=censor_and_scale&algorithm_params={"thresholds":{"min":-0.025,"max":0.5}}&url='
