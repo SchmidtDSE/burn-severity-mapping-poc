@@ -16,7 +16,7 @@ import numpy as np
 from shapely import MultiPolygon, Polygon
 
 ## TODO(!test): Add test for derive_boundary logic, including restriction polygon
-#Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/66
+# Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/66
 
 
 def test_derive_boundary_success_multiple_seeds(
