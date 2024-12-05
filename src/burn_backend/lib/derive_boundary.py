@@ -224,6 +224,10 @@ class Pipeline:
 
         # Apply thresholding strategy - will result in a xr.DataArray with a boolean mask as 'disturbed'
         burn_boundary_raster = self._thresholding_strategy.apply(metric_layer)
+
+        ## TODO: Smelly hard code indexing to remove the seed dimension (0, x, y), which caused annoying dimensionality issues
+        ## when I removed, so leaving for now
+
         # Here on, we use skimage, which expects an int numpy array
         disturbed_layer_int = burn_boundary_raster["disturbed"].values.astype(np.int8)[
             0, :, :

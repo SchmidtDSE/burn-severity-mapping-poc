@@ -48,6 +48,7 @@ def test_stac_item_collection():
         test_stac_item_collection = pickle.load(f)
     return test_stac_item_collection
 
+
 ### Coords and time windows
 
 
@@ -206,7 +207,7 @@ def test_3d_valid_xarray_epsg_4326(
     bands = ["band1", "band2"]
     values = np.random.rand(len(bands), len(y), len(x))
     test_3d_xarray = construct_dataarray(
-        metadata=metadata, values=values, bands=bands, x=x, y=y, epsg=4326
+        values=values, bands=bands, x=x, y=y, epsg=4326
     )
     return test_3d_xarray
 
@@ -221,6 +222,35 @@ def test_3d_nan_xarray(test_3d_xarray):
 def test_3d_zero_xarray(test_3d_xarray):
     test_reduced_zero_xarray = xr.full_like(test_3d_xarray, 0)
     return test_reduced_zero_xarray
+
+
+### Gradient circle, for use with derive_boundary
+
+
+@pytest.fixture
+def test_3d_gradient_circle_xarray_epsg_4326(
+    test_spatial_coords_epsg_4326, test_metadata_and_other_coords
+):
+    x, y = test_spatial_coords_epsg_4326
+    metadata = test_metadata_and_other_coords
+    bands = ["band1", "band2"]
+
+    # Create a more extreme kernel density circle pattern
+    values = np.zeros((len(bands), len(y), len(x)))
+    center_x, center_y = len(x) // 2, len(y) // 2
+
+    for i in range(len(y)):
+        for j in range(len(x)):
+            distance = np.sqrt((i - center_y) ** 2 + (j - center_x) ** 2)
+            if distance == 0:
+                values[:, i, j] = 1
+            else:
+                values[:, i, j] = 1 / (distance**2)
+
+    test_kernel_density_circle_xarray = construct_dataarray(
+        metadata=metadata, values=values, bands=bands, x=x, y=y, epsg=4326
+    )
+    return test_kernel_density_circle_xarray
 
 
 ### GeoJSON
