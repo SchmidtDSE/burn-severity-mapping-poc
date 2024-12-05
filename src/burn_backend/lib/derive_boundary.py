@@ -279,6 +279,9 @@ def derive_boundary(
         interior_nan_filled, metric_values_exist_binary
     )
 
+    # TODO: This is a new issue that should be picked up by the github action todo-to-issue
+    # Test test, hello world
+
     if no_interior_nan_detected:
         # In this case, we aren't missing interior unburned islands, but we still want the original
         # shape preserved so we can use the mask to fill in the holes later and re-apply the spatial
