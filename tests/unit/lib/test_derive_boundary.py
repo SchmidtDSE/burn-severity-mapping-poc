@@ -14,6 +14,7 @@ from shapely.geometry import Point
 import xarray as xr
 
 ## TODO(!test): Add test for derive_boundary logic, including restriction polygon
+#Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/66
 
 
 def test_derive_boundary_success(
