@@ -74,6 +74,7 @@ class Sentinel2Client:
         self.buffer = buffer
 
         # TODO(!feat): Settle on standards for storing polygons
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/56
         # Oscillating between geojsons and geopandas dataframes, which is a bit messy. Should pick one and stick with it.
         self.geojson_boundary = None
         self.bbox = None
@@ -100,6 +101,7 @@ class Sentinel2Client:
         """
         boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
         # TODO(!feat): Generalize Sentinel2Client to accept any CRS
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/55
         # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
         if not boundary_gpd.crs:
             geojson_boundary = boundary_gpd.set_crs("EPSG:4326")
@@ -148,6 +150,7 @@ class Sentinel2Client:
         date_range_fmt = "{}/{}".format(date_range[0], date_range[1])
 
         # TODO(!feat): Cloud cover response to smoke
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/54
         # Right now we don't give any mind to smoke occlusion, but we should considering we will have bias if smoke occludes our imagery
 
         query = {
@@ -267,6 +270,7 @@ class Sentinel2Client:
         """
 
         # TODO(!feat): Think about best practice for reducing time dimension pre/post fire
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/53
         # This will probably get a bit more sophisticated, but for now, just take the median
         # We will probably run into issues of cloud occlusion, and for really long fire events,
         # we might want to look into time-series effects of greenup, drying, etc, in the adjacent

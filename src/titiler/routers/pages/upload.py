@@ -21,6 +21,7 @@ def upload(
     endpoint_burn_backend: str = Depends(get_endpoint_burn_backend),
 ):
     ## TODO(!feat): Reuse UI elements from Map for Upload page
+    #Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/62
     ## these thresholds should be configurable, and probably should use the same
     ## frontend elements as the threhsold sliders within the map. Going to punt on that for now,
     ## since the map needs a refactor in the vein of the upload refactor.

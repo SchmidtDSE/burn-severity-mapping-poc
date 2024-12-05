@@ -280,6 +280,7 @@ def derive_boundary(
     )
 
     # TODO (!feat): Improve (and investigate) handling of internal NaNs within derived boundary
+    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/52
     # Internal NaNs are a problem because they may be interpreted as unburned islands, unless we handle
     # them directly. So far so good, it appears we only get these at the edges of the boundary where we
     # may have interpolation issues, so this is very conservative, but a little hacky.

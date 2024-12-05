@@ -39,6 +39,7 @@ class FloodFillSegmentationPOSTBody(BaseModel):
 
 
 # TODO(!feat): Decide on / implement cloud tasks or other async batch
+# Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/59
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
 @router.post(
@@ -67,6 +68,7 @@ async def refine_flood_fill_segmentation(
     sentry_sdk.set_context("fire-event", {"request": body})
 
     # TODO(!smelly): geojson interpreted inconsistently as string or dict by FastAPI in burn-backend?
+    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/58
     # Likely caused by a frontend issue with the request body - need to investigate
 
     # geojson_seed_points = json.loads(body.geojson)

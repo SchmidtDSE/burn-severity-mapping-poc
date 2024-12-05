@@ -45,6 +45,7 @@ class AnaylzeBurnPOSTBody(BaseModel):
 
 
 # TODO(!feat): Decide on / implement cloud tasks or other async batch
+# Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/57
 # This is a long running process, and users probably don't mind getting an email notification
 # or something similar when the process is complete. Esp if the frontend remanins static.
 @router.post(

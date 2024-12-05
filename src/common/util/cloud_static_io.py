@@ -326,6 +326,7 @@ class CloudStaticIOClient:
         with tempfile.TemporaryDirectory() as tmpdir:
             for band_name in rap_estimates.band.to_index():
                 # TODO(!feat): Refactor upload_cogs and upload_rap_estimates to share code
+                # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/61
                 local_cog_path = os.path.join(tmpdir, f"{band_name}.tif")
                 band_cog = rap_estimates.sel(band=band_name).rio
                 band_cog.to_raster(local_cog_path, driver="GTiff")
