@@ -226,6 +226,7 @@ class Pipeline:
         burn_boundary_raster = self._thresholding_strategy.apply(metric_layer)
 
         # TODO(!smelly): Integer indexing to ignore 'seed' layer, which is used to get indices
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/64
         # for skimage segmentation but otherwise not needeed
 
         # Here on, we use skimage, which expects an int numpy array
@@ -270,6 +271,7 @@ def derive_boundary(
 ):
 
     # TODO(!smelly): Some part of the spectral index process is creating a buffer of NaN
+    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/63
     # at the outside edge of the metric layer - not an issue to replace with 0 in this case
     # but zeros inside the image will be erroneously identified as unburned islands which is
     # a big problem.
