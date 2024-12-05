@@ -13,10 +13,18 @@ jobs:
         with:
           INSERT_ISSUE_URLS: "true"
           CLOSE_ISSUES: "true"
+
       - name: Set Git user
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Debug - check refs
+        run: |
+          git branch
+          git log --oneline
+          git show-ref
+
       - name: Commit and Push Changes
         run: |
           git add -A
