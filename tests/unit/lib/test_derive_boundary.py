@@ -12,11 +12,13 @@ from src.burn_backend.lib.derive_boundary import (
 import geopandas as gpd
 from shapely.geometry import Point
 import xarray as xr
+import numpy as np
+from shapely import MultiPolygon, Polygon
 
 ## TODO(!test): Add test for derive_boundary logic, including restriction polygon
 
 
-def test_derive_boundary_success(
+def test_derive_boundary_success_multiple_seeds(
     test_intermediate_burn_metrics_tiny_dome, test_seed_points_tiny_dome
 ):
     # Load test_points_gpd
@@ -25,7 +27,7 @@ def test_derive_boundary_success(
     )
 
     # To match how this runs in the pipeline, select just rbr
-    metrics_stack = test_intermediate_burn_metrics_tiny_dome.sel(burn_metric="rbr")
+    metric_layer = test_intermediate_burn_metrics_tiny_dome.sel(burn_metric="rbr")
 
     # Add a dim called 'seed' to denote whether the pixel is a seed point
     metric_layer = metric_layer.expand_dims(dim="seed")
@@ -52,12 +54,11 @@ def test_derive_boundary_success(
     )
 
     # Call the derive_boundary function
-    result = derive_boundary(metrics_stack, pipeline)
+    result = derive_boundary(metric_layer, pipeline)
 
     # Check that the result is as expected
-    assert result is not None
-    assert isinstance(result, gpd.GeoDataFrame)
-    assert not result.empty
+    assert isinstance(result, gpd.GeoSeries)
+    assert isinstance(result[0], MultiPolygon)
 
 
 def test_derive_boundary_failure(test_geojson, test_3d_invalid_xarray):

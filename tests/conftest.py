@@ -234,6 +234,12 @@ def test_intermediate_burn_metrics_tiny_dome():
     ) as f:
         test_intermediate_burn_metrics_tiny_dome = rxr.open_rasterio(f)
 
+    # Reconstruction of the xarray
+    test_intermediate_burn_metrics_tiny_dome = (
+        test_intermediate_burn_metrics_tiny_dome.rename(
+            {"band": "burn_metric"}
+        ).assign_coords(burn_metric=["rbr"])
+    )
     return test_intermediate_burn_metrics_tiny_dome
 
 
