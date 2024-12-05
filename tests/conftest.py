@@ -224,33 +224,35 @@ def test_3d_zero_xarray(test_3d_xarray):
     return test_reduced_zero_xarray
 
 
-### Gradient circle, for use with derive_boundary
+### Real 'tiny dome' case, small area of dome fire, for use with derive_boundary
 
 
 @pytest.fixture
-def test_3d_gradient_circle_xarray_epsg_4326(
-    test_spatial_coords_epsg_4326, test_metadata_and_other_coords
-):
-    x, y = test_spatial_coords_epsg_4326
-    metadata = test_metadata_and_other_coords
-    bands = ["band1", "band2"]
+def test_intermediate_burn_metrics_tiny_dome():
+    with open(
+        "tests/assets/tiny_dome/tiny_dome_intermediate_metrics_layer.tiff", "rb"
+    ) as f:
+        test_intermediate_burn_metrics_tiny_dome = rxr.open_rasterio(f)
 
-    # Create a more extreme kernel density circle pattern
-    values = np.zeros((len(bands), len(y), len(x)))
-    center_x, center_y = len(x) // 2, len(y) // 2
+    return test_intermediate_burn_metrics_tiny_dome
 
-    for i in range(len(y)):
-        for j in range(len(x)):
-            distance = np.sqrt((i - center_y) ** 2 + (j - center_x) ** 2)
-            if distance == 0:
-                values[:, i, j] = 1
-            else:
-                values[:, i, j] = 1 / (distance**2)
 
-    test_kernel_density_circle_xarray = construct_dataarray(
-        metadata=metadata, values=values, bands=bands, x=x, y=y, epsg=4326
-    )
-    return test_kernel_density_circle_xarray
+@pytest.fixture
+def test_seed_points_tiny_dome():
+    with open("tests/assets/tiny_dome/tiny_dome_seed_points.geojson", "rb") as f:
+        test_seed_points_tiny_dome = json.load(f)
+
+    return test_seed_points_tiny_dome
+
+
+@pytest.fixture
+def test_user_restriction_boundary_tiny_dome():
+    with open(
+        "tests/assets/tiny_dome/tiny_dome_user_restriction_boundary.geojson", "rb"
+    ) as f:
+        test_user_restriction_boundary_tiny_dome = json.load(f)
+
+    return test_user_restriction_boundary_tiny_dome
 
 
 ### GeoJSON
