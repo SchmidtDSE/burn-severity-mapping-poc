@@ -14,8 +14,6 @@ from shapely.geometry import Point
 
 
 def test_derive_boundary_success(test_3d_gradient_circle_xarray_epsg_4326):
-    ## TODO(@GondekNP): This test is currently failing, but it should pass.
-    ## This is a test of todos-to-issues github action
 
     # Initialize the necessary inputs
     metrics_stack = test_3d_gradient_circle_xarray_epsg_4326.rename(
@@ -59,6 +57,10 @@ def test_derive_boundary_success(test_3d_gradient_circle_xarray_epsg_4326):
 
 
 def test_derive_boundary_failure(test_geojson, test_3d_invalid_xarray):
+
+    # TODO(@GondekNP): This test is currently failing, but it should pass.
+    # This is a test of the github action todos-to-issues
+
     # Initialize the necessary inputs
     geojson_boundary = test_geojson
     metrics_stack = test_3d_invalid_xarray.rename({"band": "burn_metric"})
