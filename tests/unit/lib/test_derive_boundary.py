@@ -15,20 +15,6 @@ from shapely.geometry import Point
 
 def test_derive_boundary_success(test_3d_gradient_circle_xarray_epsg_4326):
 
-    # TODO(smelly): This is bad and I hate it
-    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/51
-    # Here is some more information. Boy it's stinky in here
-
-    # TODO(@GondekNP): Here's something just for you
-    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/50
-    # Talking to yourself?
-
-    # TODO: Stacks on stacks of labels and whatnot
-    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/49
-    # This is complicated.
-    # labels: bug, smelly
-    # asignees: GondekNP
-
     # Initialize the necessary inputs
     metrics_stack = test_3d_gradient_circle_xarray_epsg_4326.rename(
         {"band": "burn_metric"}
