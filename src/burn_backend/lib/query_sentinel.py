@@ -431,6 +431,7 @@ class Sentinel2Client:
             seed_indices = list(zip(*np.where(metric_layer["seed"].values[0, :, :])))
 
         # TODO(!smelly): Seed indices are essentially required right now, but this is an artifact
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/65
         # of flood fill segmentation, so this Pipeline should be more flexible in the future.
         pipeline = Pipeline(
             thresholding_strategy=OtsuThreshold(),
