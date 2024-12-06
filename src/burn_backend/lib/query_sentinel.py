@@ -22,6 +22,11 @@ from src.burn_backend.lib.derive_boundary import (
     OtsuThreshold,
     SimpleThreshold,
     FloodFillSegmentation,
+    GaussianSmoothing,
+    FillHoles,
+    BinaryDilation,
+    RestrictToSeedPoints,
+    Pipeline,
 )
 from pyproj import CRS
 import dask
@@ -68,7 +73,8 @@ class Sentinel2Client:
         self.crs = crs
         self.buffer = buffer
 
-        # TODO [#17]: Settle on standards for storing polygons
+        # TODO(!feat): Settle on standards for storing polygons
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/56
         # Oscillating between geojsons and geopandas dataframes, which is a bit messy. Should pick one and stick with it.
         self.geojson_boundary = None
         self.bbox = None
@@ -94,7 +100,8 @@ class Sentinel2Client:
             None
         """
         boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
-        # TODO [#7]: Generalize Sentinel2Client to accept any CRS
+        # TODO(!feat): Generalize Sentinel2Client to accept any CRS
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/55
         # This is hard-coded to assume 4326 - when we draw an AOI, we will change this logic depending on what makes frontend sense
         if not boundary_gpd.crs:
             geojson_boundary = boundary_gpd.set_crs("EPSG:4326")
@@ -142,7 +149,8 @@ class Sentinel2Client:
         """
         date_range_fmt = "{}/{}".format(date_range[0], date_range[1])
 
-        # TODO [#14]: Cloud cover response to smoke
+        # TODO(!feat): Cloud cover response to smoke
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/54
         # Right now we don't give any mind to smoke occlusion, but we should considering we will have bias if smoke occludes our imagery
 
         query = {
@@ -261,7 +269,8 @@ class Sentinel2Client:
             xarray.DataArray: The reduced range stack.
         """
 
-        # TODO [#30]: Think about best practice for reducing time dimension pre/post fire
+        # TODO(!feat): Think about best practice for reducing time dimension pre/post fire
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/53
         # This will probably get a bit more sophisticated, but for now, just take the median
         # We will probably run into issues of cloud occlusion, and for really long fire events,
         # we might want to look into time-series effects of greenup, drying, etc, in the adjacent
@@ -374,13 +383,16 @@ class Sentinel2Client:
                 dim="classification_source",
             )
 
-    def derive_boundary_flood_fill(self, seed_points, metric_name="rbr", inplace=True):
+    def derive_boundary_flood_fill(
+        self, user_edits_geojson, metric_name="rbr", inplace=True
+    ):
         """
         Derive a boundary from the given metric layer based on the specified threshold, and set it as the boundary of the Sentinel2Client.
         This means that, when we derive boundary, we use the derived boundary for visualization (and this boundary is saved as `boundary.geojson`
         within the s3 bucket), and we clip the metrics stack to this boundary.
 
         Args:
+            user_edits_geojson (GeoJSON): User edits to the boundary, will be optionally a polygon but definitely at least one point.
             metric_name (str): Name of the metric layer.
             threshold (float): Threshold value for the metric layer.
 
@@ -389,38 +401,60 @@ class Sentinel2Client:
         """
         print("Deriving boundary using metric: {}".format(metric_name))
 
-        seed_points_gpd = gpd.GeoDataFrame.from_features(seed_points["features"])
+        user_edits_gpd = gpd.GeoDataFrame.from_features(user_edits_geojson["features"])
+        seed_locations_gpd = user_edits_gpd[user_edits_gpd.geometry.type == "Point"]
+        user_restriction_boundary_gpd = user_edits_gpd[
+            user_edits_gpd.geometry.type == "Polygon"
+        ]
 
         metric_layer = self.metrics_stack.sel(burn_metric=metric_name)
 
-        if seed_points_gpd is not None:
+        if user_restriction_boundary_gpd is not None:
+            # Clip the metric layer to the user restriction boundary
+            metric_layer = metric_layer.rio.clip(
+                user_restriction_boundary_gpd.geometry.values,
+                user_restriction_boundary_gpd.crs,
+            )
+
+        if seed_locations_gpd is not None:
             # Add a dim called 'seed' to denote whether the pixel is a seed point
             metric_layer = metric_layer.expand_dims(dim="seed")
             metric_layer["seed"] = xr.full_like(metric_layer, False, dtype=bool)
 
-            for point in seed_points_gpd.geometry:
+            for point in seed_locations_gpd.geometry:
+                # Find the nearest pixel to the seed point, we want the index, not the value
                 nearest_pixel = metric_layer.sel(x=point.x, y=point.y, method="nearest")
-                nearest_pixel_x = nearest_pixel.x.values
-                nearest_pixel_y = nearest_pixel.y.values
-                metric_layer["seed"].loc[dict(x=nearest_pixel_x, y=nearest_pixel_y)] = (
-                    True
-                )
+                metric_layer["seed"].loc[
+                    dict(x=nearest_pixel.x.values, y=nearest_pixel.y.values)
+                ] = True
 
-        geojson_boundary = derive_boundary(
-            metric_layer=metric_layer,
+            seed_indices = list(zip(*np.where(metric_layer["seed"].values[0, :, :])))
+
+        # TODO(!smelly): Seed indices are essentially required right now, but this is an artifact
+        # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/65
+        # of flood fill segmentation, so this Pipeline should be more flexible in the future.
+        pipeline = Pipeline(
             thresholding_strategy=OtsuThreshold(),
-            segmentation_strategy=FloodFillSegmentation(),
+            segmentation_strategy=FloodFillSegmentation(seed_indices=seed_indices),
+            smoothing_strategies=[GaussianSmoothing(sigma=1)],
+            postprocessing_strategies=[FillHoles(), BinaryDilation(iterations=2)],
+            polygon_cleanup_strategies=[
+                RestrictToSeedPoints(seed_locations_gpd=seed_locations_gpd)
+            ],
         )
-        geojson_boundary_gpd = gpd.GeoDataFrame.from_features(geojson_boundary)
 
-        if not geojson_boundary:
+        geojson_boundary_gpd = derive_boundary(
+            metric_layer=metric_layer, pipeline=pipeline
+        )
+
+        if geojson_boundary_gpd is None:
             raise NoFireBoundaryDetectedError(
                 "No fire boundary detected for the given threshold {threshold} and metric {metric_name}"
             )
 
         if inplace:
 
-            self.set_boundary(geojson_boundary)
+            self.set_boundary(geojson_boundary_gpd.geometry)
             self.metrics_stack = self.metrics_stack.rio.clip(
                 geojson_boundary_gpd.geometry.values, geojson_boundary_gpd.crs
             )

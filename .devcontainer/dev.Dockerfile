@@ -53,6 +53,9 @@ RUN mamba env update -f .devcontainer/dev_environment_addons.yml -n titiler-prod
 # Install nb_conda_kernels in base env to allow for env discovery in jupyter
 RUN mamba install -n base nb_conda_kernels
 
+# Install pixi in base env to allow VSCode to properly use conda env for tests extension
+RUN mamba install -n base pixi
+
 #########################
 ### RUNTIME KEEP-ALIVE###
 #########################

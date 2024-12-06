@@ -140,7 +140,6 @@ def main(
     }
     geojson_name = "drawn_aoi_boundary" if derive_boundary else "boundary"
 
-    ## TODO [#34]: Should probably define a class for batch analysis and fetch
     job_status = {
         "submitted": str(submission_time),
         "fire_event_name": fire_event_name,

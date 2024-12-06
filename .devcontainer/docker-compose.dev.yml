@@ -5,7 +5,6 @@ services:
       context: ../
       dockerfile: .deployment/titiler/prod.Dockerfile
       args:
-        - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
         - ENV=LOCAL
     ports:
       - 8081:8080 # FastAPI
@@ -17,6 +16,9 @@ services:
       - type: bind
         source: ${LOCAL_ENV_HOME}/.config/gcloud
         target: /root/.config/gcloud
+      - type: bind # For debug images
+        source: /tmp
+        target: /tmp
     env_file:
       - .env
     logging:
@@ -30,7 +32,6 @@ services:
       context: ../
       dockerfile: .deployment/burn_backend/prod.Dockerfile
       args:
-        - DEVCONTAINER_SERVICE=${DEVCONTAINER_SERVICE}
         - ENV=LOCAL
     ports:
       - 5051:5050 # FastAPI
@@ -42,6 +43,9 @@ services:
       - type: bind
         source: ${LOCAL_ENV_HOME}/.config/gcloud
         target: /root/.config/gcloud
+      - type: bind # For debug images
+        source: /tmp
+        target: /tmp
     env_file:
       - .env
     logging:

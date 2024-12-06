@@ -48,6 +48,7 @@ def test_stac_item_collection():
         test_stac_item_collection = pickle.load(f)
     return test_stac_item_collection
 
+
 ### Coords and time windows
 
 
@@ -221,6 +222,53 @@ def test_3d_nan_xarray(test_3d_xarray):
 def test_3d_zero_xarray(test_3d_xarray):
     test_reduced_zero_xarray = xr.full_like(test_3d_xarray, 0)
     return test_reduced_zero_xarray
+
+
+### Real 'tiny dome' case, small area of dome fire, for use with derive_boundary
+
+
+@pytest.fixture
+def test_intermediate_burn_metrics_tiny_dome():
+    with open(
+        "tests/assets/tiny_dome/tiny_dome_intermediate_metrics_layer.tiff", "rb"
+    ) as f:
+        test_intermediate_burn_metrics_tiny_dome = rxr.open_rasterio(f)
+
+    # Reconstruction of the xarray
+    test_intermediate_burn_metrics_tiny_dome = (
+        test_intermediate_burn_metrics_tiny_dome.rename(
+            {"band": "burn_metric"}
+        ).assign_coords(burn_metric=["rbr"])
+    )
+    return test_intermediate_burn_metrics_tiny_dome
+
+
+@pytest.fixture
+def test_multiple_seed_points_tiny_dome():
+    with open(
+        "tests/assets/tiny_dome/tiny_dome_multiple_seed_points.geojson", "rb"
+    ) as f:
+        test_seed_points_tiny_dome = json.load(f)
+
+    return test_seed_points_tiny_dome
+
+
+@pytest.fixture
+def test_single_seed_point_tiny_dome():
+    with open("tests/assets/tiny_dome/tiny_dome_single_seed_point.geojson", "rb") as f:
+        test_seed_points_tiny_dome = json.load(f)
+
+    return test_seed_points_tiny_dome
+
+
+@pytest.fixture
+def test_user_restriction_boundary_tiny_dome():
+    with open(
+        "tests/assets/tiny_dome/tiny_dome_user_restriction_boundary.geojson", "rb"
+    ) as f:
+        test_user_restriction_boundary_tiny_dome = json.load(f)
+
+    return test_user_restriction_boundary_tiny_dome
 
 
 ### GeoJSON

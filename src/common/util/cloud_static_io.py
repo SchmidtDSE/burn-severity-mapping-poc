@@ -280,9 +280,6 @@ class CloudStaticIOClient:
                     ds.build_overviews([2, 4, 8, 16, 32], Resampling.nearest)
                     ds.update_tags(ns="rio_overview", resampling="nearest")
 
-                ## TODO: Stupid solution to not having control over GDAL's cache
-                ## We need to be able to invalidate it after we crop, but we can't do that
-                ## and if we disable it entirely, performance is terrible.
                 if not final:
                     band_name = f"intermediate_{band_name}"
 
@@ -328,8 +325,8 @@ class CloudStaticIOClient:
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             for band_name in rap_estimates.band.to_index():
-                # TODO [#23]: This is the same logic as in upload_cogs. Refactor to avoid duplication
-                # Save the band as a local COG
+                # TODO(!feat): Refactor upload_cogs and upload_rap_estimates to share code
+                # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/61
                 local_cog_path = os.path.join(tmpdir, f"{band_name}.tif")
                 band_cog = rap_estimates.sel(band=band_name).rio
                 band_cog.to_raster(local_cog_path, driver="GTiff")

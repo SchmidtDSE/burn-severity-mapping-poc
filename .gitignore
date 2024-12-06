@@ -26,3 +26,6 @@ tst/*
 
 # Temporary deprecated envs that we don't yet want to lose
 DEPR_*
+
+# Debug images
+.debug_images

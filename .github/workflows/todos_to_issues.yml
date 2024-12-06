@@ -1,19 +1,30 @@
 ### NOTE: Disabled for now, since we are not paying for the MongoDB Atlas cluster -
 ### probably should just self-host it but not really necessary at the moment for just this repo
 
-name: Track TODOs as Issues
-on:
-  push:
-    branches:
-      - not_a_branch_disabled_for_now
-
+name: "Run TODO to Issue"
+on: ["push"]
 jobs:
-  todos:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v1
-      - name: todo-actions
-        uses: dtinth/todo-actions@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TODO_ACTIONS_MONGO_URL: ${{ secrets.TODO_ACTIONS_MONGO_URL }}
+      - uses: "actions/checkout@v4"
+      - name: "TODO to Issue"
+        uses: "alstr/todo-to-issue-action@v5"
+        with:
+          INSERT_ISSUE_URLS: "true"
+          CLOSE_ISSUES: "true"
+
+      - name: Set Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and Push Changes
+        run: |
+          git add -A
+          if [[ `git status --porcelain` ]]; then
+            git commit -m "Automatically added GitHub issue links to TODOs"
+            git push
+          else
+            echo "No changes to commit"
+          fi

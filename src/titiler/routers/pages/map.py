@@ -46,7 +46,6 @@ def serve_map(
 
     s3_bucket_name = os.getenv("S3_BUCKET_NAME")
 
-    ## TODO [#21]: Use Tofu Output to construct hardocded cog and geojson urls (in case we change s3 bucket name)
     cog_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/{burn_metric}.tif"
     burn_boundary_geojson_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/boundary.geojson"
     ecoclass_geojson_url = f"https://{s3_bucket_name}.s3.us-east-2.amazonaws.com/public/{affiliation}/{fire_event_name}/ecoclass_dominant_cover.geojson"

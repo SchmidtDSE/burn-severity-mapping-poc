@@ -97,7 +97,8 @@ def init_sentry(logger: Logger = Depends(get_cloud_logger)):
     """
     logger.info("Initializing Sentry client")
 
-    ## TODO [#28]: Move to sentry to environment variable if we keep sentry
+    # TODO(!magic): Move to sentry to environment variable if we keep sentry
+    # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/60
     sentry_sdk.init(
         dsn="https://3660129e232b3c796208a5e46945d838@o4506701219364864.ingest.sentry.io/4506701221199872",
         # Set traces_sample_rate to 1.0 to capture 100%
