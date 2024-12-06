@@ -207,7 +207,7 @@ def test_3d_valid_xarray_epsg_4326(
     bands = ["band1", "band2"]
     values = np.random.rand(len(bands), len(y), len(x))
     test_3d_xarray = construct_dataarray(
-        values=values, bands=bands, x=x, y=y, epsg=4326
+        metadata=metadata, values=values, bands=bands, x=x, y=y, epsg=4326
     )
     return test_3d_xarray
 
