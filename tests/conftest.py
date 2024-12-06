@@ -246,7 +246,7 @@ def test_intermediate_burn_metrics_tiny_dome():
 @pytest.fixture
 def test_multiple_seed_points_tiny_dome():
     with open(
-        "tests/assets/tiny_dome/tiny_dome_mutiple_seed_points.geojson", "rb"
+        "tests/assets/tiny_dome/tiny_dome_multiple_seed_points.geojson", "rb"
     ) as f:
         test_seed_points_tiny_dome = json.load(f)
 
