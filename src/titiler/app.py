@@ -4,6 +4,7 @@ from fastapi.logger import logger as fastapi_logger
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
@@ -40,9 +41,12 @@ gunicorn_logger.addHandler(stream_handler)
 uvicorn_access_logger.addHandler(stream_handler)
 fastapi_logger.addHandler(stream_handler)
 
-## LOCAL DEV ##
-print(os.getenv("ENV"))
+## APP SETUP ##
+app = FastAPI(docs_url="/documentation")
+app.mount("/static", StaticFiles(directory="src/titiler/static"), name="static")
+add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
+## CORS / LOCAL DEV ##
 if os.getenv("ENV") == "LOCAL" and os.getenv("DEBUG_SERVICE") == "TITILER":
     # Set up debugpy
     import debugpy
@@ -52,10 +56,16 @@ if os.getenv("ENV") == "LOCAL" and os.getenv("DEBUG_SERVICE") == "TITILER":
     debugpy.wait_for_client()
     print("Debugger attached")
 
-## APP SETUP ##
-app = FastAPI(docs_url="/documentation")
-app.mount("/static", StaticFiles(directory="src/titiler/static"), name="static")
-add_exception_handlers(app, DEFAULT_STATUS_CODES)
+else:
+    allowed_origins = [os.getenv("GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND")]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,  # Allows specified origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 ### WEB PAGES ###
 app.include_router(home.router)
