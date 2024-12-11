@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.common.routers.check import connectivity, dns, health, sentry_error, logs
+from src.common.lib.backend_dependencies import get_cloud_logger
 
 from src.burn_backend.routers.analyze import spectral_burn_metrics
 from src.burn_backend.routers.refine import flood_fill_segmentation
@@ -18,7 +19,8 @@ from src.burn_backend.routers.fetch import rangeland_analysis_platform, ecoclass
 from src.burn_backend.routers.list import derived_products
 from src.burn_backend.routers.batch import batch_analyze_and_fetch
 
-
+logger = get_cloud_logger()
+logger.info("Starting Burn Backend")
 ## LOGGING SETUP ##
 
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
@@ -67,10 +69,12 @@ if os.getenv("ENV") == "LOCAL":
 else:
     allowed_origins = [os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")]
 
+logger.info(f"Allowed origins: {allowed_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=allowed_origins,  # Allows specified origins
-    allow_origins=["*"],  # Allows all origins (DEBUG)
+    allow_origins=allowed_origins,  # Allows specified origins
+    # allow_origins=["*"],  # Allows all origins (DEBUG)
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
