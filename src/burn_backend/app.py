@@ -47,8 +47,6 @@ fastapi_logger.addHandler(stream_handler)
 
 ## APP SETUP ##
 app = FastAPI(docs_url="/documentation")
-logging.info(f"Burn backend api started at time {datetime.now()}")
-logging.warning("This is a warning message")
 
 print(os.getenv("ENV"))
 
@@ -71,7 +69,8 @@ else:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,  # Allows specified origins
+    # allow_origins=allowed_origins,  # Allows specified origins
+    allow_origins=["*"],  # Allows all origins (DEBUG)
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
