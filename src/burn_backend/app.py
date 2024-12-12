@@ -67,6 +67,25 @@ if os.getenv("ENV") == "LOCAL":
 else:
     allowed_origins = [os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")]
 
+## Debug: Log incoming request origins, to help debug CORS issues
+
+
+@app.middleware("http")
+async def log_request_origin(request, call_next):
+    origin = request.headers.get("origin")
+    logger = get_cloud_logger()
+    logger.info(f"Incoming request origin: {origin}")
+    logger.info(f"Configured allowed origins: {allowed_origins}")
+
+    if origin and origin not in allowed_origins:
+        fastapi_logger.warning(
+            f"Origin {origin} not in allowed origins: {allowed_origins}"
+        )
+
+    response = await call_next(request)
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
