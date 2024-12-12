@@ -19,8 +19,6 @@ from src.burn_backend.routers.fetch import rangeland_analysis_platform, ecoclass
 from src.burn_backend.routers.list import derived_products
 from src.burn_backend.routers.batch import batch_analyze_and_fetch
 
-logger = get_cloud_logger()
-logger.info("Starting Burn Backend")
 ## LOGGING SETUP ##
 
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
@@ -69,15 +67,22 @@ if os.getenv("ENV") == "LOCAL":
 else:
     allowed_origins = [os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")]
 
-logger.info(f"Allowed origins: {allowed_origins}")
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,  # Allows specified origins
-    # allow_origins=["*"],  # Allows all origins (DEBUG)
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+    ],
+    expose_headers=["Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"],
+    max_age=3600,
 )
 
 ### CHECK ###
