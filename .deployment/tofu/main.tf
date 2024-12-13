@@ -44,7 +44,7 @@ locals {
 
   gcp_cloud_run_endpoint_burn_backend = terraform.workspace == "dev" ? "https://tf-rest-burn-backend-dev-113009620257.us-central1.run.app" : "https://tf-rest-burn-severity-prod-113009620257.us-central1.run.app"
   gcp_cloud_run_endpoint_titiler = terraform.workspace == "dev" ? "https://tf-titiler-dev-113009620257.us-central1.run.app" : "https://tf-titiler-prod-ohi6r6qs2a-uc.a.run.app"
-  gcp_cloud_run_endpoint_titiler_possible_origins = terraform.workspace == "dev" ? "[\"https://tf-titiler-dev-113009620257.us-central1.run.app\", \"https://tf-titiler-dev-ohi6r6qs2a-uc.a.run.app\",]" : "[\"prod\", \"prod\"]"
+  gcp_cloud_run_endpoint_titiler_possible_origins = terraform.workspace == "dev" ? "[\"https://tf-titiler-dev-113009620257.us-central1.run.app\", \"https://tf-titiler-dev-ohi6r6qs2a-uc.a.run.app\"]" : "[\"prod\", \"prod\"]"
 }
 
 module "common" {
