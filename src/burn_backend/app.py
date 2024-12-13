@@ -66,9 +66,18 @@ if os.getenv("ENV") == "LOCAL":
         print("Debugger attached")
 
 else:
-    allowed_origins = json.loads(
-        os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER_POSSIBLE_ORIGINS")
+    debug_logger = get_cloud_logger()
+    debug_logger.info("Setting up CORS for GCP Cloud Run")
+    debug_logger.info(
+        f"Possible origins: {os.getenv('GCP_CLOUD_RUN_ENDPOINT_TITILER_POSSIBLE_ORIGINS')}"
     )
+    try:
+        allowed_origins = json.loads(
+            os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER_POSSIBLE_ORIGINS")
+        )
+    except Exception as e:
+        debug_logger.error(f"Error parsing allowed origins: {e}")
+
 
 ## Debug: Log incoming request origins, to help debug CORS issues
 
