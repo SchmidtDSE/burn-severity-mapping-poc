@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 
 import logging
@@ -65,7 +66,9 @@ if os.getenv("ENV") == "LOCAL":
         print("Debugger attached")
 
 else:
-    allowed_origins = [os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER")]
+    allowed_origins = json.loads(
+        os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER_POSSIBLE_ORIGINS")
+    )
 
 ## Debug: Log incoming request origins, to help debug CORS issues
 

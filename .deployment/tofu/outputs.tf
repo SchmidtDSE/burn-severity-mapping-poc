@@ -8,7 +8,7 @@ output "gcp_cloud_run_endpoint_titiler" {
     value       = module.titiler.titiler_server_endpoint
 }
 
-output "gcp_cloud_run_endpoint_titiler_origins" {
+output "gcp_cloud_run_endpoint_titiler_possible_origins" {
     description = "The endpoint of the Cloud Run titiler service"
     value       = module.titiler.titiler_server_endpoint_possible_origins
 }
