@@ -156,4 +156,4 @@ async def main(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.error(f"Error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        return JSONResponse(status_code=400, content={"detail": str(e)})

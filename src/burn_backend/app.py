@@ -10,6 +10,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import Request
+from fastapi.responses import Response
+
 from src.common.routers.check import connectivity, dns, health, sentry_error, logs
 from src.common.lib.backend_dependencies import get_cloud_logger
 
@@ -54,7 +58,7 @@ print(os.getenv("ENV"))
 ## CORS / LOCAL DEV ##
 if os.getenv("ENV") == "LOCAL":
     # Set up CORS for local development
-    allowed_origins = [os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")]
+    ALLOWED_ORIGINS = [os.getenv("LOCAL_ENDPOINT_TITILER", "http://localhost:8081")]
 
     if os.getenv("DEBUG_SERVICE") == "BURN_BACKEND":
         # Set up debugpy
@@ -72,14 +76,29 @@ else:
         f"Possible origins: {os.getenv('GCP_CLOUD_RUN_ENDPOINT_TITILER_POSSIBLE_ORIGINS')}"
     )
     try:
-        allowed_origins = json.loads(
+        ALLOWED_ORIGINS = json.loads(
             os.getenv("GCP_CLOUD_RUN_ENDPOINT_TITILER_POSSIBLE_ORIGINS")
         )
     except Exception as e:
         debug_logger.error(f"Error parsing allowed origins: {e}")
 
 
-## Debug: Log incoming request origins, to help debug CORS issues
+## Debug: Log incoming request origins, to help debug CORS issues, also log outgoing
+
+
+class ResponseLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        logger = get_cloud_logger()
+
+        # Log response details
+        logger.info(f"Outgoing response status: {response.status_code}")
+        logger.info(f"Outgoing response headers: {dict(response.headers)}")
+
+        return response
+
+
+app.add_middleware(ResponseLoggingMiddleware)
 
 
 @app.middleware("http")
@@ -87,11 +106,11 @@ async def log_request_origin(request, call_next):
     origin = request.headers.get("origin")
     logger = get_cloud_logger()
     logger.info(f"Incoming request origin: {origin}")
-    logger.info(f"Configured allowed origins: {allowed_origins}")
+    logger.info(f"Configured allowed origins: {ALLOWED_ORIGINS}")
 
-    if origin and origin not in allowed_origins:
+    if origin and origin not in ALLOWED_ORIGINS:
         fastapi_logger.warning(
-            f"Origin {origin} not in allowed origins: {allowed_origins}"
+            f"Origin {origin} not in allowed origins: {ALLOWED_ORIGINS}"
         )
 
     response = await call_next(request)
@@ -100,7 +119,7 @@ async def log_request_origin(request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=[
