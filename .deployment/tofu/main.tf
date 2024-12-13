@@ -37,6 +37,7 @@ locals {
   oidc_provider_domain_url = "accounts.google.com"
 
   # TODO: Burn_backend / Titiler circular dependency of endpoints
+  # Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/67
   # titiler_server_endpoint = module.titiler.titiler_server_endpoint
   # burn_backend_server_endpoint = module.burn_backend.burn_backend_server_endpoint
   # titiler_server_endpoint_possible_origins = module.titiler.titiler_server_endpoint_possible_origins
