@@ -1,6 +1,10 @@
 from google.cloud import secretmanager
 
 
+# TODO: Non-reproducible/manual mapbox secret
+# This mapbox API key was initially stored in Google Cloud Secret Manager using the web GUI, as
+# opposed to the rest being declared in the terraform configuration. This was originally considered
+# pretty temporary, so we will re-evaluate after frontend v1 is in progress.
 def get_mapbox_secret():
     """
     Retrieves the Mapbox API key from Google Cloud Secret Manager. This assumes you are
