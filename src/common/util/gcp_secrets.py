@@ -2,6 +2,7 @@ from google.cloud import secretmanager
 
 
 # TODO: Non-reproducible/manual mapbox secret
+# Issue URL: https://github.com/SchmidtDSE/burn-severity-mapping-poc/issues/68
 # This mapbox API key was initially stored in Google Cloud Secret Manager using the web GUI, as
 # opposed to the rest being declared in the terraform configuration. This was originally considered
 # pretty temporary, so we will re-evaluate after frontend v1 is in progress.
