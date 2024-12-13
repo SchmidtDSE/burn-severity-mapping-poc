@@ -86,35 +86,35 @@ else:
 ## Debug: Log incoming request origins, to help debug CORS issues, also log outgoing
 
 
-class ResponseLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-        logger = get_cloud_logger()
+# class ResponseLoggingMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next):
+#         response = await call_next(request)
+#         logger = get_cloud_logger()
 
-        # Log response details
-        logger.info(f"Outgoing response status: {response.status_code}")
-        logger.info(f"Outgoing response headers: {dict(response.headers)}")
+#         # Log response details
+#         logger.info(f"Outgoing response status: {response.status_code}")
+#         logger.info(f"Outgoing response headers: {dict(response.headers)}")
 
-        return response
-
-
-app.add_middleware(ResponseLoggingMiddleware)
+#         return response
 
 
-@app.middleware("http")
-async def log_request_origin(request, call_next):
-    origin = request.headers.get("origin")
-    logger = get_cloud_logger()
-    logger.info(f"Incoming request origin: {origin}")
-    logger.info(f"Configured allowed origins: {ALLOWED_ORIGINS}")
+# app.add_middleware(ResponseLoggingMiddleware)
 
-    if origin and origin not in ALLOWED_ORIGINS:
-        fastapi_logger.warning(
-            f"Origin {origin} not in allowed origins: {ALLOWED_ORIGINS}"
-        )
 
-    response = await call_next(request)
-    return response
+# @app.middleware("http")
+# async def log_request_origin(request, call_next):
+#     origin = request.headers.get("origin")
+#     logger = get_cloud_logger()
+#     logger.info(f"Incoming request origin: {origin}")
+#     logger.info(f"Configured allowed origins: {ALLOWED_ORIGINS}")
+
+#     if origin and origin not in ALLOWED_ORIGINS:
+#         fastapi_logger.warning(
+#             f"Origin {origin} not in allowed origins: {ALLOWED_ORIGINS}"
+#         )
+
+#     response = await call_next(request)
+#     return response
 
 
 app.add_middleware(
