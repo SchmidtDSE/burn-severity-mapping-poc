@@ -27,3 +27,8 @@ variable "gcp_cloud_run_endpoint_titiler" {
     description = "The URL of the Titiler instance running on Cloud Run"
     type = string
 }
+
+variable "gcp_cloud_run_endpoint_titiler_possible_origins" {
+    description = "The possible origins of the Titiler instance running on Cloud Run"
+    type = string
+}

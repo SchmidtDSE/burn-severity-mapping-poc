@@ -29,6 +29,10 @@ resource "google_cloud_run_v2_service" "tf-rest-burn-severity" {
         value = var.gcp_cloud_run_endpoint_titiler
       }
       env {
+        name = "GCP_CLOUD_RUN_ENDPOINT_TITILER_POSSIBLE_ORIGINS"
+        value = var.gcp_cloud_run_endpoint_titiler_possible_origins
+      }
+      env {
         name = "GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND"
         value = ""
       }

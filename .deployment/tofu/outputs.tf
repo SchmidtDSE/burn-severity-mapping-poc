@@ -8,6 +8,11 @@ output "gcp_cloud_run_endpoint_titiler" {
     value       = module.titiler.titiler_server_endpoint
 }
 
+output "gcp_cloud_run_endpoint_titiler_origins" {
+    description = "The endpoint of the Cloud Run titiler service"
+    value       = module.titiler.titiler_server_endpoint_possible_origins
+}
+
 output "gcp_service_account_s3_email" {
     description = "The email address of the Cloud Run burn-backend service account"
     value       = module.burn_backend.gcp_service_account_s3_email

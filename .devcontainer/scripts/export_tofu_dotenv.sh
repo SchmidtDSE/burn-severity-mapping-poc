@@ -22,4 +22,4 @@ echo "GCP_CLOUD_RUN_ENDPOINT_BURN_BACKEND=$gcp_cloud_run_endpoint_burn_backend" 
 # Titiler
 export gcp_cloud_run_endpoint_titiler="$(tofu output gcp_cloud_run_endpoint_titiler)"
 echo "GCP_CLOUD_RUN_ENDPOINT_TITILER=$gcp_cloud_run_endpoint_titiler" >> /workspace/.devcontainer/.env
-
+echo "GCP_CLOUD_RUN_ENDPOINT_TITILER_POSSIBLE_ORIGINS=$gcp_cloud_run_endpoint_titiler_possible_origins" >> /workspace/.devcontainer/.env

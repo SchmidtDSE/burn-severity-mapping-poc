@@ -6,7 +6,7 @@ terraform {
     }
     google = {
       source  = "hashicorp/google"
-      version = "5.9.0"
+      version = "6.13.0"
     }
   }
   backend "gcs" {
@@ -35,12 +35,15 @@ locals {
   aws_account_id = data.aws_caller_identity.current.account_id
   aws_region = data.aws_region.current.name
   oidc_provider_domain_url = "accounts.google.com"
-  # This causes a circular dependency - need to figure out how to resolve
+
+  # TODO: Burn_backend / Titiler circular dependency of endpoints
   # titiler_server_endpoint = module.titiler.titiler_server_endpoint
-  titiler_server_endpoint = terraform.workspace == "dev" ? "https://tf-titiler-dev-113009620257.us-central1.run.app" : "https://tf-titiler-prod-ohi6r6qs2a-uc.a.run.app"
   # burn_backend_server_endpoint = module.burn_backend.burn_backend_server_endpoint
-  # For now we have a different name for dev before we send final updates to prod, so for now a switch
-  burn_backend_server_endpoint = terraform.workspace == "dev" ? "https://tf-rest-burn-backend-dev-113009620257.us-central1.run.app" : "https://tf-rest-burn-severity-prod-113009620257.us-central1.run.app"
+  # titiler_server_endpoint_possible_origins = module.titiler.titiler_server_endpoint_possible_origins
+
+  gcp_cloud_run_endpoint_burn_backend = terraform.workspace == "dev" ? "https://tf-rest-burn-backend-dev-113009620257.us-central1.run.app" : "https://tf-rest-burn-severity-prod-113009620257.us-central1.run.app"
+  gcp_cloud_run_endpoint_titiler = terraform.workspace == "dev" ? "https://tf-titiler-dev-113009620257.us-central1.run.app" : "https://tf-titiler-prod-ohi6r6qs2a-uc.a.run.app"
+  gcp_cloud_run_endpoint_titiler_possible_origins = terraform.workspace == "dev" ? "[\"https://tf-titiler-dev-113009620257.us-central1.run.app\", \"https://tf-titiler-dev-ohi6r6qs2a-uc.a.run.app\",]" : "[\"prod\", \"prod\"]"
 }
 
 module "common" {
@@ -52,7 +55,7 @@ module "titiler" {
   source = "./modules/titiler"
   google_project_number = local.google_project_number
   burn_backend_vpc_connector_id = module.common.burn_backend_vpc_connector_id
-  gcp_cloud_run_endpoint_burn_backend = local.burn_backend_server_endpoint
+  gcp_cloud_run_endpoint_burn_backend = local.gcp_cloud_run_endpoint_burn_backend
 }
 
 module "burn_backend" {
@@ -62,7 +65,8 @@ module "burn_backend" {
   s3_bucket_name = module.static_io.s3_bucket_name
   google_workload_identity_pool_id = module.common.google_workload_identity_pool_id
   burn_backend_vpc_connector_id = module.common.burn_backend_vpc_connector_id
-  gcp_cloud_run_endpoint_titiler = local.titiler_server_endpoint
+  gcp_cloud_run_endpoint_titiler = local.gcp_cloud_run_endpoint_titiler
+  gcp_cloud_run_endpoint_titiler_possible_origins = local.gcp_cloud_run_endpoint_titiler_possible_origins
 }
 
 module "static_io" {
