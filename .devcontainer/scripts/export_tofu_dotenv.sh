@@ -1,4 +1,5 @@
 cd /workspace/.deployment/tofu
+tofu workspace select dev
 tofu init
 tofu refresh
 
