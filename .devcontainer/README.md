@@ -60,6 +60,12 @@ gcloud auth application-default login
 
 _Note_: This SSO auth process must be performed periodically, as the authentication token generated are short-lived (important, as the scope of this auth is broad for provisioning resources and could be used by nefarious actors). So, if you run into an credentials-related issue running any `tofu` command, you may need to re-auth. Both will provide you a URL to login via SSO. You can accept all defaults.
 
+### Tofu dotenv generation
+
+TODO: Tofu dotenv (switch to dev or prod)
+TODO: 'DEBUG_SERVICE' env var
+TODO: Start services with docker compose / attach with debugpy
+
 #### Dev / Prod split
 
 To ensure that we can safely develop in a live environment, without breaking existing functionality, we split dev and prod environments using tofu's `workspace`s.
